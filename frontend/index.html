@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ROTISERIA360 - Productos</title>
+
+    <link rel="stylesheet" href="css/estilos.css">
+
+</head>
+
+<body>
+
+    <div class="contenedor">
+
+        <header class="cabecera">
+
+            <div>
+                <h1>ROTISERIA<span>360</span></h1>
+                <p>Gestión de productos</p>
+            </div>
+
+        </header>
+
+
+        <main>
+
+            <!-- ========================= -->
+            <!-- FORMULARIO -->
+            <!-- ========================= -->
+
+            <section class="panel formulario">
+
+                <h2>Producto</h2>
+
+                <input type="hidden" id="idProducto">
+
+
+                <div class="fila">
+
+                    <div class="campo">
+
+                        <label for="codigo">
+                            Código
+                        </label>
+
+                        <input
+                            type="text"
+                            id="codigo"
+                            maxlength="30"
+                            placeholder="Ej: P001">
+
+                    </div>
+
+
+                    <div class="campo campo-grande">
+
+                        <label for="nombre">
+                            Nombre
+                        </label>
+
+                        <input
+                            type="text"
+                            id="nombre"
+                            maxlength="150"
+                            placeholder="Nombre del producto">
+
+                    </div>
+
+                </div>
+
+
+                <div class="fila">
+
+                    <div class="campo">
+
+                        <label for="tipo">
+                            Tipo
+                        </label>
+
+                        <select id="tipo">
+
+                            <option value="">
+                                Seleccionar...
+                            </option>
+
+                            <option value="INSUMO">
+                                INSUMO
+                            </option>
+
+                            <option value="ELABORADO">
+                                ELABORADO
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="campo">
+
+                        <label for="unidad">
+                            Unidad
+                        </label>
+
+                        <select id="unidad">
+
+                            <option value="">
+                                Seleccionar...
+                            </option>
+
+                            <option value="UN">
+                                UN
+                            </option>
+
+                            <option value="KG">
+                                KG
+                            </option>
+
+                            <option value="GR">
+                                GR
+                            </option>
+
+                            <option value="LT">
+                                LT
+                            </option>
+
+                            <option value="ML">
+                                ML
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="campo campo-activo">
+
+                        <label>
+                            Estado
+                        </label>
+
+                        <label class="check">
+
+                            <input
+                                type="checkbox"
+                                id="activo"
+                                checked>
+
+                            Activo
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+
+                <div class="botones">
+
+                    <button
+                        type="button"
+                        class="btn btn-nuevo"
+                        onclick="nuevoProducto()">
+
+                        Nuevo
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="btn btn-guardar"
+                        onclick="guardarProducto()">
+
+                        Guardar
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="btn btn-modificar"
+                        onclick="modificarProducto()">
+
+                        Modificar
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="btn btn-eliminar"
+                        onclick="eliminarProducto()">
+
+                        Eliminar
+
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- ========================= -->
+            <!-- LISTADO -->
+            <!-- ========================= -->
+
+            <section class="panel">
+
+                <div class="titulo-listado">
+
+                    <div>
+
+                        <h2>Productos</h2>
+
+                        <span id="cantidadProductos">
+                            0 productos
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="btn btn-actualizar"
+                        onclick="cargarProductos()">
+
+                        Actualizar
+
+                    </button>
+
+                </div>
+
+
+                <div class="tabla-contenedor">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Código</th>
+
+                                <th>Producto</th>
+
+                                <th>Tipo</th>
+
+                                <th>Unidad</th>
+
+                                <th>Estado</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="tablaProductos">
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
+
+
+        <footer>
+
+            ROTISERIA360
+
+        </footer>
+
+    </div>
+
+
+    <script src="js/productos.js"></script>
+
+</body>
+
+</html>
