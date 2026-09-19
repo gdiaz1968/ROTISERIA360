@@ -2,6 +2,7 @@ const pool = require("../db");
 
 // ======================================================
 // LISTAR PRODUCTOS
+// Solo productos activos
 // ======================================================
 
 const listarProductos = async (req, res) => {
@@ -18,6 +19,7 @@ const listarProductos = async (req, res) => {
                 activo,
                 fecha_alta
             FROM productos
+            WHERE activo = TRUE
             ORDER BY nombre
         `);
 
@@ -36,6 +38,7 @@ const listarProductos = async (req, res) => {
 
 // ======================================================
 // OBTENER PRODUCTO
+// Permite obtener también productos inactivos
 // ======================================================
 
 const obtenerProducto = async (req, res) => {
@@ -214,7 +217,9 @@ const modificarProducto = async (req, res) => {
 
 
 // ======================================================
-// ELIMINAR PRODUCTO
+// BAJA LOGICA DE PRODUCTO
+// No se elimina el registro.
+// Se establece activo = FALSE.
 // ======================================================
 
 const eliminarProducto = async (req, res) => {
@@ -224,20 +229,23 @@ const eliminarProducto = async (req, res) => {
         const id = req.params.id;
 
         const resultado = await pool.query(`
-            DELETE FROM productos
+            UPDATE productos
+            SET activo = FALSE
             WHERE id = $1
+              AND activo = TRUE
             RETURNING *
         `, [id]);
 
         if (resultado.rows.length === 0) {
 
             return res.status(404).json({
-                error: "Producto no encontrado"
+                error: "Producto no encontrado o ya está inactivo"
             });
         }
 
         res.json({
-            mensaje: "Producto eliminado correctamente"
+            mensaje: "Producto dado de baja logicamente correctamente",
+            producto: resultado.rows[0]
         });
 
     } catch (error) {
@@ -245,7 +253,7 @@ const eliminarProducto = async (req, res) => {
         console.error(error);
 
         res.status(500).json({
-            error: "Error al eliminar producto"
+            error: "Error al dar de baja el producto"
         });
     }
 };
