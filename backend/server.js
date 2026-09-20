@@ -3,6 +3,9 @@ const cors = require("cors");
 const path = require("path");
 const pool = require("./db");
 const productosRoutes = require("./routes/productos");
+const estructuraRoutes = require("./routes/estructura");
+
+
 
 const app = express();
 const PORT = 3000;
@@ -13,8 +16,13 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend")));
 
 app.use("/api/productos", productosRoutes);
+app.use("/api/estructura", estructuraRoutes);
 
-app.use(express.static(path.join(__dirname, "../frontend")));
+app.get("/api/prueba-estructura", (req, res) => {
+    res.json({
+        mensaje: "Ruta estructura funcionando"
+    });
+});
 
 app.get("/api/prueba-db", async (req, res) => {
     try {
