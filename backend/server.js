@@ -9,7 +9,15 @@ const estructuraRoutes = require("./routes/estructura");
 
 
 const app = express();
-const PORT = 3000;
+
+// ======================================================
+// PUERTO
+// ======================================================
+
+// Render proporciona process.env.PORT.
+// En local, si no existe, utiliza el puerto 3000.
+
+const PORT = process.env.PORT || 3000;
 
 
 // ======================================================
@@ -184,15 +192,20 @@ app.use(
 
 app.listen(
     PORT,
+    "0.0.0.0",
     function () {
 
         console.log("==========================================");
+
         console.log(
             "SERVIDOR ROTISERIA360 INICIADO"
         );
+
         console.log(
-            "http://localhost:" + PORT
+            "PUERTO:",
+            PORT
         );
+
         console.log("==========================================");
 
     }
