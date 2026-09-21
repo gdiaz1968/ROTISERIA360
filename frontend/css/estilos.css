@@ -731,4 +731,138 @@ footer {
         display: none;
     }
 
+    /* ========================================================= */
+    /* ESTRUCTURA DE PRODUCTOS                                   */
+    /* ========================================================= */
+
+    .estructura-panel {
+        width: 100%;
+    }
+
+
+    /* ========================================================= */
+    /* SECCIONES                                                  */
+    /* ========================================================= */
+
+    .estructura-seccion {
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #eeeeee;
+    }
+
+    .estructura-seccion:last-of-type {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+
+    .estructura-seccion-titulo {
+        margin-bottom: 15px;
+        font-size: 15px;
+        font-weight: bold;
+        color: #333333;
+    }
+
+
+    /* ========================================================= */
+    /* CAMPOS DE SOLO LECTURA                                    */
+    /* ========================================================= */
+
+    .estructura-panel input[readonly] {
+        background: #f5f6f7;
+        color: #666666;
+        cursor: default;
+    }
+
+
+    /* ========================================================= */
+    /* BOTON AGREGAR COMPONENTE                                  */
+    /* ========================================================= */
+
+    .estructura-campo-boton {
+        min-width: 190px;
+    }
+
+
+    /* ========================================================= */
+    /* TABLA DE DETALLE                                          */
+    /* ========================================================= */
+
+    .estructura-panel table {
+        min-width: 850px;
+    }
+
+    .estructura-panel th {
+        white-space: nowrap;
+    }
+
+    .estructura-panel td {
+        vertical-align: middle;
+    }
+
+
+    /* ========================================================= */
+    /* CANTIDADES                                                */
+    /* ========================================================= */
+
+    .estructura-panel td:nth-child(5),
+    .estructura-panel td:nth-child(6) {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+
+    /* ========================================================= */
+    /* ACCIONES                                                  */
+    /* ========================================================= */
+
+    .estructura-acciones {
+        margin-top: 5px;
+        padding-top: 20px;
+    }
+
+    .estructura-acciones .btn {
+        min-width: 180px;
+    }
+
+
+    /* ========================================================= */
+    /* RESPONSIVE                                                */
+    /* ========================================================= */
+
+    @media (max-width: 1100px) {
+
+        .estructura-panel .fila {
+            flex-wrap: wrap;
+        }
+
+        .estructura-panel .campo {
+            min-width: 180px;
+        }
+
+    }
+
+
+    @media (max-width: 800px) {
+
+        .estructura-panel .fila {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .estructura-panel .campo {
+            width: 100%;
+            min-width: 100%;
+        }
+
+        .estructura-campo-boton {
+            min-width: 100%;
+        }
+
+        .estructura-campo-boton .btn {
+            width: 100%;
+        }
+
+    }
+
 }

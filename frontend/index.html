@@ -651,7 +651,6 @@
 
                 </section>
 
-
                 <!-- ================================================= -->
                 <!-- ESTRUCTURA DE PRODUCTOS -->
                 <!-- ================================================= -->
@@ -660,21 +659,312 @@
                     id="modulo-estructura"
                     class="modulo oculto">
 
-                    <section class="panel modulo-placeholder">
+                    <section class="panel estructura-panel">
 
-                        <h2>Estructura de productos</h2>
+                        <h2>Estructura de producto</h2>
 
-                        <p>
-                            Módulo en desarrollo.
-                        </p>
 
-                        <span>
-                            Aquí se definirá la composición de cada producto elaborado.
-                        </span>
+                        <!-- ================================================= -->
+                        <!-- PRODUCTO ELABORADO -->
+                        <!-- ================================================= -->
+
+                        <div class="estructura-seccion">
+
+                            <div class="estructura-seccion-titulo">
+                                Producto elaborado
+                            </div>
+
+                            <div class="fila">
+
+                                <div class="campo campo-grande">
+
+                                    <label for="estructura-producto">
+                                        Producto elaborado
+                                    </label>
+
+                                    <select id="estructura-producto">
+
+                                        <option value="">
+                                            Seleccionar producto...
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="fila">
+
+                                <div class="campo">
+
+                                    <label for="estructura-codigo">
+                                        Código
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="estructura-codigo"
+                                        readonly>
+
+                                </div>
+
+
+                                <div class="campo">
+
+                                    <label for="estructura-unidad">
+                                        Unidad
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="estructura-unidad"
+                                        readonly>
+
+                                </div>
+
+
+                                <div class="campo">
+
+                                    <label for="estructura-rendimiento">
+                                        Rendimiento
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        id="estructura-rendimiento"
+                                        value="1"
+                                        min="0.001"
+                                        step="0.001">
+
+                                </div>
+
+
+                                <div class="campo">
+
+                                    <label for="estructura-unidad-rendimiento">
+                                        Unidad rendimiento
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="estructura-unidad-rendimiento"
+                                        readonly>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ================================================= -->
+                        <!-- COMPONENTES -->
+                        <!-- ================================================= -->
+
+                        <div class="estructura-seccion estructura-componentes">
+
+                            <div class="estructura-seccion-titulo">
+                                Agregar componente
+                            </div>
+
+
+                            <div class="fila">
+
+                                <div class="campo campo-grande">
+
+                                    <label for="estructura-componente">
+                                        Componente
+                                    </label>
+
+                                    <select id="estructura-componente">
+
+                                        <option value="">
+                                            Seleccionar componente...
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="fila">
+
+                                <div class="campo">
+
+                                    <label for="componente-codigo">
+                                        Código
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="componente-codigo"
+                                        readonly>
+
+                                </div>
+
+
+                                <div class="campo">
+
+                                    <label for="componente-tipo">
+                                        Tipo
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="componente-tipo"
+                                        readonly>
+
+                                </div>
+
+
+                                <div class="campo">
+
+                                    <label for="componente-unidad">
+                                        Unidad
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        id="componente-unidad"
+                                        readonly>
+
+                                </div>
+
+
+                                <div class="campo">
+
+                                    <label for="componente-cantidad">
+                                        Cantidad
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        id="componente-cantidad"
+                                        min="0.001"
+                                        step="0.001"
+                                        placeholder="0.000">
+
+                                </div>
+
+
+                                <div class="campo">
+
+                                    <label for="componente-merma">
+                                        Merma %
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        id="componente-merma"
+                                        value="0"
+                                        min="0"
+                                        step="0.001">
+
+                                </div>
+
+
+                                <div class="campo estructura-campo-boton">
+
+                                    <label>
+                                        &nbsp;
+                                    </label>
+
+                                    <button
+                                        type="button"
+                                        id="btn-agregar-componente"
+                                        class="btn btn-actualizar">
+
+                                        Agregar componente
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ================================================= -->
+                        <!-- DETALLE -->
+                        <!-- ================================================= -->
+
+                        <div class="estructura-seccion">
+
+                            <div class="titulo-listado">
+
+                                <div>
+
+                                    <h2>
+                                        Detalle de la estructura
+                                    </h2>
+
+                                    <span>
+                                        Componentes utilizados en el producto
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="tabla-contenedor">
+
+                                <table>
+
+                                    <thead>
+
+                                        <tr>
+
+                                            <th>Código</th>
+                                            <th>Componente</th>
+                                            <th>Tipo</th>
+                                            <th>Unidad</th>
+                                            <th>Cantidad</th>
+                                            <th>Merma %</th>
+                                            <th>Acción</th>
+
+                                        </tr>
+
+                                    </thead>
+
+
+                                    <tbody id="detalle-estructura">
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ================================================= -->
+                        <!-- ACCIONES -->
+                        <!-- ================================================= -->
+
+                        <div class="botones estructura-acciones">
+
+                            <button
+                                type="button"
+                                id="btn-guardar-estructura"
+                                class="btn btn-guardar">
+
+                                Guardar estructura
+
+                            </button>
+
+                        </div>
 
                     </section>
 
                 </section>
+
 
 
                 <!-- ================================================= -->
@@ -818,6 +1108,7 @@
 
 
     <script src="js/productos.js"></script>
+    <script src="js/estructura.js"></script>
 
 
     <!-- Navegación visual -->
