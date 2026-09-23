@@ -1,322 +1,326 @@
-// ======================================================
-// ROTISERIA360
-// ESTRUCTURA DE PRODUCTOS
-// ======================================================
-
 let productosElaborados = [];
 let componentes = [];
 let detalleEstructura = [];
 
+let estructuraActual = null;
+let modoEstructura = "NUEVO";
 
-// ======================================================
-// INICIO
-// ======================================================
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", function () {
 
     cargarProductosElaborados();
     cargarComponentes();
 
-    document
-        .getElementById("estructura-producto")
+    document.getElementById("estructura-producto")
         .addEventListener("change", seleccionarProducto);
 
-    document
-        .getElementById("estructura-componente")
+    document.getElementById("estructura-componente")
         .addEventListener("change", seleccionarComponente);
 
-    document
-        .getElementById("btn-agregar-componente")
+    document.getElementById("btn-agregar-componente")
         .addEventListener("click", agregarComponente);
 
-    document
-        .getElementById("btn-guardar-estructura")
+    document.getElementById("btn-guardar-estructura")
         .addEventListener("click", guardarEstructura);
 
+    configurarBotonesCRUD();
+
+    establecerModoNuevo();
 });
 
 
-// ======================================================
-// CARGAR PRODUCTOS ELABORADOS
-// ======================================================
+/* =========================================================
+   CONFIGURACION DE BOTONES CRUD
+   ========================================================= */
+
+function configurarBotonesCRUD() {
+
+    var contenedor = document.getElementById("modulo-estructura");
+
+    if (!contenedor) {
+        return;
+    }
+
+    /*
+        Los botones se buscan por ID.
+
+        Si todavía no existen en index.html,
+        esta función simplemente no hace nada.
+    */
+
+    var btnNuevo = document.getElementById("btn-nueva-estructura");
+
+    if (btnNuevo) {
+        btnNuevo.addEventListener("click", function () {
+            establecerModoNuevo();
+        });
+    }
+
+
+    var btnConsultar = document.getElementById("btn-consultar-estructura");
+
+    if (btnConsultar) {
+        btnConsultar.addEventListener("click", function () {
+            consultarEstructura();
+        });
+    }
+
+
+    var btnModificar = document.getElementById("btn-modificar-estructura");
+
+    if (btnModificar) {
+        btnModificar.addEventListener("click", function () {
+            habilitarModificacion();
+        });
+    }
+
+
+    var btnEliminar = document.getElementById("btn-eliminar-estructura");
+
+    if (btnEliminar) {
+        btnEliminar.addEventListener("click", function () {
+            eliminarEstructura();
+        });
+    }
+}
+
+
+/* =========================================================
+   PRODUCTOS ELABORADOS
+   ========================================================= */
 
 async function cargarProductosElaborados() {
 
     try {
 
-        const respuesta = await fetch(
-            "/api/estructura/productos"
-        );
+        var respuesta = await fetch("/api/estructura/productos");
 
         if (!respuesta.ok) {
-
-            throw new Error(
-                "Error al consultar productos elaborados"
-            );
+            throw new Error("No se pudieron cargar los productos elaborados.");
         }
 
         productosElaborados = await respuesta.json();
 
-        const combo =
-            document.getElementById(
-                "estructura-producto"
-            );
+        var combo = document.getElementById("estructura-producto");
 
-        combo.innerHTML = `
-            <option value="">
-                Seleccionar producto...
-            </option>
-        `;
+        combo.innerHTML = '<option value="">Seleccione un producto</option>';
 
-        productosElaborados.forEach(producto => {
+        productosElaborados.forEach(function (producto) {
 
-            const option =
-                document.createElement("option");
+            var opcion = document.createElement("option");
 
-            option.value = producto.id;
+            opcion.value = producto.id;
 
-            option.textContent =
-                producto.codigo +
-                " - " +
-                producto.nombre;
+            opcion.textContent =
+                producto.codigo + " - " + producto.nombre;
 
-            combo.appendChild(option);
-
+            combo.appendChild(opcion);
         });
 
     } catch (error) {
 
-        console.error(error);
+        console.error("ERROR CARGANDO PRODUCTOS:", error);
 
-        alert(
-            "No se pudieron cargar los productos elaborados."
-        );
-
+        alert("Error al cargar los productos elaborados.");
     }
-
 }
 
 
-// ======================================================
-// CARGAR COMPONENTES
-// ======================================================
+/* =========================================================
+   COMPONENTES
+   ========================================================= */
 
 async function cargarComponentes() {
 
     try {
 
-        const respuesta = await fetch(
-            "/api/estructura/componentes"
-        );
+        var respuesta = await fetch("/api/estructura/componentes");
 
         if (!respuesta.ok) {
-
-            throw new Error(
-                "Error al consultar componentes"
-            );
+            throw new Error("No se pudieron cargar los componentes.");
         }
 
         componentes = await respuesta.json();
 
-        const combo =
-            document.getElementById(
-                "estructura-componente"
-            );
+        var combo = document.getElementById("estructura-componente");
 
-        combo.innerHTML = `
-            <option value="">
-                Seleccionar componente...
-            </option>
-        `;
+        combo.innerHTML = '<option value="">Seleccione un componente</option>';
 
-        componentes.forEach(componente => {
+        componentes.forEach(function (componente) {
 
-            const option =
-                document.createElement("option");
+            var opcion = document.createElement("option");
 
-            option.value = componente.id;
+            opcion.value = componente.id;
 
-            option.textContent =
-                componente.codigo +
-                " - " +
-                componente.nombre;
+            opcion.textContent =
+                componente.codigo + " - " + componente.nombre;
 
-            combo.appendChild(option);
-
+            combo.appendChild(opcion);
         });
 
     } catch (error) {
 
-        console.error(error);
+        console.error("ERROR CARGANDO COMPONENTES:", error);
 
-        alert(
-            "No se pudieron cargar los componentes."
-        );
-
+        alert("Error al cargar los componentes.");
     }
-
 }
 
 
-// ======================================================
-// SELECCIONAR PRODUCTO
-// ======================================================
+/* =========================================================
+   SELECCIONAR PRODUCTO
+   ========================================================= */
 
 function seleccionarProducto() {
 
-    const id =
-        parseInt(
-            document.getElementById(
-                "estructura-producto"
-            ).value
-        );
+    var combo = document.getElementById("estructura-producto");
 
-    const producto =
-        productosElaborados.find(
-            p => p.id === id
-        );
+    var productoId = parseInt(combo.value);
 
-    if (!producto) {
+    if (!productoId) {
 
-        document.getElementById(
-            "estructura-codigo"
-        ).value = "";
-
-        document.getElementById(
-            "estructura-unidad"
-        ).value = "";
-
-        document.getElementById(
-            "estructura-unidad-rendimiento"
-        ).value = "";
+        limpiarDatosProducto();
 
         return;
     }
 
-    document.getElementById(
-        "estructura-codigo"
-    ).value = producto.codigo;
+    var producto = productosElaborados.find(function (p) {
+        return p.id === productoId;
+    });
 
-    document.getElementById(
-        "estructura-unidad"
-    ).value = producto.unidad;
+    if (!producto) {
+        return;
+    }
 
-    document.getElementById(
-        "estructura-unidad-rendimiento"
-    ).value = producto.unidad;
+    document.getElementById("estructura-codigo").value =
+        producto.codigo || "";
 
+    document.getElementById("estructura-unidad").value =
+        producto.unidad || "";
+
+    document.getElementById("estructura-unidad-rendimiento").value =
+        producto.unidad || "";
+
+
+    /*
+        Al cambiar de producto estamos trabajando
+        sobre una nueva consulta.
+    */
+
+    estructuraActual = null;
+
+    detalleEstructura = [];
+
+    mostrarDetalle();
+
+    actualizarEstadoBotones();
 }
 
 
-// ======================================================
-// SELECCIONAR COMPONENTE
-// ======================================================
+/* =========================================================
+   SELECCIONAR COMPONENTE
+   ========================================================= */
 
 function seleccionarComponente() {
 
-    const id =
-        parseInt(
-            document.getElementById(
-                "estructura-componente"
-            ).value
-        );
+    var combo = document.getElementById("estructura-componente");
 
-    const componente =
-        componentes.find(
-            c => c.id === id
-        );
+    var componenteId = parseInt(combo.value);
 
-    if (!componente) {
+    if (!componenteId) {
 
-        document.getElementById(
-            "componente-codigo"
-        ).value = "";
-
-        document.getElementById(
-            "componente-tipo"
-        ).value = "";
-
-        document.getElementById(
-            "componente-unidad"
-        ).value = "";
+        limpiarComponente();
 
         return;
     }
 
-    document.getElementById(
-        "componente-codigo"
-    ).value = componente.codigo;
+    var componente = componentes.find(function (c) {
+        return c.id === componenteId;
+    });
 
-    document.getElementById(
-        "componente-tipo"
-    ).value = componente.tipo;
+    if (!componente) {
+        return;
+    }
 
-    document.getElementById(
-        "componente-unidad"
-    ).value = componente.unidad;
+    document.getElementById("estructura-componente-codigo").value =
+        componente.codigo || "";
 
+    document.getElementById("estructura-componente-tipo").value =
+        componente.tipo || "";
+
+    document.getElementById("estructura-componente-unidad").value =
+        componente.unidad || "";
 }
 
 
-// ======================================================
-// AGREGAR COMPONENTE
-// ======================================================
+/* =========================================================
+   AGREGAR COMPONENTE
+   ========================================================= */
 
 function agregarComponente() {
 
-    const componenteId =
-        parseInt(
-            document.getElementById(
-                "estructura-componente"
-            ).value
-        );
+    var combo = document.getElementById("estructura-componente");
 
-    const cantidad =
-        parseFloat(
-            document.getElementById(
-                "componente-cantidad"
-            ).value
-        );
+    var componenteId = parseInt(combo.value);
 
-    const merma =
-        parseFloat(
-            document.getElementById(
-                "componente-merma"
-            ).value
-        ) || 0;
+    var cantidad = parseFloat(
+        document.getElementById("estructura-cantidad").value
+    );
+
+    var merma = parseFloat(
+        document.getElementById("estructura-merma").value
+    );
 
 
     if (!componenteId) {
 
-        alert(
-            "Seleccione un componente."
-        );
+        alert("Seleccione un componente.");
 
         return;
     }
 
 
-    if (!cantidad || cantidad <= 0) {
+    if (isNaN(cantidad) || cantidad <= 0) {
 
-        alert(
-            "Ingrese una cantidad válida."
-        );
+        alert("Ingrese una cantidad válida.");
 
         return;
     }
 
 
-    const componente =
-        componentes.find(
-            c => c.id === componenteId
-        );
+    if (isNaN(merma) || merma < 0) {
+
+        alert("Ingrese una merma válida.");
+
+        return;
+    }
+
+
+    var componente = componentes.find(function (c) {
+        return c.id === componenteId;
+    });
 
 
     if (!componente) {
 
-        alert(
-            "Componente no encontrado."
-        );
+        alert("El componente seleccionado no existe.");
+
+        return;
+    }
+
+
+    /*
+        Evitamos agregar dos veces el mismo componente.
+    */
+
+    var existente = detalleEstructura.find(function (item) {
+        return item.componente_id === componenteId;
+    });
+
+
+    if (existente) {
+
+        alert("El componente ya fue agregado a la estructura.");
 
         return;
     }
@@ -337,181 +341,367 @@ function agregarComponente() {
         cantidad: cantidad,
 
         merma: merma
-
     });
 
 
     mostrarDetalle();
 
     limpiarComponente();
-
 }
 
 
-// ======================================================
-// MOSTRAR DETALLE
-// ======================================================
+/* =========================================================
+   MOSTRAR DETALLE
+   ========================================================= */
 
 function mostrarDetalle() {
 
-    const tbody =
-        document.getElementById(
-            "detalle-estructura"
-        );
+    var tbody = document.getElementById("detalle-estructura");
+
+    if (!tbody) {
+        return;
+    }
 
     tbody.innerHTML = "";
 
 
-    detalleEstructura.forEach(
-        (detalle, index) => {
+    detalleEstructura.forEach(function (item, index) {
 
-            const fila =
-                document.createElement("tr");
+        var fila = document.createElement("tr");
 
 
-            fila.innerHTML = `
+        var columnaCodigo = document.createElement("td");
 
-                <td>
-                    ${detalle.codigo}
-                </td>
+        columnaCodigo.textContent =
+            item.codigo || "";
 
-                <td>
-                    ${detalle.nombre}
-                </td>
-
-                <td>
-                    ${detalle.tipo}
-                </td>
-
-                <td>
-                    ${detalle.unidad}
-                </td>
-
-                <td>
-                    ${detalle.cantidad.toFixed(3)}
-                </td>
-
-                <td>
-                    ${detalle.merma.toFixed(3)}
-                </td>
-
-                <td>
-
-                    <button
-                        type="button"
-                        onclick="eliminarComponente(${index})">
-
-                        Eliminar
-
-                    </button>
-
-                </td>
-
-            `;
+        fila.appendChild(columnaCodigo);
 
 
-            tbody.appendChild(fila);
+        var columnaNombre = document.createElement("td");
 
-        }
-    );
+        columnaNombre.textContent =
+            item.nombre || "";
 
+        fila.appendChild(columnaNombre);
+
+
+        var columnaTipo = document.createElement("td");
+
+        columnaTipo.textContent =
+            item.tipo || "";
+
+        fila.appendChild(columnaTipo);
+
+
+        var columnaUnidad = document.createElement("td");
+
+        columnaUnidad.textContent =
+            item.unidad || "";
+
+        fila.appendChild(columnaUnidad);
+
+
+        var columnaCantidad = document.createElement("td");
+
+        columnaCantidad.textContent =
+            Number(item.cantidad).toFixed(3);
+
+        fila.appendChild(columnaCantidad);
+
+
+        var columnaMerma = document.createElement("td");
+
+        columnaMerma.textContent =
+            Number(item.merma).toFixed(3);
+
+        fila.appendChild(columnaMerma);
+
+
+        var columnaAccion = document.createElement("td");
+
+
+        var botonEliminar = document.createElement("button");
+
+        botonEliminar.type = "button";
+
+        botonEliminar.textContent = "Eliminar";
+
+        botonEliminar.addEventListener("click", function () {
+
+            eliminarComponente(index);
+
+        });
+
+
+        columnaAccion.appendChild(botonEliminar);
+
+        fila.appendChild(columnaAccion);
+
+
+        tbody.appendChild(fila);
+    });
 }
 
 
-// ======================================================
-// ELIMINAR COMPONENTE
-// ======================================================
+/* =========================================================
+   ELIMINAR COMPONENTE DEL DETALLE
+   ========================================================= */
 
 function eliminarComponente(index) {
 
-    detalleEstructura.splice(
-        index,
-        1
-    );
+    if (modoEstructura === "CONSULTA") {
 
-    mostrarDetalle();
-
-}
-
-
-// ======================================================
-// LIMPIAR COMPONENTE
-// ======================================================
-
-function limpiarComponente() {
-
-    document.getElementById(
-        "estructura-componente"
-    ).value = "";
-
-    document.getElementById(
-        "componente-codigo"
-    ).value = "";
-
-    document.getElementById(
-        "componente-tipo"
-    ).value = "";
-
-    document.getElementById(
-        "componente-unidad"
-    ).value = "";
-
-    document.getElementById(
-        "componente-cantidad"
-    ).value = "";
-
-    document.getElementById(
-        "componente-merma"
-    ).value = "0";
-
-}
-
-
-// ======================================================
-// GUARDAR ESTRUCTURA
-// ======================================================
-
-async function guardarEstructura() {
-
-    const productoId =
-        parseInt(
-            document.getElementById(
-                "estructura-producto"
-            ).value
-        );
-
-    const rendimiento =
-        parseFloat(
-            document.getElementById(
-                "estructura-rendimiento"
-            ).value
-        );
-
-    const unidadRendimiento =
-        document.getElementById(
-            "estructura-unidad-rendimiento"
-        ).value;
-
-
-    // --------------------------------------------------
-    // VALIDACIONES
-    // --------------------------------------------------
-
-    if (!productoId) {
-
-        alert(
-            "Seleccione un producto elaborado."
-        );
+        alert("La estructura está en modo consulta.");
 
         return;
     }
 
 
-    if (!rendimiento || rendimiento <= 0) {
+    detalleEstructura.splice(index, 1);
+
+    mostrarDetalle();
+}
+
+
+/* =========================================================
+   LIMPIAR COMPONENTE
+   ========================================================= */
+
+function limpiarComponente() {
+
+    document.getElementById("estructura-componente").value = "";
+
+    document.getElementById("estructura-componente-codigo").value = "";
+
+    document.getElementById("estructura-componente-tipo").value = "";
+
+    document.getElementById("estructura-componente-unidad").value = "";
+
+    document.getElementById("estructura-cantidad").value = "";
+
+    document.getElementById("estructura-merma").value = "0";
+}
+
+
+/* =========================================================
+   LIMPIAR DATOS PRODUCTO
+   ========================================================= */
+
+function limpiarDatosProducto() {
+
+    document.getElementById("estructura-codigo").value = "";
+
+    document.getElementById("estructura-unidad").value = "";
+
+    document.getElementById("estructura-unidad-rendimiento").value = "";
+
+    document.getElementById("estructura-rendimiento").value = "1";
+}
+
+
+/* =========================================================
+   NUEVA ESTRUCTURA
+   ========================================================= */
+
+function establecerModoNuevo() {
+
+    modoEstructura = "NUEVO";
+
+    estructuraActual = null;
+
+    detalleEstructura = [];
+
+    var producto = document.getElementById("estructura-producto");
+
+    if (producto) {
+        producto.value = "";
+    }
+
+
+    limpiarDatosProducto();
+
+    limpiarComponente();
+
+    mostrarDetalle();
+
+    actualizarEstadoBotones();
+}
+
+
+/* =========================================================
+   CONSULTAR ESTRUCTURA
+   ========================================================= */
+
+async function consultarEstructura() {
+
+    var combo = document.getElementById("estructura-producto");
+
+    var productoId = parseInt(combo.value);
+
+
+    if (!productoId) {
+
+        alert("Seleccione un producto elaborado.");
+
+        return;
+    }
+
+
+    try {
+
+        var respuesta = await fetch(
+            "/api/estructura/producto/" + productoId
+        );
+
+
+        if (respuesta.status === 404) {
+
+            estructuraActual = null;
+
+            detalleEstructura = [];
+
+            mostrarDetalle();
+
+            modoEstructura = "NUEVO";
+
+            actualizarEstadoBotones();
+
+            alert("El producto no tiene una estructura activa.");
+
+            return;
+        }
+
+
+        if (!respuesta.ok) {
+
+            var error = await respuesta.json();
+
+            throw new Error(
+                error.error || "Error al consultar la estructura."
+            );
+        }
+
+
+        var datos = await respuesta.json();
+
+
+        estructuraActual = datos.estructura;
+
+        detalleEstructura = datos.detalle.map(function (item) {
+
+            return {
+
+                id: item.id,
+
+                componente_id: item.componente_id,
+
+                codigo: item.componente_codigo,
+
+                nombre: item.componente_nombre,
+
+                tipo: item.componente_tipo,
+
+                unidad: item.componente_unidad,
+
+                cantidad: Number(item.cantidad),
+
+                merma: Number(item.merma)
+            };
+        });
+
+
+        document.getElementById("estructura-producto").value =
+            estructuraActual.producto_id;
+
+
+        document.getElementById("estructura-codigo").value =
+            estructuraActual.producto_codigo || "";
+
+
+        document.getElementById("estructura-unidad").value =
+            estructuraActual.producto_unidad || "";
+
+
+        document.getElementById("estructura-rendimiento").value =
+            estructuraActual.rendimiento;
+
+
+        document.getElementById("estructura-unidad-rendimiento").value =
+            estructuraActual.unidad_rendimiento || "";
+
+
+        mostrarDetalle();
+
+
+        modoEstructura = "CONSULTA";
+
+        actualizarEstadoBotones();
+
+
+    } catch (error) {
+
+        console.error("ERROR CONSULTANDO ESTRUCTURA:", error);
 
         alert(
-            "Ingrese un rendimiento válido."
+            "Error al consultar la estructura:\n" +
+            error.message
         );
+    }
+}
+
+
+/* =========================================================
+   HABILITAR MODIFICACION
+   ========================================================= */
+
+function habilitarModificacion() {
+
+    if (!estructuraActual) {
+
+        alert("Primero debe consultar una estructura.");
+
+        return;
+    }
+
+
+    modoEstructura = "MODIFICACION";
+
+    actualizarEstadoBotones();
+}
+
+
+/* =========================================================
+   GUARDAR ESTRUCTURA
+   ========================================================= */
+
+async function guardarEstructura() {
+
+    var productoId = parseInt(
+        document.getElementById("estructura-producto").value
+    );
+
+
+    var rendimiento = parseFloat(
+        document.getElementById("estructura-rendimiento").value
+    );
+
+
+    var unidadRendimiento =
+        document.getElementById("estructura-unidad-rendimiento").value;
+
+
+    if (!productoId) {
+
+        alert("Seleccione un producto elaborado.");
+
+        return;
+    }
+
+
+    if (isNaN(rendimiento) || rendimiento <= 0) {
+
+        alert("Ingrese un rendimiento válido.");
 
         return;
     }
@@ -519,9 +709,7 @@ async function guardarEstructura() {
 
     if (!unidadRendimiento) {
 
-        alert(
-            "No se encontró la unidad de rendimiento."
-        );
+        alert("La unidad de rendimiento es obligatoria.");
 
         return;
     }
@@ -529,19 +717,26 @@ async function guardarEstructura() {
 
     if (detalleEstructura.length === 0) {
 
-        alert(
-            "Debe agregar al menos un componente."
-        );
+        alert("Debe agregar al menos un componente.");
 
         return;
     }
 
 
-    // --------------------------------------------------
-    // ARMAR DATOS PARA EL BACKEND
-    // --------------------------------------------------
+    var detalle = detalleEstructura.map(function (item) {
 
-    const datos = {
+        return {
+
+            componente_id: item.componente_id,
+
+            cantidad: Number(item.cantidad),
+
+            merma: Number(item.merma)
+        };
+    });
+
+
+    var datos = {
 
         producto_id: productoId,
 
@@ -549,133 +744,385 @@ async function guardarEstructura() {
 
         unidad_rendimiento: unidadRendimiento,
 
-        detalle: detalleEstructura.map(
-            item => ({
-
-                componente_id:
-                    item.componente_id,
-
-                cantidad:
-                    item.cantidad,
-
-                merma:
-                    item.merma
-
-            })
-        )
-
+        detalle: detalle
     };
 
 
-    console.log(
-        "Datos enviados al servidor:",
-        datos
-    );
-
-
-    // --------------------------------------------------
-    // ENVIAR AL BACKEND
-    // --------------------------------------------------
-
     try {
 
-        const respuesta =
-            await fetch(
+        var respuesta;
+
+
+        /*
+            ALTA
+        */
+
+        if (modoEstructura === "NUEVO") {
+
+            respuesta = await fetch(
                 "/api/estructura",
                 {
-
                     method: "POST",
 
                     headers: {
-                        "Content-Type":
-                            "application/json"
+                        "Content-Type": "application/json"
                     },
 
-                    body:
-                        JSON.stringify(datos)
-
+                    body: JSON.stringify(datos)
                 }
             );
+        }
 
 
-        const resultado =
-            await respuesta.json();
+        /*
+            MODIFICACION
+
+            El backend genera una nueva versión.
+        */
+
+        else if (modoEstructura === "MODIFICACION") {
+
+            if (!estructuraActual || !estructuraActual.id) {
+
+                alert("No existe una estructura para modificar.");
+
+                return;
+            }
 
 
-        // --------------------------------------------------
-        // ERROR DEL SERVIDOR
-        // --------------------------------------------------
+            respuesta = await fetch(
+                "/api/estructura/" + estructuraActual.id,
+                {
+                    method: "PUT",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        rendimiento: rendimiento,
+
+                        unidad_rendimiento: unidadRendimiento,
+
+                        detalle: detalle
+                    })
+                }
+            );
+        }
+
+
+        else {
+
+            alert(
+                "La estructura está en modo consulta. " +
+                "Seleccione Modificar para editarla."
+            );
+
+            return;
+        }
+
+
+        var resultado = await respuesta.json();
+
 
         if (!respuesta.ok) {
 
             throw new Error(
                 resultado.error ||
-                "Error al guardar la estructura"
+                resultado.mensaje ||
+                "No se pudo guardar la estructura."
             );
-
         }
 
 
-        // --------------------------------------------------
-        // ESTRUCTURA GUARDADA
-        // --------------------------------------------------
+        if (modoEstructura === "NUEVO") {
+
+            alert(
+                "Estructura creada correctamente.\n\n" +
+                "Versión: " +
+                resultado.version
+            );
+
+        } else {
+
+            alert(
+                "Estructura modificada correctamente.\n\n" +
+                "Nueva versión: " +
+                resultado.nueva_version
+            );
+        }
+
+
+        /*
+            Volvemos a consultar la estructura activa
+            para dejar la pantalla sincronizada con DB.
+        */
+
+        await consultarEstructura();
+
+
+    } catch (error) {
+
+        console.error("ERROR GUARDANDO ESTRUCTURA:", error);
 
         alert(
-            "Estructura guardada correctamente.\n\n" +
+            "Error al guardar la estructura:\n" +
+            error.message
+        );
+    }
+}
+
+
+/* =========================================================
+   ELIMINAR ESTRUCTURA
+   ========================================================= */
+
+async function eliminarEstructura() {
+
+    if (!estructuraActual || !estructuraActual.id) {
+
+        alert("Primero debe consultar una estructura.");
+
+        return;
+    }
+
+
+    var confirmar = confirm(
+        "¿Está seguro de dar de baja la estructura?\n\n" +
+        "Producto: " +
+        (estructuraActual.producto_nombre || "") +
+        "\n" +
+        "Versión: " +
+        estructuraActual.version +
+        "\n\n" +
+        "La estructura no será eliminada físicamente. " +
+        "Se realizará una baja lógica."
+    );
+
+
+    if (!confirmar) {
+        return;
+    }
+
+
+    try {
+
+        var respuesta = await fetch(
+            "/api/estructura/" + estructuraActual.id,
+            {
+                method: "DELETE"
+            }
+        );
+
+
+        var resultado = await respuesta.json();
+
+
+        if (!respuesta.ok) {
+
+            throw new Error(
+                resultado.error ||
+                resultado.mensaje ||
+                "No se pudo eliminar la estructura."
+            );
+        }
+
+
+        alert(
+            "Estructura dada de baja correctamente.\n\n" +
             "Versión: " +
             resultado.version
         );
 
 
-        console.log(
-            "Respuesta del servidor:",
-            resultado
-        );
-
-
-        // --------------------------------------------------
-        // LIMPIAR PANTALLA
-        // --------------------------------------------------
-
-        detalleEstructura = [];
-
-        mostrarDetalle();
-
-
-        document.getElementById(
-            "estructura-producto"
-        ).value = "";
-
-
-        document.getElementById(
-            "estructura-codigo"
-        ).value = "";
-
-
-        document.getElementById(
-            "estructura-unidad"
-        ).value = "";
-
-
-        document.getElementById(
-            "estructura-rendimiento"
-        ).value = "1";
-
-
-        document.getElementById(
-            "estructura-unidad-rendimiento"
-        ).value = "";
+        establecerModoNuevo();
 
 
     } catch (error) {
 
-        console.error(error);
+        console.error("ERROR ELIMINANDO ESTRUCTURA:", error);
 
         alert(
-            "No se pudo guardar la estructura.\n\n" +
+            "Error al dar de baja la estructura:\n" +
             error.message
         );
+    }
+}
 
+
+/* =========================================================
+   ESTADO DE LA PANTALLA
+   ========================================================= */
+
+function actualizarEstadoBotones() {
+
+    var btnGuardar =
+        document.getElementById("btn-guardar-estructura");
+
+    var btnNuevo =
+        document.getElementById("btn-nueva-estructura");
+
+    var btnConsultar =
+        document.getElementById("btn-consultar-estructura");
+
+    var btnModificar =
+        document.getElementById("btn-modificar-estructura");
+
+    var btnEliminar =
+        document.getElementById("btn-eliminar-estructura");
+
+
+    /*
+        NUEVO
+    */
+
+    if (modoEstructura === "NUEVO") {
+
+        if (btnGuardar) {
+            btnGuardar.disabled = false;
+            btnGuardar.textContent = "Guardar estructura";
+        }
+
+        if (btnModificar) {
+            btnModificar.disabled = true;
+        }
+
+        if (btnEliminar) {
+            btnEliminar.disabled = true;
+        }
     }
 
+
+    /*
+        CONSULTA
+    */
+
+    if (modoEstructura === "CONSULTA") {
+
+        if (btnGuardar) {
+            btnGuardar.disabled = true;
+        }
+
+        if (btnModificar) {
+            btnModificar.disabled = false;
+        }
+
+        if (btnEliminar) {
+            btnEliminar.disabled = false;
+        }
+    }
+
+
+    /*
+        MODIFICACION
+    */
+
+    if (modoEstructura === "MODIFICACION") {
+
+        if (btnGuardar) {
+            btnGuardar.disabled = false;
+            btnGuardar.textContent = "Guardar nueva versión";
+        }
+
+        if (btnModificar) {
+            btnModificar.disabled = true;
+        }
+
+        if (btnEliminar) {
+            btnEliminar.disabled = true;
+        }
+    }
+
+
+    /*
+        Habilitación de campos según modo
+    */
+
+    actualizarCamposSegunModo();
+}
+
+
+/* =========================================================
+   HABILITAR / DESHABILITAR CAMPOS
+   ========================================================= */
+
+function actualizarCamposSegunModo() {
+
+    var producto =
+        document.getElementById("estructura-producto");
+
+    var rendimiento =
+        document.getElementById("estructura-rendimiento");
+
+    var componente =
+        document.getElementById("estructura-componente");
+
+    var cantidad =
+        document.getElementById("estructura-cantidad");
+
+    var merma =
+        document.getElementById("estructura-merma");
+
+    var btnAgregar =
+        document.getElementById("btn-agregar-componente");
+
+
+    /*
+        CONSULTA
+    */
+
+    if (modoEstructura === "CONSULTA") {
+
+        if (producto) producto.disabled = false;
+
+        if (rendimiento) rendimiento.disabled = true;
+
+        if (componente) componente.disabled = true;
+
+        if (cantidad) cantidad.disabled = true;
+
+        if (merma) merma.disabled = true;
+
+        if (btnAgregar) btnAgregar.disabled = true;
+
+        return;
+    }
+
+
+    /*
+        NUEVO / MODIFICACION
+    */
+
+    if (producto) {
+
+        /*
+            Durante modificación no permitimos
+            cambiar el producto de la estructura.
+        */
+
+        producto.disabled =
+            modoEstructura === "MODIFICACION";
+    }
+
+
+    if (rendimiento) {
+        rendimiento.disabled = false;
+    }
+
+    if (componente) {
+        componente.disabled = false;
+    }
+
+    if (cantidad) {
+        cantidad.disabled = false;
+    }
+
+    if (merma) {
+        merma.disabled = false;
+    }
+
+    if (btnAgregar) {
+        btnAgregar.disabled = false;
+    }
 }
