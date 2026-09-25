@@ -1,617 +1,1025 @@
 <!DOCTYPE html>
+
 <html lang="es">
 
 <head>
 
-    <meta charset="UTF-8">
+```
+<meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
 
-    <title>ROTISERIA360</title>
+<title>ROTISERIA360</title>
 
-    <link rel="stylesheet" href="css/estilos.css">
+<link
+    rel="stylesheet"
+    href="css/estilos.css">
+```
 
 </head>
 
 <body>
 
-    <div class="aplicacion">
+```
+<div class="aplicacion">
 
-        <!-- ================================================= -->
-        <!-- MENU LATERAL -->
-        <!-- ================================================= -->
 
-        <aside class="menu-lateral">
+    <!-- ================================================= -->
+    <!-- MENU LATERAL -->
+    <!-- ================================================= -->
 
-            <div class="logo">
+    <aside class="menu-lateral">
 
-                <h1>ROTISERIA<span>360</span></h1>
+        <div class="logo">
 
-                <p>Sistema de gestión</p>
+            <h1>
+                ROTISERIA<span>360</span>
+            </h1>
 
-            </div>
+            <p>
+                Sistema de gestión
+            </p>
 
+        </div>
 
-            <nav class="menu">
 
-                <div class="menu-grupo">
+        <nav class="menu">
 
-                    <div
-                        class="menu-item activo"
-                        data-modulo="dashboard">
+            <div class="menu-grupo">
 
-                        <span>Dashboard</span>
+                <div
+                    class="menu-item activo"
+                    data-modulo="dashboard">
 
-                    </div>
-
-                </div>
-
-
-                <div class="menu-separador">
-
-                    <span>GESTIÓN</span>
-
-                </div>
-
-
-                <div class="menu-grupo">
-
-                    <div
-                        class="menu-item"
-                        data-modulo="productos">
-
-                        <span>Productos</span>
-
-                    </div>
-
-
-                    <div
-                        class="menu-item"
-                        data-modulo="estructura">
-
-                        <span>Estructura de productos</span>
-
-                    </div>
-
-
-                    <div
-                        class="menu-item"
-                        data-modulo="stock">
-
-                        <span>Stock</span>
-
-                    </div>
-
-
-                    <div
-                        class="menu-item"
-                        data-modulo="compras">
-
-                        <span>Compras</span>
-
-                    </div>
-
-
-                    <div
-                        class="menu-item"
-                        data-modulo="ventas">
-
-                        <span>Ventas</span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="menu-separador">
-
-                    <span>ANÁLISIS</span>
-
-                </div>
-
-
-                <div class="menu-grupo">
-
-                    <div
-                        class="menu-item"
-                        data-modulo="costos">
-
-                        <span>Costos</span>
-
-                    </div>
-
-
-                    <div
-                        class="menu-item"
-                        data-modulo="reportes">
-
-                        <span>Reportes</span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="menu-separador">
-
-                    <span>SISTEMA</span>
-
-                </div>
-
-
-                <div class="menu-grupo">
-
-                    <div
-                        class="menu-item"
-                        data-modulo="configuracion">
-
-                        <span>Configuración</span>
-
-                    </div>
-
-                </div>
-
-            </nav>
-
-
-            <div class="menu-pie">
-
-                <span>ROTISERIA360</span>
-
-                <small>Versión desarrollo</small>
-
-            </div>
-
-        </aside>
-
-
-        <!-- ================================================= -->
-        <!-- AREA PRINCIPAL -->
-        <!-- ================================================= -->
-
-        <div class="contenido-aplicacion">
-
-
-            <!-- ================================================= -->
-            <!-- CABECERA -->
-            <!-- ================================================= -->
-
-            <header class="cabecera">
-
-                <div>
-
-                    <h2 id="tituloModulo">
+                    <span>
                         Dashboard
-                    </h2>
+                    </span>
 
-                    <p id="subtituloModulo">
-                        Resumen general de la gestión
+                </div>
+
+            </div>
+
+
+            <div class="menu-separador">
+
+                <span>
+                    GESTIÓN
+                </span>
+
+            </div>
+
+
+            <div class="menu-grupo">
+
+                <div
+                    class="menu-item"
+                    data-modulo="productos">
+
+                    <span>
+                        Productos
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="menu-item"
+                    data-modulo="estructura">
+
+                    <span>
+                        Estructura de productos
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="menu-item"
+                    data-modulo="stock">
+
+                    <span>
+                        Stock
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="menu-item"
+                    data-modulo="compras">
+
+                    <span>
+                        Compras
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="menu-item"
+                    data-modulo="ventas">
+
+                    <span>
+                        Ventas
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="menu-separador">
+
+                <span>
+                    ANÁLISIS
+                </span>
+
+            </div>
+
+
+            <div class="menu-grupo">
+
+                <div
+                    class="menu-item"
+                    data-modulo="costos">
+
+                    <span>
+                        Costos
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="menu-item"
+                    data-modulo="reportes">
+
+                    <span>
+                        Reportes
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="menu-separador">
+
+                <span>
+                    SISTEMA
+                </span>
+
+            </div>
+
+
+            <div class="menu-grupo">
+
+                <div
+                    class="menu-item"
+                    data-modulo="configuracion">
+
+                    <span>
+                        Configuración
+                    </span>
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+        <div class="menu-pie">
+
+            <span>
+                ROTISERIA360
+            </span>
+
+            <small>
+                Versión desarrollo
+            </small>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- ================================================= -->
+    <!-- AREA PRINCIPAL -->
+    <!-- ================================================= -->
+
+    <div class="contenido-aplicacion">
+
+
+        <!-- ================================================= -->
+        <!-- CABECERA -->
+        <!-- ================================================= -->
+
+        <header class="cabecera">
+
+            <div>
+
+                <h2 id="tituloModulo">
+                    Dashboard
+                </h2>
+
+                <p id="subtituloModulo">
+                    Resumen general de la gestión
+                </p>
+
+            </div>
+
+
+            <div class="usuario">
+
+                <span>
+                    Usuario
+                </span>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- ================================================= -->
+        <!-- CONTENIDO -->
+        <!-- ================================================= -->
+
+        <main class="contenido-principal">
+
+
+            <!-- ================================================= -->
+            <!-- DASHBOARD -->
+            <!-- ================================================= -->
+
+            <section
+                id="modulo-dashboard"
+                class="modulo">
+
+                <div class="bienvenida">
+
+                    <h1>
+                        Dashboard
+                    </h1>
+
+                    <p>
+                        Resumen general de ROTISERIA360.
                     </p>
 
                 </div>
 
 
-                <div class="usuario">
+                <div class="tarjetas-dashboard">
 
-                    <span>Usuario</span>
+
+                    <div class="tarjeta">
+
+                        <span class="tarjeta-titulo">
+                            Productos
+                        </span>
+
+                        <strong id="dashboardCantidadProductos">
+                            0
+                        </strong>
+
+                        <small>
+                            Productos registrados
+                        </small>
+
+                    </div>
+
+
+                    <div class="tarjeta">
+
+                        <span class="tarjeta-titulo">
+                            Stock
+                        </span>
+
+                        <strong>
+                            -
+                        </strong>
+
+                        <small>
+                            Información pendiente
+                        </small>
+
+                    </div>
+
+
+                    <div class="tarjeta">
+
+                        <span class="tarjeta-titulo">
+                            Costos
+                        </span>
+
+                        <strong id="dashboardCosto">
+                            -
+                        </strong>
+
+                        <small>
+                            Costo del producto seleccionado
+                        </small>
+
+                    </div>
+
+
+                    <div class="tarjeta">
+
+                        <span class="tarjeta-titulo">
+                            Ventas
+                        </span>
+
+                        <strong>
+                            -
+                        </strong>
+
+                        <small>
+                            Información pendiente
+                        </small>
+
+                    </div>
 
                 </div>
 
-            </header>
 
+                <section class="panel dashboard-panel">
 
-            <!-- ================================================= -->
-            <!-- CONTENIDO -->
-            <!-- ================================================= -->
+                    <div class="titulo-listado">
 
-            <main class="contenido-principal">
+                        <div>
 
+                            <h2>
+                                Estado del sistema
+                            </h2>
 
-                <!-- ================================================= -->
-                <!-- DASHBOARD -->
-                <!-- ================================================= -->
+                            <span>
+                                Información disponible actualmente
+                            </span>
 
-                <section
-                    id="modulo-dashboard"
-                    class="modulo">
-
-                    <div class="bienvenida">
-
-                        <h1>Dashboard</h1>
-
-                        <p>
-                            Resumen general de ROTISERIA360.
-                        </p>
+                        </div>
 
                     </div>
 
 
-                    <div class="tarjetas-dashboard">
+                    <div class="estado-sistema">
 
-                        <div class="tarjeta">
 
-                            <span class="tarjeta-titulo">
+                        <div class="estado-item">
+
+                            <span
+                                class="estado-indicador estado-ok">
+                            </span>
+
+                            <div>
+
+                                <strong>
+                                    Productos
+                                </strong>
+
+                                <p>
+                                    Módulo disponible
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="estado-item">
+
+                            <span
+                                class="estado-indicador estado-ok">
+                            </span>
+
+                            <div>
+
+                                <strong>
+                                    Estructura
+                                </strong>
+
+                                <p>
+                                    Módulo disponible
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="estado-item">
+
+                            <span
+                                class="estado-indicador estado-ok">
+                            </span>
+
+                            <div>
+
+                                <strong>
+                                    Costos
+                                </strong>
+
+                                <p>
+                                    Cálculo de costos disponible
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="estado-item">
+
+                            <span
+                                class="estado-indicador estado-pendiente">
+                            </span>
+
+                            <div>
+
+                                <strong>
+                                    Stock
+                                </strong>
+
+                                <p>
+                                    Módulo en desarrollo
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </section>
+
+
+
+            <!-- ================================================= -->
+            <!-- PRODUCTOS -->
+            <!-- ================================================= -->
+
+            <section
+                id="modulo-productos"
+                class="modulo oculto">
+
+
+                <section class="panel formulario">
+
+                    <h2>
+                        Producto
+                    </h2>
+
+                    <input
+                        type="hidden"
+                        id="idProducto">
+
+
+                    <div class="fila">
+
+                        <div class="campo">
+
+                            <label for="codigo">
+                                Código
+                            </label>
+
+                            <input
+                                type="text"
+                                id="codigo"
+                                maxlength="30"
+                                placeholder="Ej: P001">
+
+                        </div>
+
+
+                        <div class="campo campo-grande">
+
+                            <label for="nombre">
+                                Nombre
+                            </label>
+
+                            <input
+                                type="text"
+                                id="nombre"
+                                maxlength="150"
+                                placeholder="Nombre del producto">
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="fila">
+
+                        <div class="campo">
+
+                            <label for="tipo">
+                                Tipo
+                            </label>
+
+                            <select id="tipo">
+
+                                <option value="">
+                                    Seleccionar...
+                                </option>
+
+                                <option value="INSUMO">
+                                    INSUMO
+                                </option>
+
+                                <option value="ELABORADO">
+                                    ELABORADO
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="campo">
+
+                            <label for="unidad">
+                                Unidad
+                            </label>
+
+                            <select id="unidad">
+
+                                <option value="">
+                                    Seleccionar...
+                                </option>
+
+                                <option value="UN">
+                                    UN
+                                </option>
+
+                                <option value="KG">
+                                    KG
+                                </option>
+
+                                <option value="GR">
+                                    GR
+                                </option>
+
+                                <option value="LT">
+                                    LT
+                                </option>
+
+                                <option value="ML">
+                                    ML
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="campo campo-activo">
+
+                            <label>
+                                Estado
+                            </label>
+
+                            <label class="check">
+
+                                <input
+                                    type="checkbox"
+                                    id="activo"
+                                    checked>
+
+                                Activo
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="botones">
+
+                        <button
+                            type="button"
+                            class="btn btn-nuevo"
+                            onclick="nuevoProducto()">
+
+                            Nuevo
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-guardar"
+                            onclick="guardarProducto()">
+
+                            Guardar
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-modificar"
+                            onclick="modificarProducto()">
+
+                            Modificar
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-eliminar"
+                            onclick="eliminarProducto()">
+
+                            Eliminar
+
+                        </button>
+
+                    </div>
+
+                </section>
+
+
+                <section class="panel">
+
+                    <div class="titulo-listado">
+
+                        <div>
+
+                            <h2>
                                 Productos
+                            </h2>
+
+                            <span id="cantidadProductos">
+                                0 productos
                             </span>
-
-                            <strong id="dashboardCantidadProductos">
-                                0
-                            </strong>
-
-                            <small>
-                                Productos registrados
-                            </small>
 
                         </div>
 
 
-                        <div class="tarjeta">
+                        <button
+                            type="button"
+                            class="btn btn-actualizar"
+                            onclick="cargarProductos()">
 
-                            <span class="tarjeta-titulo">
-                                Stock
-                            </span>
+                            Actualizar
 
-                            <strong>
-                                -
-                            </strong>
+                        </button>
 
-                            <small>
-                                Información pendiente
-                            </small>
+                    </div>
+
+
+                    <div class="tabla-contenedor">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Código
+                                    </th>
+
+                                    <th>
+                                        Producto
+                                    </th>
+
+                                    <th>
+                                        Tipo
+                                    </th>
+
+                                    <th>
+                                        Unidad
+                                    </th>
+
+                                    <th>
+                                        Estado
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="tablaProductos">
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+            </section>
+
+
+
+            <!-- ================================================= -->
+            <!-- ESTRUCTURA -->
+            <!-- ================================================= -->
+
+            <section
+                id="modulo-estructura"
+                class="modulo oculto">
+
+
+                <!-- ================================================= -->
+                <!-- DATOS DE LA ESTRUCTURA -->
+                <!-- ================================================= -->
+
+                <section class="panel estructura-panel">
+
+                    <h2>
+                        Estructura de producto
+                    </h2>
+
+
+                    <div class="estructura-seccion">
+
+                        <div class="estructura-seccion-titulo">
+                            Producto elaborado
+                        </div>
+
+
+                        <div class="fila">
+
+                            <div class="campo campo-grande">
+
+                                <label for="estructura-producto">
+                                    Producto elaborado
+                                </label>
+
+                                <select id="estructura-producto">
+
+                                    <option value="">
+                                        Seleccionar producto...
+                                    </option>
+
+                                </select>
+
+                            </div>
 
                         </div>
 
 
-                        <div class="tarjeta">
+                        <div class="fila">
 
-                            <span class="tarjeta-titulo">
-                                Costos
-                            </span>
+                            <div class="campo">
 
-                            <strong>
-                                -
-                            </strong>
+                                <label for="estructura-codigo">
+                                    Código
+                                </label>
 
-                            <small>
-                                Información pendiente
-                            </small>
+                                <input
+                                    type="text"
+                                    id="estructura-codigo"
+                                    readonly>
+
+                            </div>
+
+
+                            <div class="campo">
+
+                                <label for="estructura-unidad">
+                                    Unidad
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="estructura-unidad"
+                                    readonly>
+
+                            </div>
+
+
+                            <div class="campo">
+
+                                <label for="estructura-rendimiento">
+                                    Rendimiento
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="estructura-rendimiento"
+                                    value="1"
+                                    min="0.001"
+                                    step="0.001">
+
+                            </div>
+
+
+                            <div class="campo">
+
+                                <label for="estructura-unidad-rendimiento">
+                                    Unidad rendimiento
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="estructura-unidad-rendimiento"
+                                    readonly>
+
+                            </div>
 
                         </div>
 
 
-                        <div class="tarjeta">
+                        <!-- ================================================= -->
+                        <!-- VERSION Y ESTADO -->
+                        <!-- ================================================= -->
 
-                            <span class="tarjeta-titulo">
-                                Ventas
-                            </span>
+                        <div class="fila">
 
-                            <strong>
-                                -
-                            </strong>
+                            <div class="campo">
 
-                            <small>
-                                Información pendiente
-                            </small>
+                                <label for="estructura-version">
+                                    Versión
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="estructura-version"
+                                    readonly>
+
+                            </div>
+
+
+                            <div class="campo">
+
+                                <label for="estructura-estado">
+                                    Estado
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="estructura-estado"
+                                    readonly>
+
+                            </div>
 
                         </div>
 
                     </div>
 
 
-                    <section class="panel dashboard-panel">
+
+                    <!-- ================================================= -->
+                    <!-- COMPONENTES -->
+                    <!-- ================================================= -->
+
+                    <div class="estructura-seccion estructura-componentes">
+
+                        <div class="estructura-seccion-titulo">
+                            Agregar componente
+                        </div>
+
+
+                        <div class="fila">
+
+                            <div class="campo campo-grande">
+
+                                <label for="estructura-componente">
+                                    Componente
+                                </label>
+
+                                <select id="estructura-componente">
+
+                                    <option value="">
+                                        Seleccionar componente...
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="fila">
+
+                            <div class="campo">
+
+                                <label for="estructura-componente-codigo">
+                                    Código
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="estructura-componente-codigo"
+                                    readonly>
+
+                            </div>
+
+
+                            <div class="campo">
+
+                                <label for="estructura-componente-tipo">
+                                    Tipo
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="estructura-componente-tipo"
+                                    readonly>
+
+                            </div>
+
+
+                            <div class="campo">
+
+                                <label for="estructura-componente-unidad">
+                                    Unidad
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="estructura-componente-unidad"
+                                    readonly>
+
+                            </div>
+
+
+                            <div class="campo">
+
+                                <label for="estructura-cantidad">
+                                    Cantidad
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="estructura-cantidad"
+                                    min="0.001"
+                                    step="0.001"
+                                    placeholder="0.000">
+
+                            </div>
+
+
+                            <div class="campo">
+
+                                <label for="estructura-merma">
+                                    Merma %
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="estructura-merma"
+                                    value="0"
+                                    min="0"
+                                    step="0.001">
+
+                            </div>
+
+
+                            <div class="campo estructura-campo-boton">
+
+                                <label>
+                                    &nbsp;
+                                </label>
+
+                                <button
+                                    type="button"
+                                    id="btn-agregar-componente"
+                                    class="btn btn-actualizar">
+
+                                    Agregar componente
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- ================================================= -->
+                    <!-- DETALLE -->
+                    <!-- ================================================= -->
+
+                    <div class="estructura-seccion">
 
                         <div class="titulo-listado">
 
                             <div>
 
                                 <h2>
-                                    Estado del sistema
+                                    Detalle de la estructura
                                 </h2>
 
                                 <span>
-                                    Información disponible actualmente
+                                    Componentes utilizados en el producto
                                 </span>
 
                             </div>
-
-                        </div>
-
-
-                        <div class="estado-sistema">
-
-                            <div class="estado-item">
-
-                                <span class="estado-indicador estado-ok"></span>
-
-                                <div>
-
-                                    <strong>
-                                        Productos
-                                    </strong>
-
-                                    <p>
-                                        Módulo disponible
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-
-                            <div class="estado-item">
-
-                                <span class="estado-indicador estado-pendiente"></span>
-
-                                <div>
-
-                                    <strong>
-                                        Stock
-                                    </strong>
-
-                                    <p>
-                                        Módulo en desarrollo
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-
-                            <div class="estado-item">
-
-                                <span class="estado-indicador estado-pendiente"></span>
-
-                                <div>
-
-                                    <strong>
-                                        Compras
-                                    </strong>
-
-                                    <p>
-                                        Módulo en desarrollo
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-
-                            <div class="estado-item">
-
-                                <span class="estado-indicador estado-pendiente"></span>
-
-                                <div>
-
-                                    <strong>
-                                        Ventas
-                                    </strong>
-
-                                    <p>
-                                        Módulo en desarrollo
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </section>
-
-                </section>
-
-
-                <!-- ================================================= -->
-                <!-- PRODUCTOS -->
-                <!-- ================================================= -->
-
-                <section
-                    id="modulo-productos"
-                    class="modulo oculto">
-
-
-                    <!-- FORMULARIO -->
-
-                    <section class="panel formulario">
-
-                        <h2>Producto</h2>
-
-                        <input
-                            type="hidden"
-                            id="idProducto">
-
-
-                        <div class="fila">
-
-                            <div class="campo">
-
-                                <label for="codigo">
-                                    Código
-                                </label>
-
-                                <input
-                                    type="text"
-                                    id="codigo"
-                                    maxlength="30"
-                                    placeholder="Ej: P001">
-
-                            </div>
-
-
-                            <div class="campo campo-grande">
-
-                                <label for="nombre">
-                                    Nombre
-                                </label>
-
-                                <input
-                                    type="text"
-                                    id="nombre"
-                                    maxlength="150"
-                                    placeholder="Nombre del producto">
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="fila">
-
-                            <div class="campo">
-
-                                <label for="tipo">
-                                    Tipo
-                                </label>
-
-                                <select id="tipo">
-
-                                    <option value="">
-                                        Seleccionar...
-                                    </option>
-
-                                    <option value="INSUMO">
-                                        INSUMO
-                                    </option>
-
-                                    <option value="ELABORADO">
-                                        ELABORADO
-                                    </option>
-
-                                </select>
-
-                            </div>
-
-
-                            <div class="campo">
-
-                                <label for="unidad">
-                                    Unidad
-                                </label>
-
-                                <select id="unidad">
-
-                                    <option value="">
-                                        Seleccionar...
-                                    </option>
-
-                                    <option value="UN">
-                                        UN
-                                    </option>
-
-                                    <option value="KG">
-                                        KG
-                                    </option>
-
-                                    <option value="GR">
-                                        GR
-                                    </option>
-
-                                    <option value="LT">
-                                        LT
-                                    </option>
-
-                                    <option value="ML">
-                                        ML
-                                    </option>
-
-                                </select>
-
-                            </div>
-
-
-                            <div class="campo campo-activo">
-
-                                <label>
-                                    Estado
-                                </label>
-
-                                <label class="check">
-
-                                    <input
-                                        type="checkbox"
-                                        id="activo"
-                                        checked>
-
-                                    Activo
-
-                                </label>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="botones">
-
-                            <button
-                                type="button"
-                                class="btn btn-nuevo"
-                                onclick="nuevoProducto()">
-
-                                Nuevo
-
-                            </button>
-
-
-                            <button
-                                type="button"
-                                class="btn btn-guardar"
-                                onclick="guardarProducto()">
-
-                                Guardar
-
-                            </button>
-
-
-                            <button
-                                type="button"
-                                class="btn btn-modificar"
-                                onclick="modificarProducto()">
-
-                                Modificar
-
-                            </button>
-
-
-                            <button
-                                type="button"
-                                class="btn btn-eliminar"
-                                onclick="eliminarProducto()">
-
-                                Eliminar
-
-                            </button>
-
-                        </div>
-
-                    </section>
-
-
-                    <!-- LISTADO -->
-
-                    <section class="panel">
-
-                        <div class="titulo-listado">
-
-                            <div>
-
-                                <h2>Productos</h2>
-
-                                <span id="cantidadProductos">
-                                    0 productos
-                                </span>
-
-                            </div>
-
-
-                            <button
-                                type="button"
-                                class="btn btn-actualizar"
-                                onclick="cargarProductos()">
-
-                                Actualizar
-
-                            </button>
 
                         </div>
 
@@ -624,22 +1032,40 @@
 
                                     <tr>
 
-                                        <th>Código</th>
+                                        <th>
+                                            Código
+                                        </th>
 
-                                        <th>Producto</th>
+                                        <th>
+                                            Componente
+                                        </th>
 
-                                        <th>Tipo</th>
+                                        <th>
+                                            Tipo
+                                        </th>
 
-                                        <th>Unidad</th>
+                                        <th>
+                                            Unidad
+                                        </th>
 
-                                        <th>Estado</th>
+                                        <th>
+                                            Cantidad
+                                        </th>
+
+                                        <th>
+                                            Merma %
+                                        </th>
+
+                                        <th>
+                                            Acción
+                                        </th>
 
                                     </tr>
 
                                 </thead>
 
 
-                                <tbody id="tablaProductos">
+                                <tbody id="detalle-estructura">
 
                                 </tbody>
 
@@ -647,750 +1073,711 @@
 
                         </div>
 
-                    </section>
+                    </div>
+
+
+
+                    <!-- ================================================= -->
+                    <!-- BOTONES CRUD -->
+                    <!-- ================================================= -->
+
+                    <div class="botones estructura-acciones">
+
+                        <button
+                            type="button"
+                            id="btn-nueva-estructura"
+                            class="btn btn-nuevo">
+
+                            Nueva
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            id="btn-consultar-estructura"
+                            class="btn btn-actualizar">
+
+                            Consultar
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            id="btn-modificar-estructura"
+                            class="btn btn-modificar">
+
+                            Modificar
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            id="btn-eliminar-estructura"
+                            class="btn btn-eliminar">
+
+                            Eliminar
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            id="btn-guardar-estructura"
+                            class="btn btn-guardar">
+
+                            Guardar estructura
+
+                        </button>
+
+                    </div>
 
                 </section>
 
-
-                <!-- ================================================= -->
-                <!-- ESTRUCTURA DE PRODUCTOS -->
-                <!-- ================================================= -->
-
-                <section
-                    id="modulo-estructura"
-                    class="modulo oculto">
+            </section>
 
 
-                    <section class="panel estructura-panel">
+
+            <!-- ================================================= -->
+            <!-- STOCK -->
+            <!-- ================================================= -->
+
+            <section
+                id="modulo-stock"
+                class="modulo oculto">
+
+                <section class="panel modulo-placeholder">
+
+                    <h2>
+                        Stock
+                    </h2>
+
+                    <p>
+                        Módulo en desarrollo.
+                    </p>
+
+                </section>
+
+            </section>
 
 
-                        <h2>Estructura de producto</h2>
+
+            <!-- ================================================= -->
+            <!-- COMPRAS -->
+            <!-- ================================================= -->
+
+            <section
+                id="modulo-compras"
+                class="modulo oculto">
+
+                <section class="panel modulo-placeholder">
+
+                    <h2>
+                        Compras
+                    </h2>
+
+                    <p>
+                        Módulo en desarrollo.
+                    </p>
+
+                </section>
+
+            </section>
 
 
-                        <!-- ================================================= -->
-                        <!-- DATOS DEL PRODUCTO -->
-                        <!-- ================================================= -->
 
-                        <div class="estructura-seccion">
+            <!-- ================================================= -->
+            <!-- VENTAS -->
+            <!-- ================================================= -->
 
-                            <div class="estructura-seccion-titulo">
+            <section
+                id="modulo-ventas"
+                class="modulo oculto">
 
-                                Producto elaborado
+                <section class="panel modulo-placeholder">
 
-                            </div>
+                    <h2>
+                        Ventas
+                    </h2>
 
+                    <p>
+                        Módulo en desarrollo.
+                    </p>
 
-                            <div class="fila">
+                </section>
 
-
-                                <div class="campo campo-grande">
-
-                                    <label for="estructura-producto">
-                                        Producto elaborado
-                                    </label>
-
-                                    <select id="estructura-producto">
-
-                                        <option value="">
-                                            Seleccionar producto...
-                                        </option>
-
-                                    </select>
-
-                                </div>
+            </section>
 
 
-                                <div class="campo">
 
-                                    <label for="estructura-version">
-                                        Versión
-                                    </label>
+            <!-- ================================================= -->
+            <!-- COSTOS -->
+            <!-- ================================================= -->
 
-                                    <input
-                                        type="text"
-                                        id="estructura-version"
-                                        readonly>
-
-                                </div>
+            <section
+                id="modulo-costos"
+                class="modulo oculto">
 
 
-                                <div class="campo">
+                <section class="panel costos-panel">
 
-                                    <label for="estructura-estado">
-                                        Estado
-                                    </label>
+                    <div class="titulo-listado">
 
-                                    <input
-                                        type="text"
-                                        id="estructura-estado"
-                                        value=""
-                                        readonly>
+                        <div>
 
-                                </div>
+                            <h2>
+                                Cálculo de costos
+                            </h2>
 
+                            <span>
+                                Consulta del costo actual del producto
+                            </span>
 
-                            </div>
+                        </div>
 
-
-                            <div class="fila">
+                    </div>
 
 
-                                <div class="campo">
+                    <div class="fila">
 
-                                    <label for="estructura-codigo">
-                                        Código
-                                    </label>
+                        <div class="campo campo-grande">
 
-                                    <input
-                                        type="text"
-                                        id="estructura-codigo"
-                                        readonly>
+                            <label for="costos-producto">
+                                Producto
+                            </label>
 
-                                </div>
+                            <select id="costos-producto">
 
+                                <option value="">
+                                    Seleccionar producto...
+                                </option>
 
-                                <div class="campo">
-
-                                    <label for="estructura-unidad">
-                                        Unidad
-                                    </label>
-
-                                    <input
-                                        type="text"
-                                        id="estructura-unidad"
-                                        readonly>
-
-                                </div>
-
-
-                                <div class="campo">
-
-                                    <label for="estructura-rendimiento">
-                                        Rendimiento
-                                    </label>
-
-                                    <input
-                                        type="number"
-                                        id="estructura-rendimiento"
-                                        value="1"
-                                        min="0.001"
-                                        step="0.001">
-
-                                </div>
-
-
-                                <div class="campo">
-
-                                    <label for="estructura-unidad-rendimiento">
-                                        Unidad rendimiento
-                                    </label>
-
-                                    <input
-                                        type="text"
-                                        id="estructura-unidad-rendimiento"
-                                        readonly>
-
-                                </div>
-
-
-                            </div>
+                            </select>
 
                         </div>
 
 
-                        <!-- ================================================= -->
-                        <!-- COMPONENTES -->
-                        <!-- ================================================= -->
-
-                        <div class="estructura-seccion estructura-componentes">
-
-
-                            <div class="estructura-seccion-titulo">
-
-                                Agregar componente
-
-                            </div>
-
-
-                            <div class="fila">
-
-
-                                <div class="campo campo-grande">
-
-                                    <label for="estructura-componente">
-                                        Componente
-                                    </label>
-
-                                    <select id="estructura-componente">
-
-                                        <option value="">
-                                            Seleccionar componente...
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-
-                            </div>
-
-
-                            <div class="fila">
-
-
-                                <div class="campo">
-
-                                    <label for="estructura-componente-codigo">
-                                        Código
-                                    </label>
-
-                                    <input
-                                        type="text"
-                                        id="estructura-componente-codigo"
-                                        readonly>
-
-                                </div>
-
-
-                                <div class="campo">
-
-                                    <label for="estructura-componente-tipo">
-                                        Tipo
-                                    </label>
-
-                                    <input
-                                        type="text"
-                                        id="estructura-componente-tipo"
-                                        readonly>
-
-                                </div>
-
-
-                                <div class="campo">
-
-                                    <label for="estructura-componente-unidad">
-                                        Unidad
-                                    </label>
-
-                                    <input
-                                        type="text"
-                                        id="estructura-componente-unidad"
-                                        readonly>
-
-                                </div>
-
-
-                                <div class="campo">
-
-                                    <label for="estructura-cantidad">
-                                        Cantidad
-                                    </label>
-
-                                    <input
-                                        type="number"
-                                        id="estructura-cantidad"
-                                        min="0.001"
-                                        step="0.001"
-                                        placeholder="0.000">
-
-                                </div>
-
-
-                                <div class="campo">
-
-                                    <label for="estructura-merma">
-                                        Merma %
-                                    </label>
-
-                                    <input
-                                        type="number"
-                                        id="estructura-merma"
-                                        value="0"
-                                        min="0"
-                                        step="0.001">
-
-                                </div>
-
-
-                                <div class="campo estructura-campo-boton">
-
-                                    <label>
-                                        &nbsp;
-                                    </label>
-
-                                    <button
-                                        type="button"
-                                        id="btn-agregar-componente"
-                                        class="btn btn-actualizar">
-
-                                        Agregar componente
-
-                                    </button>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- ================================================= -->
-                        <!-- DETALLE -->
-                        <!-- ================================================= -->
-
-                        <div class="estructura-seccion">
-
-
-                            <div class="titulo-listado">
-
-                                <div>
-
-                                    <h2>
-                                        Detalle de la estructura
-                                    </h2>
-
-                                    <span>
-                                        Componentes utilizados en el producto
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-
-                            <div class="tabla-contenedor">
-
-                                <table>
-
-                                    <thead>
-
-                                        <tr>
-
-                                            <th>Código</th>
-
-                                            <th>Componente</th>
-
-                                            <th>Tipo</th>
-
-                                            <th>Unidad</th>
-
-                                            <th>Cantidad</th>
-
-                                            <th>Merma %</th>
-
-                                            <th>Acción</th>
-
-                                        </tr>
-
-                                    </thead>
-
-
-                                    <tbody id="detalle-estructura">
-
-                                    </tbody>
-
-                                </table>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- ================================================= -->
-                        <!-- ACCIONES CRUD -->
-                        <!-- ================================================= -->
-
-                        <div class="botones estructura-acciones">
-
+                        <div class="campo costos-boton">
+
+                            <label>
+                                &nbsp;
+                            </label>
 
                             <button
                                 type="button"
-                                id="btn-nueva-estructura"
-                                class="btn btn-nuevo">
-
-                                Nueva
-
-                            </button>
-
-
-                            <button
-                                type="button"
-                                id="btn-consultar-estructura"
-                                class="btn btn-actualizar">
-
-                                Consultar
-
-                            </button>
-
-
-                            <button
-                                type="button"
-                                id="btn-modificar-estructura"
-                                class="btn btn-modificar">
-
-                                Modificar
-
-                            </button>
-
-
-                            <button
-                                type="button"
-                                id="btn-eliminar-estructura"
-                                class="btn btn-eliminar">
-
-                                Eliminar
-
-                            </button>
-
-
-                            <button
-                                type="button"
-                                id="btn-guardar-estructura"
+                                id="btn-calcular-costo"
                                 class="btn btn-guardar">
 
-                                Guardar estructura
+                                Calcular costo
 
                             </button>
-
 
                         </div>
 
 
-                    </section>
+                        <div class="campo costos-boton">
+
+                            <label>
+                                &nbsp;
+                            </label>
+
+                            <button
+                                type="button"
+                                id="btn-limpiar-costo"
+                                class="btn btn-nuevo">
+
+                                Limpiar
+
+                            </button>
+
+                        </div>
+
+                    </div>
 
                 </section>
 
 
-                <!-- ================================================= -->
-                <!-- STOCK -->
-                <!-- ================================================= -->
 
                 <section
-                    id="modulo-stock"
-                    class="modulo oculto">
+                    class="panel"
+                    id="costos-datos-producto">
 
-                    <section class="panel modulo-placeholder">
+                    <div class="titulo-listado">
 
-                        <h2>Stock</h2>
+                        <div>
 
-                        <p>
-                            Módulo en desarrollo.
-                        </p>
+                            <h2>
+                                Producto
+                            </h2>
 
-                    </section>
+                            <span>
+                                Información del producto seleccionado
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="fila">
+
+                        <div class="campo">
+
+                            <label for="costos-codigo">
+                                Código
+                            </label>
+
+                            <input
+                                type="text"
+                                id="costos-codigo"
+                                readonly>
+
+                        </div>
+
+
+                        <div class="campo campo-grande">
+
+                            <label for="costos-nombre">
+                                Nombre
+                            </label>
+
+                            <input
+                                type="text"
+                                id="costos-nombre"
+                                readonly>
+
+                        </div>
+
+
+                        <div class="campo">
+
+                            <label for="costos-tipo">
+                                Tipo
+                            </label>
+
+                            <input
+                                type="text"
+                                id="costos-tipo"
+                                readonly>
+
+                        </div>
+
+
+                        <div class="campo">
+
+                            <label for="costos-unidad">
+                                Unidad
+                            </label>
+
+                            <input
+                                type="text"
+                                id="costos-unidad"
+                                readonly>
+
+                        </div>
+
+                    </div>
 
                 </section>
 
 
-                <!-- ================================================= -->
-                <!-- COMPRAS -->
-                <!-- ================================================= -->
 
                 <section
-                    id="modulo-compras"
-                    class="modulo oculto">
+                    class="panel costos-resultado"
+                    id="costos-resultado">
 
-                    <section class="panel modulo-placeholder">
+                    <div class="costos-resumen">
 
-                        <h2>Compras</h2>
+                        <div class="costo-resumen-item">
 
-                        <p>
-                            Módulo en desarrollo.
-                        </p>
+                            <span>
+                                Costo unitario
+                            </span>
 
-                    </section>
+                            <strong id="costos-costo-unitario">
+                                -
+                            </strong>
+
+                        </div>
+
+
+                        <div class="costo-resumen-item">
+
+                            <span>
+                                Rendimiento
+                            </span>
+
+                            <strong id="costos-rendimiento">
+                                -
+                            </strong>
+
+                        </div>
+
+
+                        <div class="costo-resumen-item">
+
+                            <span>
+                                Costo total
+                            </span>
+
+                            <strong id="costos-costo-total">
+                                -
+                            </strong>
+
+                        </div>
+
+                    </div>
 
                 </section>
 
 
-                <!-- ================================================= -->
-                <!-- VENTAS -->
-                <!-- ================================================= -->
 
                 <section
-                    id="modulo-ventas"
-                    class="modulo oculto">
+                    class="panel"
+                    id="costos-detalle-panel">
 
-                    <section class="panel modulo-placeholder">
+                    <div class="titulo-listado">
 
-                        <h2>Ventas</h2>
+                        <div>
 
-                        <p>
-                            Módulo en desarrollo.
-                        </p>
+                            <h2>
+                                Detalle del costo
+                            </h2>
 
-                    </section>
+                            <span>
+                                Componentes que forman el costo del producto
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="tabla-contenedor">
+
+                        <table class="tabla-costos">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Código
+                                    </th>
+
+                                    <th>
+                                        Componente
+                                    </th>
+
+                                    <th>
+                                        Tipo
+                                    </th>
+
+                                    <th>
+                                        Unidad
+                                    </th>
+
+                                    <th>
+                                        Cantidad
+                                    </th>
+
+                                    <th>
+                                        Merma %
+                                    </th>
+
+                                    <th>
+                                        Cantidad efectiva
+                                    </th>
+
+                                    <th>
+                                        Costo unitario
+                                    </th>
+
+                                    <th>
+                                        Subtotal
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="tablaCostos">
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
 
                 </section>
 
 
-                <!-- ================================================= -->
-                <!-- COSTOS -->
-                <!-- ================================================= -->
 
-                <section
-                    id="modulo-costos"
-                    class="modulo oculto">
+                <div
+                    id="costos-mensaje"
+                    class="costos-mensaje">
 
-                    <section class="panel modulo-placeholder">
+                </div>
 
-                        <h2>Costos</h2>
-
-                        <p>
-                            Módulo en desarrollo.
-                        </p>
-
-                    </section>
-
-                </section>
+            </section>
 
 
-                <!-- ================================================= -->
-                <!-- REPORTES -->
-                <!-- ================================================= -->
 
-                <section
-                    id="modulo-reportes"
-                    class="modulo oculto">
+            <!-- ================================================= -->
+            <!-- REPORTES -->
+            <!-- ================================================= -->
 
-                    <section class="panel modulo-placeholder">
+            <section
+                id="modulo-reportes"
+                class="modulo oculto">
 
-                        <h2>Reportes</h2>
+                <section class="panel modulo-placeholder">
 
-                        <p>
-                            Módulo en desarrollo.
-                        </p>
+                    <h2>
+                        Reportes
+                    </h2>
 
-                    </section>
+                    <p>
+                        Módulo en desarrollo.
+                    </p>
 
                 </section>
 
+            </section>
 
-                <!-- ================================================= -->
-                <!-- CONFIGURACION -->
-                <!-- ================================================= -->
 
-                <section
-                    id="modulo-configuracion"
-                    class="modulo oculto">
 
-                    <section class="panel modulo-placeholder">
+            <!-- ================================================= -->
+            <!-- CONFIGURACION -->
+            <!-- ================================================= -->
 
-                        <h2>Configuración</h2>
+            <section
+                id="modulo-configuracion"
+                class="modulo oculto">
 
-                        <p>
-                            Módulo en desarrollo.
-                        </p>
+                <section class="panel modulo-placeholder">
 
-                    </section>
+                    <h2>
+                        Configuración
+                    </h2>
+
+                    <p>
+                        Configuración general de ROTISERIA360.
+                    </p>
 
                 </section>
 
+            </section>
 
-            </main>
+
+        </main>
 
 
-            <footer>
 
-                ROTISERIA360
+        <footer>
 
-            </footer>
+            ROTISERIA360
 
-        </div>
+        </footer>
 
     </div>
 
-
-    <!-- ================================================= -->
-    <!-- JAVASCRIPT -->
-    <!-- ================================================= -->
-
-    <script src="js/productos.js"></script>
-    <script src="js/estructura.js"></script>
+</div>
 
 
-    <!-- ================================================= -->
-    <!-- NAVEGACION -->
-    <!-- ================================================= -->
 
-    <script>
+<!-- ================================================= -->
+<!-- JAVASCRIPT -->
+<!-- ================================================= -->
 
-        document.addEventListener("DOMContentLoaded", function () {
+<script src="js/productos.js"></script>
 
+<script src="js/estructura.js"></script>
+
+<script src="js/costos.js"></script>
+
+
+
+<!-- ================================================= -->
+<!-- NAVEGACION -->
+<!-- ================================================= -->
+
+<script>
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
 
             var menuItems =
-                document.querySelectorAll(".menu-item");
-
+                document.querySelectorAll(
+                    ".menu-item"
+                );
 
             var modulos =
-                document.querySelectorAll(".modulo");
-
+                document.querySelectorAll(
+                    ".modulo"
+                );
 
             var tituloModulo =
-                document.getElementById("tituloModulo");
-
+                document.getElementById(
+                    "tituloModulo"
+                );
 
             var subtituloModulo =
-                document.getElementById("subtituloModulo");
+                document.getElementById(
+                    "subtituloModulo"
+                );
 
 
             var informacionModulos = {
 
-
                 dashboard: {
-
                     titulo: "Dashboard",
-
                     subtitulo:
                         "Resumen general de la gestión"
-
                 },
-
 
                 productos: {
-
                     titulo: "Productos",
-
                     subtitulo:
                         "Alta, modificación y consulta de productos"
-
                 },
-
 
                 estructura: {
-
-                    titulo: "Estructura de productos",
-
+                    titulo:
+                        "Estructura de productos",
                     subtitulo:
-                        "Alta, consulta, modificación y baja de estructuras"
-
+                        "Composición de productos elaborados"
                 },
-
 
                 stock: {
-
                     titulo: "Stock",
-
                     subtitulo:
                         "Existencias y movimientos de inventario"
-
                 },
-
 
                 compras: {
-
                     titulo: "Compras",
-
                     subtitulo:
                         "Compras y proveedores"
-
                 },
-
 
                 ventas: {
-
                     titulo: "Ventas",
-
                     subtitulo:
                         "Gestión de ventas"
-
                 },
-
 
                 costos: {
-
                     titulo: "Costos",
-
                     subtitulo:
                         "Costos y precios de productos"
-
                 },
-
 
                 reportes: {
-
                     titulo: "Reportes",
-
                     subtitulo:
                         "Información y análisis"
-
                 },
 
-
                 configuracion: {
-
                     titulo: "Configuración",
-
                     subtitulo:
                         "Configuración general del sistema"
-
                 }
 
             };
 
 
-            menuItems.forEach(function (item) {
+            menuItems.forEach(
+                function (item) {
+
+                    item.addEventListener(
+                        "click",
+                        function () {
+
+                            var modulo =
+                                item.getAttribute(
+                                    "data-modulo"
+                                );
 
 
-                item.addEventListener("click", function () {
+                            menuItems.forEach(
+                                function (elemento) {
+
+                                    elemento.classList.remove(
+                                        "activo"
+                                    );
+
+                                }
+                            );
 
 
-                    var modulo =
-                        item.getAttribute("data-modulo");
+                            item.classList.add(
+                                "activo"
+                            );
 
 
-                    menuItems.forEach(function (elemento) {
+                            modulos.forEach(
+                                function (elemento) {
 
-                        elemento.classList.remove("activo");
+                                    elemento.classList.add(
+                                        "oculto"
+                                    );
 
-                    });
-
-
-                    item.classList.add("activo");
-
-
-                    modulos.forEach(function (elemento) {
-
-                        elemento.classList.add("oculto");
-
-                    });
+                                }
+                            );
 
 
-                    var moduloSeleccionado =
-                        document.getElementById(
-                            "modulo-" + modulo
-                        );
+                            var moduloSeleccionado =
+                                document.getElementById(
+                                    "modulo-" + modulo
+                                );
 
 
-                    if (moduloSeleccionado) {
+                            if (
+                                moduloSeleccionado
+                            ) {
 
-                        moduloSeleccionado.classList.remove(
-                            "oculto"
-                        );
+                                moduloSeleccionado.classList.remove(
+                                    "oculto"
+                                );
 
-                    }
-
-
-                    if (informacionModulos[modulo]) {
-
-
-                        tituloModulo.textContent =
-                            informacionModulos[modulo].titulo;
+                            }
 
 
-                        subtituloModulo.textContent =
-                            informacionModulos[modulo].subtitulo;
+                            if (
+                                informacionModulos[
+                                    modulo
+                                ]
+                            ) {
 
-                    }
+                                tituloModulo.textContent =
+                                    informacionModulos[
+                                        modulo
+                                    ].titulo;
 
-                });
+                                subtituloModulo.textContent =
+                                    informacionModulos[
+                                        modulo
+                                    ].subtitulo;
 
-            });
+                            }
 
+                        }
+                    );
 
-        });
+                }
+            );
 
-    </script>
+        }
+    );
+
+</script>
+```
 
 </body>
 

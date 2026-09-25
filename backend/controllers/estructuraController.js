@@ -11,14 +11,18 @@ const listarProductosElaborados = async (req, res) => {
 
         const resultado = await pool.query(`
             SELECT
-                id,
-                codigo,
-                nombre,
-                unidad
-            FROM productos
-            WHERE tipo = 'ELABORADO'
-              AND activo = TRUE
-            ORDER BY nombre
+                p.id,
+                p.codigo,
+                p.nombre,
+                p.id_unidad,
+                um.codigo AS unidad,
+                um.nombre AS unidad_nombre
+            FROM productos p
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
+            WHERE p.tipo = 'ELABORADO'
+              AND p.activo = TRUE
+            ORDER BY p.nombre
         `);
 
         res.json(resultado.rows);
@@ -46,15 +50,19 @@ const listarComponentes = async (req, res) => {
 
         const resultado = await pool.query(`
             SELECT
-                id,
-                codigo,
-                nombre,
-                tipo,
-                unidad
-            FROM productos
-            WHERE activo = TRUE
-              AND tipo IN ('INSUMO', 'ELABORADO')
-            ORDER BY nombre
+                p.id,
+                p.codigo,
+                p.nombre,
+                p.tipo,
+                p.id_unidad,
+                um.codigo AS unidad,
+                um.nombre AS unidad_nombre
+            FROM productos p
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
+            WHERE p.activo = TRUE
+              AND p.tipo IN ('INSUMO', 'ELABORADO')
+            ORDER BY p.nombre
         `);
 
         res.json(resultado.rows);
@@ -113,12 +121,18 @@ const consultarEstructura = async (req, res) => {
 
                 p.codigo AS producto_codigo,
                 p.nombre AS producto_nombre,
-                p.unidad AS producto_unidad
+                p.id_unidad AS producto_id_unidad,
+
+                um.codigo AS producto_unidad,
+                um.nombre AS producto_unidad_nombre
 
             FROM producto_estructura pe
 
             INNER JOIN productos p
                 ON p.id = pe.producto_id
+
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
 
             WHERE pe.producto_id = $1
               AND pe.activo = TRUE
@@ -173,12 +187,19 @@ const consultarEstructura = async (req, res) => {
 
                 p.tipo AS componente_tipo,
 
-                p.unidad AS componente_unidad
+                p.id_unidad AS componente_id_unidad,
+
+                um.codigo AS componente_unidad,
+
+                um.nombre AS componente_unidad_nombre
 
             FROM producto_estructura_detalle ped
 
             INNER JOIN productos p
                 ON p.id = ped.componente_id
+
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
 
             WHERE ped.estructura_id = $1
               AND ped.activo = TRUE
@@ -260,12 +281,18 @@ const consultarEstructuraPorId = async (req, res) => {
 
                 p.codigo AS producto_codigo,
                 p.nombre AS producto_nombre,
-                p.unidad AS producto_unidad
+                p.id_unidad AS producto_id_unidad,
+
+                um.codigo AS producto_unidad,
+                um.nombre AS producto_unidad_nombre
 
             FROM producto_estructura pe
 
             INNER JOIN productos p
                 ON p.id = pe.producto_id
+
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
 
             WHERE pe.id = $1
         `, [
@@ -311,12 +338,19 @@ const consultarEstructuraPorId = async (req, res) => {
 
                 p.tipo AS componente_tipo,
 
-                p.unidad AS componente_unidad
+                p.id_unidad AS componente_id_unidad,
+
+                um.codigo AS componente_unidad,
+
+                um.nombre AS componente_unidad_nombre
 
             FROM producto_estructura_detalle ped
 
             INNER JOIN productos p
                 ON p.id = ped.componente_id
+
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
 
             WHERE ped.estructura_id = $1
 
@@ -433,7 +467,7 @@ const crearEstructura = async (req, res) => {
                 SELECT
                     id,
                     tipo,
-                    unidad,
+                    id_unidad,
                     activo
                 FROM productos
                 WHERE id = $1
@@ -584,7 +618,7 @@ const crearEstructura = async (req, res) => {
                     SELECT
                         id,
                         tipo,
-                        unidad,
+                        id_unidad,
                         activo
                     FROM productos
                     WHERE id = $1
@@ -812,7 +846,7 @@ const modificarEstructura = async (req, res) => {
                     pe.activo,
 
                     p.tipo,
-                    p.unidad,
+                    p.id_unidad,
                     p.activo AS producto_activo
 
                 FROM producto_estructura pe
@@ -984,7 +1018,7 @@ const modificarEstructura = async (req, res) => {
                     SELECT
                         id,
                         tipo,
-                        unidad,
+                        id_unidad,
                         activo
                     FROM productos
                     WHERE id = $1

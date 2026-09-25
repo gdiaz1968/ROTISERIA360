@@ -11,16 +11,20 @@ const listarProductos = async (req, res) => {
 
         const resultado = await pool.query(`
             SELECT
-                id,
-                codigo,
-                nombre,
-                tipo,
-                unidad,
-                activo,
-                fecha_alta
-            FROM productos
-            WHERE activo = TRUE
-            ORDER BY nombre
+                p.id,
+                p.codigo,
+                p.nombre,
+                p.tipo,
+                p.id_unidad,
+                um.codigo AS unidad,
+                um.nombre AS unidad_nombre,
+                p.activo,
+                p.fecha_alta
+            FROM productos p
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
+            WHERE p.activo = TRUE
+            ORDER BY p.nombre
         `);
 
         res.json(resultado.rows);
@@ -49,15 +53,19 @@ const obtenerProducto = async (req, res) => {
 
         const resultado = await pool.query(`
             SELECT
-                id,
-                codigo,
-                nombre,
-                tipo,
-                unidad,
-                activo,
-                fecha_alta
-            FROM productos
-            WHERE id = $1
+                p.id,
+                p.codigo,
+                p.nombre,
+                p.tipo,
+                p.id_unidad,
+                um.codigo AS unidad,
+                um.nombre AS unidad_nombre,
+                p.activo,
+                p.fecha_alta
+            FROM productos p
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
+            WHERE p.id = $1
         `, [id]);
 
         if (resultado.rows.length === 0) {
@@ -92,10 +100,10 @@ const crearProducto = async (req, res) => {
             codigo,
             nombre,
             tipo,
-            unidad
+            id_unidad
         } = req.body;
 
-        if (!codigo || !nombre || !tipo || !unidad) {
+        if (!codigo || !nombre || !tipo || !id_unidad) {
 
             return res.status(400).json({
                 error: "Todos los campos son obligatorios"
@@ -108,7 +116,7 @@ const crearProducto = async (req, res) => {
                 codigo,
                 nombre,
                 tipo,
-                unidad
+                id_unidad
             )
             VALUES
             (
@@ -122,7 +130,7 @@ const crearProducto = async (req, res) => {
             codigo,
             nombre,
             tipo,
-            unidad
+            id_unidad
         ]);
 
         res.status(201).json(resultado.rows[0]);
@@ -159,11 +167,11 @@ const modificarProducto = async (req, res) => {
             codigo,
             nombre,
             tipo,
-            unidad,
+            id_unidad,
             activo
         } = req.body;
 
-        if (!codigo || !nombre || !tipo || !unidad) {
+        if (!codigo || !nombre || !tipo || !id_unidad) {
 
             return res.status(400).json({
                 error: "Todos los campos son obligatorios"
@@ -176,7 +184,7 @@ const modificarProducto = async (req, res) => {
                 codigo = $1,
                 nombre = $2,
                 tipo = $3,
-                unidad = $4,
+                id_unidad = $4,
                 activo = $5
             WHERE id = $6
             RETURNING *
@@ -184,7 +192,7 @@ const modificarProducto = async (req, res) => {
             codigo,
             nombre,
             tipo,
-            unidad,
+            id_unidad,
             activo,
             id
         ]);

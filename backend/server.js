@@ -6,23 +6,13 @@ const pool = require("./db");
 
 const productosRoutes = require("./routes/productos");
 const estructuraRoutes = require("./routes/estructura");
-
+const costosRoutes = require("./routes/costos");
 
 const app = express();
 
-// ======================================================
-// PUERTO
-// ======================================================
+console.log(">>> SERVER.JS CORRECTO - PRUEBA 3032");
 
-// Render proporciona process.env.PORT.
-// En local, si no existe, utiliza el puerto 3000.
-
-const PORT = process.env.PORT || 3000;
-
-
-// ======================================================
-// DIAGNOSTICO DEL PROCESO
-// ======================================================
+const PORT = process.env.PORT || 3032;
 
 console.log("==========================================");
 console.log("INICIO SERVER ROTISERIA360");
@@ -32,47 +22,33 @@ console.log("ARCHIVO SERVER:", __filename);
 console.log("PUERTO:", PORT);
 console.log("==========================================");
 
-
-// ======================================================
-// MIDDLEWARES
-// ======================================================
+app.get(
+    "/api/prueba-version",
+    function (req, res) {
+        res.json({
+            ok: true,
+            mensaje: "SERVER.JS CORRECTO - VERSION COSTOS"
+        });
+    }
+);
 
 app.use(cors());
-
 app.use(express.json());
 
-
-// ======================================================
-// DIAGNOSTICO DE REQUESTS
-// ======================================================
-
 app.use(function (req, res, next) {
-
     console.log(
         ">>> REQUEST:",
         req.method,
         req.originalUrl
     );
-
     next();
-
 });
-
-
-// ======================================================
-// ARCHIVOS FRONTEND
-// ======================================================
 
 app.use(
     express.static(
         path.join(__dirname, "../frontend")
     )
 );
-
-
-// ======================================================
-// RUTAS API
-// ======================================================
 
 app.use(
     "/api/productos",
@@ -84,51 +60,50 @@ app.use(
     estructuraRoutes
 );
 
+app.get(
+    "/api/costos-prueba-directa",
+    function (req, res) {
+
+        res.json({
+            ok: true,
+            mensaje: "Ruta COSTOS directa desde server.js funcionando"
+        });
+
+    }
+);
+
+app.use(
+    "/api/costos",
+    costosRoutes
+);
+
 console.log("ROUTER PRODUCTOS MONTADO");
 console.log("ROUTER ESTRUCTURA MONTADO");
-
-
-// ======================================================
-// PRUEBA DIRECTA
-// ======================================================
+console.log("ROUTER COSTOS MONTADO");
 
 app.get(
     "/api/prueba-directa",
     function (req, res) {
-
         console.log(">>> ENTRO A PRUEBA DIRECTA");
 
         res.json({
             ok: true,
             mensaje: "Ruta directa de server.js funcionando"
         });
-
     }
 );
-
-
-// ======================================================
-// PRUEBA GENERAL DE ESTRUCTURA
-// ======================================================
 
 app.get(
     "/api/prueba-estructura",
     function (req, res) {
-
         console.log(">>> ENTRO A PRUEBA ESTRUCTURA");
 
         res.json({
             ok: true,
             mensaje: "Ruta estructura funcionando"
         });
-
     }
 );
-
-
-// ======================================================
-// PRUEBA BASE DE DATOS
-// ======================================================
 
 app.get(
     "/api/prueba-db",
@@ -148,23 +123,19 @@ app.get(
 
         } catch (error) {
 
-            console.error("ERROR POSTGRESQL:", error);
+            console.error(
+                "ERROR POSTGRESQL:",
+                error
+            );
 
             res.status(500).json({
                 ok: false,
                 mensaje: "Error de conexión con PostgreSQL",
                 error: error.message
             });
-
         }
-
     }
 );
-
-
-// ======================================================
-// DIAGNOSTICO DE RUTAS NO ENCONTRADAS
-// ======================================================
 
 app.use(
     function (req, res) {
@@ -181,14 +152,8 @@ app.use(
             metodo: req.method,
             ruta: req.originalUrl
         });
-
     }
 );
-
-
-// ======================================================
-// INICIAR SERVIDOR
-// ======================================================
 
 app.listen(
     PORT,
@@ -196,17 +161,13 @@ app.listen(
     function () {
 
         console.log("==========================================");
-
         console.log(
             "SERVIDOR ROTISERIA360 INICIADO"
         );
-
         console.log(
             "PUERTO:",
             PORT
         );
-
         console.log("==========================================");
-
     }
 );
