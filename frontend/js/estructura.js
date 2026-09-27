@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function () {
     cargarComponentes();
 
     document.getElementById("estructura-producto")
-        .addEventListener("change", seleccionarProducto);
+        .addEventListener("change", seleccionarProductoEstructura);
 
     document.getElementById("estructura-componente")
         .addEventListener("change", seleccionarComponente);
@@ -237,7 +237,7 @@ async function cargarComponentes() {
    SELECCIONAR PRODUCTO
    ========================================================= */
 
-function seleccionarProducto() {
+function seleccionarProductoEstructura() {
 
     var combo =
         document.getElementById(

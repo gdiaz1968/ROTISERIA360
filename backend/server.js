@@ -7,6 +7,7 @@ const pool = require("./db");
 const productosRoutes = require("./routes/productos");
 const estructuraRoutes = require("./routes/estructura");
 const costosRoutes = require("./routes/costos");
+const unidadesRoutes = require("./routes/unidades");
 
 const app = express();
 
@@ -54,6 +55,8 @@ app.use(
     "/api/productos",
     productosRoutes
 );
+
+app.use("/api/unidades", unidadesRoutes);
 
 app.use(
     "/api/estructura",
