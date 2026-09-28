@@ -1,13 +1,23 @@
-
 const express = require("express");
 
 console.log(">>> CARGANDO ROUTER COSTOS");
 
 const {
-    calcularCostoProducto
+    calcularCostoProducto,
+    listarInsumos,
+    obtenerCostoInsumo,
+    registrarCostoInsumo,
+    listarHistorialCosto,
+    obtenerEstructuraProducto,
+    obtenerEstructuraConCostos
 } = require("../services/costosService");
 
 const router = express.Router();
+
+
+// ==========================================================
+// PRUEBA
+// ==========================================================
 
 router.get(
     "/prueba",
@@ -22,19 +32,349 @@ router.get(
 );
 
 
+// ==========================================================
+// LISTAR INSUMOS
+// ==========================================================
+
+router.get(
+    "/insumos",
+    async function (req, res) {
+
+        try {
+
+            const resultado =
+                await listarInsumos();
+
+            res.json({
+                ok: true,
+                insumos: resultado
+            });
+
+        } catch (error) {
+
+            console.error(
+                "ERROR LISTANDO INSUMOS:",
+                error
+            );
+
+            res.status(500).json({
+                ok: false,
+                mensaje: error.message
+            });
+
+        }
+
+    }
+);
+
+
+// ==========================================================
+// OBTENER COSTO ACTUAL DE UN INSUMO
+// ==========================================================
+
+router.get(
+    "/insumo/:id",
+    async function (req, res) {
+
+        try {
+
+            const idProducto =
+                Number(req.params.id);
+
+            if (
+                !Number.isInteger(idProducto) ||
+                idProducto <= 0
+            ) {
+
+                return res.status(400).json({
+                    ok: false,
+                    mensaje: "El ID del producto no es válido."
+                });
+
+            }
+
+            const resultado =
+                await obtenerCostoInsumo(
+                    idProducto
+                );
+
+            res.json({
+                ok: true,
+                resultado
+            });
+
+        } catch (error) {
+
+            console.error(
+                "ERROR CONSULTANDO COSTO INSUMO:",
+                error
+            );
+
+            res.status(400).json({
+                ok: false,
+                mensaje: error.message
+            });
+
+        }
+
+    }
+);
+
+
+// ==========================================================
+// HISTORIAL DE COSTOS
+// ==========================================================
+
+router.get(
+    "/insumo/:id/historial",
+    async function (req, res) {
+
+        try {
+
+            const idProducto =
+                Number(req.params.id);
+
+            if (
+                !Number.isInteger(idProducto) ||
+                idProducto <= 0
+            ) {
+
+                return res.status(400).json({
+                    ok: false,
+                    mensaje: "El ID del producto no es válido."
+                });
+
+            }
+
+            const resultado =
+                await listarHistorialCosto(
+                    idProducto
+                );
+
+            res.json({
+                ok: true,
+                historial: resultado
+            });
+
+        } catch (error) {
+
+            console.error(
+                "ERROR CONSULTANDO HISTORIAL:",
+                error
+            );
+
+            res.status(400).json({
+                ok: false,
+                mensaje: error.message
+            });
+
+        }
+
+    }
+);
+
+
+// ==========================================================
+// REGISTRAR NUEVO COSTO DE INSUMO
+// ==========================================================
+
+router.post(
+    "/insumo",
+    async function (req, res) {
+
+        try {
+
+            const {
+                id_producto,
+                costo
+            } = req.body;
+
+            const idProducto =
+                Number(id_producto);
+
+            const costoNumerico =
+                Number(costo);
+
+
+            if (
+                !Number.isInteger(idProducto) ||
+                idProducto <= 0
+            ) {
+
+                return res.status(400).json({
+                    ok: false,
+                    mensaje: "El producto no es válido."
+                });
+
+            }
+
+
+            if (
+                !Number.isFinite(costoNumerico) ||
+                costoNumerico < 0
+            ) {
+
+                return res.status(400).json({
+                    ok: false,
+                    mensaje: "El costo no es válido."
+                });
+
+            }
+
+
+            const resultado =
+                await registrarCostoInsumo(
+                    idProducto,
+                    costoNumerico
+                );
+
+
+            res.status(201).json({
+                ok: true,
+                mensaje: "Costo registrado correctamente.",
+                resultado
+            });
+
+        } catch (error) {
+
+            console.error(
+                "ERROR REGISTRANDO COSTO:",
+                error
+            );
+
+            res.status(400).json({
+                ok: false,
+                mensaje: error.message
+            });
+
+        }
+
+    }
+);
+
+// ==========================================================
+// OBTENER ESTRUCTURA DE PRODUCTO
+// ==========================================================
+
+router.get(
+    "/estructura/:id",
+    async function (req, res) {
+
+        try {
+
+            const idProducto =
+                Number(
+                    req.params.id
+                );
+
+
+            if (
+                !Number.isInteger(idProducto) ||
+                idProducto <= 0
+            ) {
+
+                return res.status(400).json({
+
+                    ok: false,
+
+                    mensaje:
+                        "El ID del producto no es válido."
+
+                });
+
+            }
+
+
+            console.log(
+                ">>> CONSULTANDO ESTRUCTURA PRODUCTO:",
+                idProducto
+            );
+
+
+            const resultado =
+                await obtenerEstructuraProducto(
+                    idProducto
+                );
+
+
+            res.json({
+
+                ok: true,
+
+                resultado
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "ERROR CONSULTANDO ESTRUCTURA:",
+                error
+            );
+
+
+            res.status(400).json({
+
+                ok: false,
+
+                mensaje:
+                    error.message
+
+            });
+
+        }
+
+    }
+);
+
 // ======================================================
-// CALCULAR COSTO DE UN PRODUCTO
+// ESTRUCTURA + COSTOS ACTUALES
 // ======================================================
-//
-// GET /api/costos/calcular/:id
-//
-// Ejemplo:
-//
-// /api/costos/calcular/14
-// /api/costos/calcular/18
-// /api/costos/calcular/19
-//
-// ======================================================
+
+router.get("/estructura/:id/costos", async (req, res) => {
+
+    try {
+
+        const idProducto = parseInt(req.params.id, 10);
+
+        if (isNaN(idProducto)) {
+
+            return res.status(400).json({
+                ok: false,
+                mensaje: "ID de producto inválido"
+            });
+
+        }
+
+        const resultado =
+            await obtenerEstructuraConCostos(idProducto);
+
+        return res.json({
+            ok: true,
+            resultado: resultado
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Error obteniendo estructura con costos:",
+            error
+        );
+
+        return res.status(400).json({
+            ok: false,
+            mensaje: error.message
+        });
+
+    }
+
+});
+
+
+// ==========================================================
+// CALCULAR COSTO DE PRODUCTO
+// ==========================================================
 
 router.get(
     "/calcular/:id",
@@ -45,14 +385,16 @@ router.get(
             const idProducto =
                 Number(req.params.id);
 
-            if (!Number.isInteger(idProducto) ||
-                idProducto <= 0) {
+            if (
+                !Number.isInteger(idProducto) ||
+                idProducto <= 0
+            ) {
 
                 return res.status(400).json({
                     ok: false,
-                    mensaje:
-                        "El ID del producto no es válido."
+                    mensaje: "El ID del producto no es válido."
                 });
+
             }
 
             console.log(
@@ -67,7 +409,7 @@ router.get(
 
             res.json({
                 ok: true,
-                resultado: resultado
+                resultado
             });
 
         } catch (error) {
@@ -81,27 +423,16 @@ router.get(
                 ok: false,
                 mensaje: error.message
             });
+
         }
+
     }
 );
 
 
-// ======================================================
-// CONSULTAR COSTO DE UN PRODUCTO
-// ======================================================
-//
-// GET /api/costos/producto/:id
-//
-// Por ahora utiliza el mismo motor de cálculo.
-//
-// Se deja separado para poder diferenciar posteriormente:
-//
-// - calcular
-// - consultar
-// - historial
-// - costos registrados
-//
-// ======================================================
+// ==========================================================
+// CONSULTAR COSTO DE PRODUCTO
+// ==========================================================
 
 router.get(
     "/producto/:id",
@@ -112,14 +443,16 @@ router.get(
             const idProducto =
                 Number(req.params.id);
 
-            if (!Number.isInteger(idProducto) ||
-                idProducto <= 0) {
+            if (
+                !Number.isInteger(idProducto) ||
+                idProducto <= 0
+            ) {
 
                 return res.status(400).json({
                     ok: false,
-                    mensaje:
-                        "El ID del producto no es válido."
+                    mensaje: "El ID del producto no es válido."
                 });
+
             }
 
             const resultado =
@@ -129,7 +462,7 @@ router.get(
 
             res.json({
                 ok: true,
-                resultado: resultado
+                resultado
             });
 
         } catch (error) {
@@ -143,7 +476,9 @@ router.get(
                 ok: false,
                 mensaje: error.message
             });
+
         }
+
     }
 );
 

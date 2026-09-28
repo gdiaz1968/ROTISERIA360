@@ -1192,318 +1192,338 @@
 
 
 
-            <!-- ================================================= -->
-            <!-- COSTOS -->
-            <!-- ================================================= -->
+           <!-- ================================================= -->
+<!-- COSTOS -->
+<!-- ================================================= -->
 
-            <section
-                id="modulo-costos"
-                class="modulo oculto">
+<section
+    id="modulo-costos"
+    class="modulo oculto">
 
 
-                <section class="panel costos-panel">
+    <!-- ================================================= -->
+    <!-- SELECCION DEL PRODUCTO -->
+    <!-- ================================================= -->
 
-                    <div class="titulo-listado">
+    <section class="panel costos-panel">
 
-                        <div>
+        <div class="titulo-listado">
 
-                            <h2>
-                                Cálculo de costos
-                            </h2>
+            <div>
 
-                            <span>
-                                Consulta del costo actual del producto
-                            </span>
+                <h2>
+                    Cálculo de costos
+                </h2>
 
-                        </div>
+                <span>
+                    Consulta y cálculo del costo actual del producto
+                </span>
 
-                    </div>
+            </div>
 
+        </div>
 
-                    <div class="fila">
 
-                        <div class="campo campo-grande">
+        <div class="fila">
 
-                            <label for="costos-producto">
-                                Producto
-                            </label>
+            <div class="campo campo-grande">
 
-                            <select id="costos-producto">
+                <label for="costos-producto">
+                    Producto
+                </label>
 
-                                <option value="">
-                                    Seleccionar producto...
-                                </option>
+                <select id="costos-producto">
 
-                            </select>
+                    <option value="">
+                        Seleccionar producto...
+                    </option>
 
-                        </div>
+                </select>
 
+            </div>
 
-                        <div class="campo costos-boton">
 
-                            <label>
-                                &nbsp;
-                            </label>
+            <div class="campo costos-boton">
 
-                            <button
-                                type="button"
-                                id="btn-calcular-costo"
-                                class="btn btn-guardar">
+                <label>
+                    &nbsp;
+                </label>
 
-                                Calcular costo
+                <button
+                    type="button"
+                    id="btn-calcular-costo"
+                    class="btn btn-guardar">
 
-                            </button>
+                    Calcular costo
 
-                        </div>
+                </button>
 
+            </div>
 
-                        <div class="campo costos-boton">
 
-                            <label>
-                                &nbsp;
-                            </label>
+            <div class="campo costos-boton">
 
-                            <button
-                                type="button"
-                                id="btn-limpiar-costo"
-                                class="btn btn-nuevo">
+                <label>
+                    &nbsp;
+                </label>
 
-                                Limpiar
+                <button
+                    type="button"
+                    id="btn-limpiar-costo"
+                    class="btn btn-nuevo">
 
-                            </button>
+                    Limpiar
 
-                        </div>
+                </button>
 
-                    </div>
+            </div>
 
-                </section>
+        </div>
 
+    </section>
 
 
-                <section
-                    class="panel"
-                    id="costos-datos-producto">
 
-                    <div class="titulo-listado">
+    <!-- ================================================= -->
+    <!-- DATOS DEL PRODUCTO -->
+    <!-- ================================================= -->
 
-                        <div>
+    <section
+        class="panel"
+        id="costos-datos-producto">
 
-                            <h2>
-                                Producto
-                            </h2>
+        <div class="titulo-listado">
 
-                            <span>
-                                Información del producto seleccionado
-                            </span>
+            <div>
 
-                        </div>
+                <h2>
+                    Producto
+                </h2>
 
-                    </div>
+                <span>
+                    Información del producto seleccionado
+                </span>
 
+            </div>
 
-                    <div class="fila">
+        </div>
 
-                        <div class="campo">
 
-                            <label for="costos-codigo">
-                                Código
-                            </label>
+        <div class="fila">
 
-                            <input
-                                type="text"
-                                id="costos-codigo"
-                                readonly>
+            <div class="campo">
 
-                        </div>
+                <label for="costos-codigo">
+                    Código
+                </label>
 
+                <input
+                    type="text"
+                    id="costos-codigo"
+                    readonly>
 
-                        <div class="campo campo-grande">
+            </div>
 
-                            <label for="costos-nombre">
-                                Nombre
-                            </label>
 
-                            <input
-                                type="text"
-                                id="costos-nombre"
-                                readonly>
+            <div class="campo campo-grande">
 
-                        </div>
+                <label for="costos-nombre">
+                    Nombre
+                </label>
 
+                <input
+                    type="text"
+                    id="costos-nombre"
+                    readonly>
 
-                        <div class="campo">
+            </div>
 
-                            <label for="costos-tipo">
-                                Tipo
-                            </label>
 
-                            <input
-                                type="text"
-                                id="costos-tipo"
-                                readonly>
+            <div class="campo">
 
-                        </div>
+                <label for="costos-tipo">
+                    Tipo
+                </label>
 
+                <input
+                    type="text"
+                    id="costos-tipo"
+                    readonly>
 
-                        <div class="campo">
+            </div>
 
-                            <label for="costos-unidad">
-                                Unidad
-                            </label>
 
-                            <input
-                                type="text"
-                                id="costos-unidad"
-                                readonly>
+            <div class="campo">
 
-                        </div>
+                <label for="costos-unidad">
+                    Unidad
+                </label>
 
-                    </div>
+                <input
+                    type="text"
+                    id="costos-unidad"
+                    readonly>
 
-                </section>
+            </div>
 
+        </div>
 
+    </section>
 
-                <section
-                    class="panel costos-resultado"
-                    id="costos-resultado">
 
-                    <div class="costos-resumen">
 
-                        <div class="costo-resumen-item">
+    <!-- ================================================= -->
+    <!-- DETALLE DE COMPONENTES -->
+    <!-- ================================================= -->
 
-                            <span>
-                                Costo unitario
-                            </span>
+    <section
+        class="panel"
+        id="costos-detalle-panel">
 
-                            <strong id="costos-costo-unitario">
-                                -
-                            </strong>
+        <div class="titulo-listado">
 
-                        </div>
+            <div>
 
+                <h2>
+                    Detalle del costo
+                </h2>
 
-                        <div class="costo-resumen-item">
+                <span>
+                    Componentes que forman el costo del producto
+                </span>
 
-                            <span>
-                                Rendimiento
-                            </span>
+            </div>
 
-                            <strong id="costos-rendimiento">
-                                -
-                            </strong>
+        </div>
 
-                        </div>
 
+        <div class="tabla-contenedor">
 
-                        <div class="costo-resumen-item">
+            <table class="tabla-costos">
 
-                            <span>
-                                Costo total
-                            </span>
+                <thead>
 
-                            <strong id="costos-costo-total">
-                                -
-                            </strong>
+                    <tr>
 
-                        </div>
+                        <th>
+                            Código
+                        </th>
 
-                    </div>
+                        <th>
+                            Componente
+                        </th>
 
-                </section>
+                        <th>
+                            Tipo
+                        </th>
 
+                        <th>
+                            Unidad
+                        </th>
 
+                        <th>
+                            Cantidad
+                        </th>
 
-                <section
-                    class="panel"
-                    id="costos-detalle-panel">
+                        <th>
+                            Merma %
+                        </th>
 
-                    <div class="titulo-listado">
+                        <th>
+                            Cantidad efectiva
+                        </th>
 
-                        <div>
+                        <th>
+                            Costo unitario
+                        </th>
 
-                            <h2>
-                                Detalle del costo
-                            </h2>
+                        <th>
+                            Subtotal
+                        </th>
 
-                            <span>
-                                Componentes que forman el costo del producto
-                            </span>
+                    </tr>
 
-                        </div>
+                </thead>
 
-                    </div>
 
+                <tbody id="tablaCostos">
 
-                    <div class="tabla-contenedor">
+                </tbody>
 
-                        <table class="tabla-costos">
+            </table>
 
-                            <thead>
+        </div>
 
-                                <tr>
+    </section>
 
-                                    <th>
-                                        Código
-                                    </th>
 
-                                    <th>
-                                        Componente
-                                    </th>
 
-                                    <th>
-                                        Tipo
-                                    </th>
+    <!-- ================================================= -->
+    <!-- RESUMEN DEL COSTO -->
+    <!-- ================================================= -->
 
-                                    <th>
-                                        Unidad
-                                    </th>
+    <section
+        class="panel costos-resultado"
+        id="costos-resultado">
 
-                                    <th>
-                                        Cantidad
-                                    </th>
+        <div class="costos-resumen">
 
-                                    <th>
-                                        Merma %
-                                    </th>
+            <div class="costo-resumen-item">
 
-                                    <th>
-                                        Cantidad efectiva
-                                    </th>
+                <span>
+                    Costo unitario
+                </span>
 
-                                    <th>
-                                        Costo unitario
-                                    </th>
+                <strong id="costos-costo-unitario">
+                    -
+                </strong>
 
-                                    <th>
-                                        Subtotal
-                                    </th>
+            </div>
 
-                                </tr>
 
-                            </thead>
+            <div class="costo-resumen-item">
 
+                <span>
+                    Rendimiento
+                </span>
 
-                            <tbody id="tablaCostos">
+                <strong id="costos-rendimiento">
+                    -
+                </strong>
 
-                            </tbody>
+            </div>
 
-                        </table>
 
-                    </div>
+            <div class="costo-resumen-item">
 
-                </section>
+                <span>
+                    Costo total
+                </span>
 
+                <strong id="costos-costo-total">
+                    -
+                </strong>
 
+            </div>
 
-                <div
-                    id="costos-mensaje"
-                    class="costos-mensaje">
+        </div>
 
-                </div>
+    </section>
 
-            </section>
 
+
+    <!-- ================================================= -->
+    <!-- MENSAJES -->
+    <!-- ================================================= -->
+
+    <div
+        id="costos-mensaje"
+        class="costos-mensaje">
+
+    </div>
+
+
+</section>
 
 
             <!-- ================================================= -->

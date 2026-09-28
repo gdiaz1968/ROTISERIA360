@@ -1,142 +1,675 @@
 const pool = require("../db");
 
-// ======================================================
-// MOTOR DE COSTOS BÁSICO
-// ======================================================
-//
-// Calcula el costo de un producto:
-//
-// INSUMO
-//    -> toma el costo vigente
-//
-// ELABORADO
-//    -> toma la estructura activa
-//    -> calcula cada componente
-//    -> suma los subtotales
-//    -> divide por el rendimiento
-//
-// El cálculo es recursivo para permitir:
-//
-// ELABORADO
-//    -> ELABORADO
-//        -> ELABORADO
-//            -> INSUMO
-//
-// ======================================================
 
+// ==========================================================
+// LISTAR INSUMOS
+// ==========================================================
 
-/**
- * Calcula el costo de un producto.
- *
- * @param {number} idProducto
- * @param {Array} camino
- * @returns {Object}
- */
-async function calcularCostoProducto(idProducto, camino = []) {
+async function listarInsumos() {
 
-    // ==================================================
-    // 1. VALIDAR ID
-    // ==================================================
-
-    if (!idProducto) {
-
-        throw new Error(
-            "No se recibió el ID del producto."
-        );
-
-    }
-
-
-    // ==================================================
-    // 2. DETECTAR CICLOS
-    // ==================================================
-
-    if (camino.includes(idProducto)) {
-
-        const recorrido = [
-            ...camino,
-            idProducto
-        ];
-
-        throw new Error(
-            "Dependencia circular detectada: " +
-            recorrido.join(" -> ")
-        );
-
-    }
-
-
-    // ==================================================
-    // 3. OBTENER PRODUCTO
-    // ==================================================
-
-    const productoResult = await pool.query(
-        `
+    const resultado = await pool.query(`
         SELECT
             p.id,
             p.codigo,
             p.nombre,
             p.tipo,
             p.id_unidad,
-            u.codigo AS unidad_codigo,
-            u.nombre AS unidad_nombre
+            um.codigo AS unidad,
+            um.nombre AS unidad_nombre,
+
+            (
+                SELECT cp.costo
+                FROM costos_productos cp
+                WHERE cp.id_producto = p.id
+                  AND cp.activo = TRUE
+                ORDER BY cp.fecha_desde DESC
+                LIMIT 1
+            ) AS costo_actual,
+
+            (
+                SELECT cp.fecha_desde
+                FROM costos_productos cp
+                WHERE cp.id_producto = p.id
+                  AND cp.activo = TRUE
+                ORDER BY cp.fecha_desde DESC
+                LIMIT 1
+            ) AS costo_fecha_desde
+
         FROM productos p
-        LEFT JOIN unidades_medida u
-            ON u.id = p.id_unidad
+
+        LEFT JOIN unidades_medida um
+            ON um.id = p.id_unidad
+
+        WHERE p.activo = TRUE
+          AND p.tipo = 'INSUMO'
+
+        ORDER BY p.nombre
+    `);
+
+    return resultado.rows;
+}
+
+
+// ==========================================================
+// OBTENER COSTO ACTUAL DE UN INSUMO
+// ==========================================================
+
+async function obtenerCostoInsumo(idProducto) {
+
+    const producto = await pool.query(`
+        SELECT
+            p.id,
+            p.codigo,
+            p.nombre,
+            p.tipo,
+            p.id_unidad,
+            um.codigo AS unidad,
+            um.nombre AS unidad_nombre
+        FROM productos p
+        LEFT JOIN unidades_medida um
+            ON um.id = p.id_unidad
         WHERE p.id = $1
-          AND p.activo = true
-        `,
-        [idProducto]
-    );
+          AND p.activo = TRUE
+    `, [idProducto]);
 
 
-    if (productoResult.rows.length === 0) {
+    if (producto.rows.length === 0) {
 
         throw new Error(
-            "No existe un producto activo con ID " +
-            idProducto
+            "El producto no existe o está inactivo."
         );
 
     }
 
 
-    const producto = productoResult.rows[0];
+    const datosProducto =
+        producto.rows[0];
 
 
-    // ==================================================
-    // 4. AGREGAR PRODUCTO AL CAMINO
-    // ==================================================
+    if (datosProducto.tipo !== "INSUMO") {
 
-    const nuevoCamino = [
-        ...camino,
-        idProducto
-    ];
+        throw new Error(
+            "El producto seleccionado no es un INSUMO."
+        );
+
+    }
 
 
-    // ==================================================
-    // 5. SI ES INSUMO
-    // ==================================================
+    const costo = await pool.query(`
+        SELECT
+            id,
+            costo,
+            fecha_desde,
+            fecha_hasta,
+            activo
+        FROM costos_productos
+        WHERE id_producto = $1
+          AND activo = TRUE
+        ORDER BY fecha_desde DESC
+        LIMIT 1
+    `, [idProducto]);
+
+
+    return {
+
+        producto: datosProducto,
+
+        costo: costo.rows.length > 0
+            ? costo.rows[0]
+            : null
+
+    };
+}
+
+
+// ==========================================================
+// LISTAR HISTORIAL DE COSTOS
+// ==========================================================
+
+async function listarHistorialCosto(idProducto) {
+
+    const resultado = await pool.query(`
+        SELECT
+            id,
+            costo,
+            fecha_desde,
+            fecha_hasta,
+            activo
+        FROM costos_productos
+        WHERE id_producto = $1
+        ORDER BY fecha_desde DESC, id DESC
+    `, [idProducto]);
+
+    return resultado.rows;
+}
+
+
+// ==========================================================
+// REGISTRAR NUEVO COSTO DE INSUMO
+// ==========================================================
+
+async function registrarCostoInsumo(
+    idProducto,
+    costo
+) {
+
+    const client =
+        await pool.connect();
+
+    try {
+
+        await client.query("BEGIN");
+
+
+        // --------------------------------------------------
+        // Verificar producto
+        // --------------------------------------------------
+
+        const producto =
+            await client.query(`
+                SELECT
+                    p.id,
+                    p.codigo,
+                    p.nombre,
+                    p.tipo,
+                    p.id_unidad,
+                    um.codigo AS unidad,
+                    um.nombre AS unidad_nombre
+                FROM productos p
+                LEFT JOIN unidades_medida um
+                    ON um.id = p.id_unidad
+                WHERE p.id = $1
+                  AND p.activo = TRUE
+            `, [idProducto]);
+
+
+        if (producto.rows.length === 0) {
+
+            throw new Error(
+                "El producto no existe o está inactivo."
+            );
+
+        }
+
+
+        const datosProducto =
+            producto.rows[0];
+
+
+        if (datosProducto.tipo !== "INSUMO") {
+
+            throw new Error(
+                "Solo se puede registrar costo para productos INSUMO."
+            );
+
+        }
+
+
+        if (!datosProducto.id_unidad) {
+
+            throw new Error(
+                "El INSUMO no tiene una unidad de medida asignada."
+            );
+
+        }
+
+
+        // --------------------------------------------------
+        // Obtener costo activo actual
+        // --------------------------------------------------
+
+        const costoActual =
+            await client.query(`
+                SELECT
+                    id,
+                    costo,
+                    fecha_desde
+                FROM costos_productos
+                WHERE id_producto = $1
+                  AND activo = TRUE
+                ORDER BY fecha_desde DESC
+                LIMIT 1
+            `, [idProducto]);
+
+
+        const ahora =
+            new Date();
+
+
+        // --------------------------------------------------
+        // Cerrar costo anterior
+        // --------------------------------------------------
+
+        if (costoActual.rows.length > 0) {
+
+            await client.query(`
+                UPDATE costos_productos
+                SET
+                    fecha_hasta = $1,
+                    activo = FALSE
+                WHERE id = $2
+            `, [
+                ahora,
+                costoActual.rows[0].id
+            ]);
+
+        }
+
+
+        // --------------------------------------------------
+        // Crear nuevo costo
+        // --------------------------------------------------
+
+        const nuevoCosto =
+            await client.query(`
+                INSERT INTO costos_productos
+                (
+                    id_producto,
+                    costo,
+                    fecha_desde,
+                    fecha_hasta,
+                    activo
+                )
+                VALUES
+                (
+                    $1,
+                    $2,
+                    $3,
+                    NULL,
+                    TRUE
+                )
+                RETURNING
+                    id,
+                    id_producto,
+                    costo,
+                    fecha_desde,
+                    fecha_hasta,
+                    activo
+            `, [
+                idProducto,
+                costo,
+                ahora
+            ]);
+
+
+        await client.query("COMMIT");
+
+
+        return {
+
+            producto: datosProducto,
+
+            costo: nuevoCosto.rows[0]
+
+        };
+
+    } catch (error) {
+
+        await client.query("ROLLBACK");
+
+        throw error;
+
+    } finally {
+
+        client.release();
+
+    }
+}
+
+// ==========================================================
+// OBTENER ESTRUCTURA ACTIVA DE UN PRODUCTO
+// ==========================================================
+
+async function obtenerEstructuraProducto(
+    idProducto
+) {
+
+    // ------------------------------------------------------
+    // PRODUCTO
+    // ------------------------------------------------------
+
+    const productoResultado =
+        await pool.query(`
+            SELECT
+                p.id,
+                p.codigo,
+                p.nombre,
+                p.tipo,
+                p.id_unidad,
+                u.codigo AS unidad_codigo,
+                u.nombre AS unidad_nombre
+            FROM productos p
+
+            LEFT JOIN unidades_medida u
+                ON u.id = p.id_unidad
+
+            WHERE p.id = $1
+              AND p.activo = TRUE
+        `, [
+            idProducto
+        ]);
+
+
+    if (
+        productoResultado.rows.length === 0
+    ) {
+
+        throw new Error(
+            "El producto no existe o está inactivo."
+        );
+
+    }
+
+
+    const producto =
+        productoResultado.rows[0];
+
+
+    // ------------------------------------------------------
+    // VALIDAR TIPO
+    // ------------------------------------------------------
+
+    if (
+        producto.tipo !== "ELABORADO"
+    ) {
+
+        throw new Error(
+            "El producto seleccionado no es un producto ELABORADO."
+        );
+
+    }
+
+
+    // ------------------------------------------------------
+    // BUSCAR ESTRUCTURA ACTIVA
+    // ------------------------------------------------------
+
+    const estructuraResultado =
+        await pool.query(`
+            SELECT
+                pe.id,
+                pe.version,
+                pe.rendimiento,
+                pe.unidad_rendimiento,
+                pe.activo
+            FROM producto_estructura pe
+
+            WHERE pe.producto_id = $1
+              AND pe.activo = TRUE
+
+            ORDER BY pe.version DESC
+
+            LIMIT 1
+        `, [
+            idProducto
+        ]);
+
+
+    if (
+        estructuraResultado.rows.length === 0
+    ) {
+
+        throw new Error(
+            "El producto " +
+            producto.codigo +
+            " - " +
+            producto.nombre +
+            " no posee una estructura activa."
+        );
+
+    }
+
+
+    const estructura =
+        estructuraResultado.rows[0];
+
+
+    // ------------------------------------------------------
+    // BUSCAR COMPONENTES
+    // ------------------------------------------------------
+
+    const detalleResultado =
+        await pool.query(`
+            SELECT
+
+                d.id,
+                d.componente_id,
+                d.cantidad,
+                d.merma,
+                d.activo,
+
+                p.codigo AS componente_codigo,
+                p.nombre AS componente_nombre,
+                p.tipo AS componente_tipo,
+                p.id_unidad AS componente_id_unidad,
+
+                u.codigo AS componente_unidad,
+                u.nombre AS componente_unidad_nombre
+
+            FROM producto_estructura_detalle d
+
+            INNER JOIN productos p
+                ON p.id = d.componente_id
+
+            LEFT JOIN unidades_medida u
+                ON u.id = p.id_unidad
+
+            WHERE d.estructura_id = $1
+              AND d.activo = TRUE
+
+            ORDER BY d.id
+        `, [
+            estructura.id
+        ]);
+
+
+    // ------------------------------------------------------
+    // DEVOLVER ESTRUCTURA
+    // ------------------------------------------------------
+
+    return {
+
+        producto: {
+
+            id:
+                producto.id,
+
+            codigo:
+                producto.codigo,
+
+            nombre:
+                producto.nombre,
+
+            tipo:
+                producto.tipo,
+
+            id_unidad:
+                producto.id_unidad,
+
+            unidad:
+                producto.unidad_codigo,
+
+            unidad_nombre:
+                producto.unidad_nombre
+
+        },
+
+        estructura: {
+
+            id:
+                estructura.id,
+
+            version:
+                estructura.version,
+
+            rendimiento:
+                Number(
+                    estructura.rendimiento
+                ),
+
+            unidad_rendimiento:
+                estructura.unidad_rendimiento,
+
+            activo:
+                estructura.activo
+
+        },
+
+        detalle:
+            detalleResultado.rows.map(
+                function (item) {
+
+                    return {
+
+                        id:
+                            item.id,
+
+                        componente_id:
+                            item.componente_id,
+
+                        codigo:
+                            item.componente_codigo,
+
+                        nombre:
+                            item.componente_nombre,
+
+                        tipo:
+                            item.componente_tipo,
+
+                        id_unidad:
+                            item.componente_id_unidad,
+
+                        unidad:
+                            item.componente_unidad,
+
+                        unidad_nombre:
+                            item.componente_unidad_nombre,
+
+                        cantidad:
+                            Number(
+                                item.cantidad
+                            ),
+
+                        merma:
+                            Number(
+                                item.merma
+                            )
+
+                    };
+
+                }
+            )
+
+    };
+
+}
+
+
+// ==========================================================
+// CALCULAR COSTO DE PRODUCTO
+// ==========================================================
+
+async function calcularCostoProducto(
+    idProducto,
+    camino = []
+) {
+
+    // ------------------------------------------------------
+    // Validación
+    // ------------------------------------------------------
+
+    if (
+        !Number.isInteger(idProducto) ||
+        idProducto <= 0
+    ) {
+
+        throw new Error(
+            "El ID del producto no es válido."
+        );
+
+    }
+
+
+    // ------------------------------------------------------
+    // Detectar ciclo
+    // ------------------------------------------------------
+
+    if (camino.includes(idProducto)) {
+
+        const ciclo =
+            camino.concat(idProducto);
+
+        throw new Error(
+            "Se detectó una dependencia circular: " +
+            ciclo.join(" -> ")
+        );
+
+    }
+
+
+    const nuevoCamino =
+        camino.concat(idProducto);
+
+
+    // ------------------------------------------------------
+    // Producto
+    // ------------------------------------------------------
+
+    const productoResultado =
+        await pool.query(`
+            SELECT
+                p.id,
+                p.codigo,
+                p.nombre,
+                p.tipo,
+                p.id_unidad,
+                u.codigo AS unidad_codigo,
+                u.nombre AS unidad_nombre
+            FROM productos p
+            LEFT JOIN unidades_medida u
+                ON u.id = p.id_unidad
+            WHERE p.id = $1
+              AND p.activo = TRUE
+        `, [idProducto]);
+
+
+    if (productoResultado.rows.length === 0) {
+
+        throw new Error(
+            "El producto con ID " +
+            idProducto +
+            " no existe o está inactivo."
+        );
+
+    }
+
+
+    const producto =
+        productoResultado.rows[0];
+
+
+    // ======================================================
+    // INSUMO
+    // ======================================================
 
     if (producto.tipo === "INSUMO") {
 
-        const costoResult = await pool.query(
-            `
-            SELECT
-                id,
-                costo,
-                fecha_desde,
-                fecha_hasta
-            FROM costos_productos
-            WHERE id_producto = $1
-              AND activo = true
-            ORDER BY fecha_desde DESC
-            LIMIT 1
-            `,
-            [idProducto]
-        );
+        const costoResultado =
+            await pool.query(`
+                SELECT
+                    id,
+                    costo,
+                    fecha_desde,
+                    fecha_hasta
+                FROM costos_productos
+                WHERE id_producto = $1
+                  AND activo = TRUE
+                ORDER BY fecha_desde DESC
+                LIMIT 1
+            `, [idProducto]);
 
 
-        if (costoResult.rows.length === 0) {
+        if (costoResultado.rows.length === 0) {
 
             throw new Error(
                 "El producto " +
@@ -149,46 +682,68 @@ async function calcularCostoProducto(idProducto, camino = []) {
         }
 
 
-        const costo = costoResult.rows[0];
+        const costo =
+            costoResultado.rows[0];
 
 
         return {
 
-            id_producto: producto.id,
+            producto: {
 
-            codigo: producto.codigo,
+                id: producto.id,
+                codigo: producto.codigo,
+                nombre: producto.nombre,
+                tipo: producto.tipo,
+                id_unidad: producto.id_unidad,
+                unidad: producto.unidad_codigo,
+                unidad_nombre: producto.unidad_nombre
 
-            nombre: producto.nombre,
+            },
 
-            tipo: producto.tipo,
+            costo_unitario:
+                Number(costo.costo),
 
-            unidad: producto.unidad_codigo,
-
-            unidad_nombre: producto.unidad_nombre,
-
-            costo_total: Number(costo.costo),
-
-            costo_unitario: Number(costo.costo),
+            costo_total:
+                Number(costo.costo),
 
             rendimiento: 1,
 
-            unidad_rendimiento: producto.unidad_codigo,
+            unidad_rendimiento:
+                producto.unidad_codigo,
 
-            detalle: []
+            detalle: [],
+
+            fecha_costo:
+                costo.fecha_desde,
+
+            tipo_calculo: "INSUMO"
 
         };
 
     }
 
 
-    // ==================================================
-    // 6. SI ES ELABORADO
-    // ==================================================
+    // ======================================================
+    // ELABORADO
+    // ======================================================
 
-    if (producto.tipo === "ELABORADO") {
+    if (producto.tipo !== "ELABORADO") {
 
-        const estructuraResult = await pool.query(
-            `
+        throw new Error(
+            "El tipo de producto " +
+            producto.tipo +
+            " no es válido para cálculo de costos."
+        );
+
+    }
+
+
+    // ------------------------------------------------------
+    // Buscar estructura activa
+    // ------------------------------------------------------
+
+    const estructuraResultado =
+        await pool.query(`
             SELECT
                 pe.id,
                 pe.version,
@@ -196,232 +751,221 @@ async function calcularCostoProducto(idProducto, camino = []) {
                 pe.unidad_rendimiento
             FROM producto_estructura pe
             WHERE pe.producto_id = $1
-              AND pe.activo = true
+              AND pe.activo = TRUE
             ORDER BY pe.version DESC
             LIMIT 1
-            `,
-            [idProducto]
+        `, [idProducto]);
+
+
+    if (estructuraResultado.rows.length === 0) {
+
+        throw new Error(
+            "El producto " +
+            producto.codigo +
+            " - " +
+            producto.nombre +
+            " no posee una estructura activa."
         );
 
-
-        if (estructuraResult.rows.length === 0) {
-
-            throw new Error(
-                "El producto " +
-                producto.codigo +
-                " - " +
-                producto.nombre +
-                " no posee una estructura activa."
-            );
-
-        }
+    }
 
 
-        const estructura = estructuraResult.rows[0];
+    const estructura =
+        estructuraResultado.rows[0];
 
 
-        const rendimiento = Number(
-            estructura.rendimiento
+    const rendimiento =
+        Number(estructura.rendimiento);
+
+
+    if (
+        !Number.isFinite(rendimiento) ||
+        rendimiento <= 0
+    ) {
+
+        throw new Error(
+            "El rendimiento de la estructura no es válido."
         );
 
-
-        if (!Number.isFinite(rendimiento) ||
-            rendimiento <= 0) {
-
-            throw new Error(
-                "El producto " +
-                producto.codigo +
-                " posee un rendimiento inválido."
-            );
-
-        }
+    }
 
 
-        // ==============================================
-        // 7. OBTENER COMPONENTES
-        // ==============================================
+    // ------------------------------------------------------
+    // Detalle de estructura
+    // ------------------------------------------------------
 
-        const componentesResult = await pool.query(
-            `
+    const detalleResultado =
+        await pool.query(`
             SELECT
-                ped.id,
-                ped.componente_id,
-                ped.cantidad,
-                ped.merma,
+                d.id,
+                d.componente_id,
+                d.cantidad,
+                d.merma,
 
-                p.codigo,
-                p.nombre,
-                p.tipo,
-                p.id_unidad,
+                p.codigo AS componente_codigo,
+                p.nombre AS componente_nombre,
+                p.tipo AS componente_tipo,
+                p.id_unidad AS componente_id_unidad,
 
-                u.codigo AS unidad_codigo,
-                u.nombre AS unidad_nombre
+                u.codigo AS componente_unidad,
+                u.nombre AS componente_unidad_nombre
 
-            FROM producto_estructura_detalle ped
+            FROM producto_estructura_detalle d
 
             INNER JOIN productos p
-                ON p.id = ped.componente_id
+                ON p.id = d.componente_id
 
             LEFT JOIN unidades_medida u
                 ON u.id = p.id_unidad
 
-            WHERE ped.estructura_id = $1
-              AND ped.activo = true
-              AND p.activo = true
+            WHERE d.estructura_id = $1
+              AND d.activo = TRUE
 
-            ORDER BY ped.id
-            `,
-            [estructura.id]
-        );
+            ORDER BY d.id
+        `, [estructura.id]);
 
 
-        // ==============================================
-        // 8. CALCULAR COMPONENTES
-        // ==============================================
+    let costoTotal = 0;
 
-        let costoTotal = 0;
-
-        const detalle = [];
+    const detalle = [];
 
 
-        for (const componente of componentesResult.rows) {
+    // ------------------------------------------------------
+    // Calcular componentes
+    // ------------------------------------------------------
 
-            const cantidad = Number(
-                componente.cantidad
+    for (
+        const item of detalleResultado.rows
+    ) {
+
+        const cantidad =
+            Number(item.cantidad);
+
+        const merma =
+            Number(item.merma);
+
+
+        if (
+            !Number.isFinite(cantidad) ||
+            cantidad < 0
+        ) {
+
+            throw new Error(
+                "La cantidad del componente " +
+                item.componente_nombre +
+                " no es válida."
             );
-
-            const merma = Number(
-                componente.merma || 0
-            );
-
-
-            if (!Number.isFinite(cantidad) ||
-                cantidad < 0) {
-
-                throw new Error(
-                    "Cantidad inválida en el componente " +
-                    componente.codigo
-                );
-
-            }
-
-
-            if (!Number.isFinite(merma) ||
-                merma < 0) {
-
-                throw new Error(
-                    "Merma inválida en el componente " +
-                    componente.codigo
-                );
-
-            }
-
-
-            // ==========================================
-            // 9. CALCULAR CANTIDAD EFECTIVA
-            // ==========================================
-            //
-            // La merma se interpreta como porcentaje.
-            //
-            // Ejemplo:
-            //
-            // cantidad = 10
-            // merma    = 5
-            //
-            // 10 * (1 + 5 / 100)
-            // = 10.5
-            //
-            // ==========================================
-
-            const cantidadEfectiva =
-                cantidad *
-                (1 + merma / 100);
-
-
-            // ==========================================
-            // 10. CALCULAR COSTO DEL COMPONENTE
-            // ==========================================
-
-            const costoComponente =
-                await calcularCostoProducto(
-                    componente.componente_id,
-                    nuevoCamino
-                );
-
-
-            // ==========================================
-            // 11. CALCULAR SUBTOTAL
-            // ==========================================
-
-            const subtotal =
-                cantidadEfectiva *
-                costoComponente.costo_unitario;
-
-
-            costoTotal += subtotal;
-
-
-            // ==========================================
-            // 12. GUARDAR DETALLE
-            // ==========================================
-
-            detalle.push({
-
-                id: componente.id,
-
-                componente_id:
-                    componente.componente_id,
-
-                codigo:
-                    componente.codigo,
-
-                nombre:
-                    componente.nombre,
-
-                tipo:
-                    componente.tipo,
-
-                cantidad,
-
-                merma,
-
-                cantidad_efectiva:
-                    cantidadEfectiva,
-
-                unidad:
-                    componente.unidad_codigo,
-
-                unidad_nombre:
-                    componente.unidad_nombre,
-
-                costo_unitario:
-                    costoComponente.costo_unitario,
-
-                subtotal,
-
-                calculo:
-                    costoComponente
-
-            });
 
         }
 
 
-        // ==============================================
-        // 13. COSTO POR UNIDAD DE RENDIMIENTO
-        // ==============================================
+        if (
+            !Number.isFinite(merma) ||
+            merma < 0
+        ) {
 
-        const costoUnitario =
-            costoTotal / rendimiento;
+            throw new Error(
+                "La merma del componente " +
+                item.componente_nombre +
+                " no es válida."
+            );
+
+        }
 
 
-        // ==============================================
-        // 14. DEVOLVER RESULTADO
-        // ==============================================
+        // --------------------------------------------------
+        // Cantidad efectiva
+        // --------------------------------------------------
 
-        return {
+        const cantidadEfectiva =
+            cantidad *
+            (1 + merma / 100);
 
-            id_producto:
+
+        // --------------------------------------------------
+        // Calcular costo componente
+        // --------------------------------------------------
+
+        const costoComponente =
+            await calcularCostoProducto(
+                item.componente_id,
+                nuevoCamino
+            );
+
+
+        const costoUnitarioComponente =
+            Number(
+                costoComponente.costo_unitario
+            );
+
+
+        const subtotal =
+            cantidadEfectiva *
+            costoUnitarioComponente;
+
+
+        costoTotal += subtotal;
+
+
+        detalle.push({
+
+            id:
+                item.id,
+
+            componente_id:
+                item.componente_id,
+
+            codigo:
+                item.componente_codigo,
+
+            nombre:
+                item.componente_nombre,
+
+            tipo:
+                item.componente_tipo,
+
+            unidad:
+                item.componente_unidad,
+
+            unidad_nombre:
+                item.componente_unidad_nombre,
+
+            cantidad:
+                cantidad,
+
+            merma:
+                merma,
+
+            cantidad_efectiva:
+                cantidadEfectiva,
+
+            costo_unitario:
+                costoUnitarioComponente,
+
+            subtotal:
+                subtotal,
+
+            calculo:
+                costoComponente
+
+        });
+
+    }
+
+
+    // ------------------------------------------------------
+    // Costo unitario
+    // ------------------------------------------------------
+
+    const costoUnitario =
+        costoTotal / rendimiento;
+
+
+    return {
+
+        producto: {
+
+            id:
                 producto.id,
 
             codigo:
@@ -433,50 +977,191 @@ async function calcularCostoProducto(idProducto, camino = []) {
             tipo:
                 producto.tipo,
 
+            id_unidad:
+                producto.id_unidad,
+
             unidad:
                 producto.unidad_codigo,
 
             unidad_nombre:
-                producto.unidad_nombre,
+                producto.unidad_nombre
 
-            estructura_id:
+        },
+
+        estructura: {
+
+            id:
                 estructura.id,
 
             version:
-                estructura.version,
+                estructura.version
 
+        },
+
+        rendimiento:
             rendimiento,
 
-            unidad_rendimiento:
-                estructura.unidad_rendimiento,
+        unidad_rendimiento:
+            estructura.unidad_rendimiento,
 
-            costo_total:
-                costoTotal,
+        costo_total:
+            costoTotal,
 
-            costo_unitario:
-                costoUnitario,
+        costo_unitario:
+            costoUnitario,
 
-            detalle
+        detalle:
+            detalle,
 
-        };
+        tipo_calculo:
+            "ELABORADO"
 
+    };
+}
+
+// ======================================================
+// OBTENER ESTRUCTURA + COSTO ACTUAL DE COMPONENTES
+// ======================================================
+
+const obtenerEstructuraConCostos = async (idProducto) => {
+
+    if (!idProducto || isNaN(idProducto)) {
+        throw new Error("ID de producto inválido");
     }
 
+    // --------------------------------------------------
+    // PRODUCTO
+    // --------------------------------------------------
 
-    // ==================================================
-    // 15. TIPO NO SOPORTADO
-    // ==================================================
+    const productoResult = await pool.query(`
+        SELECT
+            p.id,
+            p.codigo,
+            p.nombre,
+            p.tipo,
+            p.id_unidad,
+            um.codigo AS unidad,
+            um.nombre AS unidad_nombre
+        FROM productos p
+        LEFT JOIN unidades_medida um
+            ON um.id = p.id_unidad
+        WHERE p.id = $1
+          AND p.activo = TRUE
+    `, [idProducto]);
 
-    throw new Error(
-        "Tipo de producto no soportado: " +
-        producto.tipo
-    );
+    if (productoResult.rows.length === 0) {
+        throw new Error("Producto no encontrado");
+    }
 
-}
+    const producto = productoResult.rows[0];
+
+    // --------------------------------------------------
+    // DEBE SER PRODUCTO ELABORADO
+    // --------------------------------------------------
+
+    if (producto.tipo !== "ELABORADO") {
+        throw new Error(
+            "El producto seleccionado no es un producto ELABORADO"
+        );
+    }
+
+    // --------------------------------------------------
+    // ÚLTIMA ESTRUCTURA ACTIVA
+    // --------------------------------------------------
+
+    const estructuraResult = await pool.query(`
+        SELECT
+            pe.id,
+            pe.version,
+            pe.rendimiento,
+            pe.unidad_rendimiento,
+            pe.activo
+        FROM producto_estructura pe
+        WHERE pe.producto_id = $1
+          AND pe.activo = TRUE
+        ORDER BY pe.version DESC
+        LIMIT 1
+    `, [idProducto]);
+
+    if (estructuraResult.rows.length === 0) {
+        throw new Error(
+            "El producto no tiene una estructura activa"
+        );
+    }
+
+    const estructura = estructuraResult.rows[0];
+
+    // --------------------------------------------------
+    // COMPONENTES
+    // --------------------------------------------------
+
+    const detalleResult = await pool.query(`
+        SELECT
+            ped.id,
+            ped.componente_id,
+
+            p.codigo,
+            p.nombre,
+            p.tipo,
+
+            p.id_unidad,
+
+            um.codigo AS unidad,
+            um.nombre AS unidad_nombre,
+
+            ped.cantidad,
+            ped.merma,
+
+            cp.costo AS costo_unitario
+
+        FROM producto_estructura_detalle ped
+
+        INNER JOIN productos p
+            ON p.id = ped.componente_id
+
+        LEFT JOIN unidades_medida um
+            ON um.id = p.id_unidad
+
+        LEFT JOIN costos_productos cp
+            ON cp.id_producto = ped.componente_id
+           AND cp.activo = TRUE
+
+        WHERE ped.estructura_id = $1
+          AND ped.activo = TRUE
+          AND p.activo = TRUE
+
+        ORDER BY ped.id
+    `, [estructura.id]);
+
+    // --------------------------------------------------
+    // RESULTADO
+    // --------------------------------------------------
+
+    return {
+
+        producto: producto,
+
+        estructura: {
+            id: estructura.id,
+            version: estructura.version,
+            rendimiento: estructura.rendimiento,
+            unidad_rendimiento: estructura.unidad_rendimiento,
+            activo: estructura.activo
+        },
+
+        detalle: detalleResult.rows
+
+    };
+
+};
 
 
 module.exports = {
-
-    calcularCostoProducto
-
+    calcularCostoProducto,
+    listarInsumos,
+    obtenerCostoInsumo,
+    registrarCostoInsumo,
+    listarHistorialCosto,
+    obtenerEstructuraProducto,
+    obtenerEstructuraConCostos
 };

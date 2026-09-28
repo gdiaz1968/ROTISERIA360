@@ -5,6 +5,14 @@ let detalleEstructura = [];
 let estructuraActual = null;
 let modoEstructura = "NUEVO";
 
+/*
+    Índice del componente que se está editando.
+
+    -1 = no se está editando ningún componente.
+     0, 1, 2... = componente seleccionado.
+*/
+let indiceComponenteEditando = -1;
+
 
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -255,6 +263,8 @@ function seleccionarProductoEstructura() {
 
         detalleEstructura = [];
 
+        indiceComponenteEditando = -1;
+
         limpiarDatosProducto();
 
         mostrarDetalle();
@@ -307,6 +317,8 @@ function seleccionarProductoEstructura() {
 
     detalleEstructura = [];
 
+    indiceComponenteEditando = -1;
+
 
     document.getElementById(
         "estructura-rendimiento"
@@ -314,6 +326,8 @@ function seleccionarProductoEstructura() {
 
 
     limpiarVersionEstado();
+
+    limpiarComponente();
 
     mostrarDetalle();
 
@@ -339,7 +353,7 @@ function seleccionarComponente() {
 
     if (!componenteId) {
 
-        limpiarComponente();
+        limpiarDatosComponenteSinCombo();
 
         return;
     }
@@ -379,7 +393,7 @@ function seleccionarComponente() {
 
 
 /* =========================================================
-   AGREGAR COMPONENTE
+   AGREGAR / ACTUALIZAR COMPONENTE
    ========================================================= */
 
 function agregarComponente() {
@@ -459,6 +473,109 @@ function agregarComponente() {
 
 
     /*
+        =====================================================
+        MODO EDICION DE COMPONENTE
+        =====================================================
+    */
+
+    if (indiceComponenteEditando >= 0) {
+
+        var item =
+            detalleEstructura[
+                indiceComponenteEditando
+            ];
+
+
+        if (!item) {
+
+            alert(
+                "No se encontró el componente que se está editando."
+            );
+
+            indiceComponenteEditando = -1;
+
+            actualizarBotonComponente();
+
+            return;
+        }
+
+
+        /*
+            No permitimos cambiar el componente
+            por otro que ya exista en la estructura.
+        */
+
+        var componenteExistente =
+            detalleEstructura.find(function (elemento, index) {
+
+                return (
+                    index !== indiceComponenteEditando &&
+                    elemento.componente_id === componenteId
+                );
+
+            });
+
+
+        if (componenteExistente) {
+
+            alert(
+                "El componente seleccionado ya existe en la estructura."
+            );
+
+            return;
+        }
+
+
+        /*
+            Actualizamos el componente existente.
+        */
+
+        item.componente_id =
+            componente.id;
+
+        item.codigo =
+            componente.codigo;
+
+        item.nombre =
+            componente.nombre;
+
+        item.tipo =
+            componente.tipo;
+
+        item.unidad =
+            componente.unidad;
+
+        item.cantidad =
+            cantidad;
+
+        item.merma =
+            merma;
+
+
+        /*
+            Salimos del modo edición.
+        */
+
+        indiceComponenteEditando = -1;
+
+
+        mostrarDetalle();
+
+        limpiarComponente();
+
+        actualizarBotonComponente();
+
+        return;
+    }
+
+
+    /*
+        =====================================================
+        MODO AGREGAR COMPONENTE
+        =====================================================
+    */
+
+    /*
         No permitimos agregar dos veces
         el mismo componente.
     */
@@ -503,7 +620,123 @@ function agregarComponente() {
     mostrarDetalle();
 
     limpiarComponente();
+
+    actualizarBotonComponente();
 }
+
+
+/* =========================================================
+   EDITAR COMPONENTE
+   ========================================================= */
+
+function editarComponente(index) {
+
+    if (modoEstructura !== "MODIFICACION") {
+
+        alert(
+            "La estructura no está en modo modificación."
+        );
+
+        return;
+    }
+
+
+    var item =
+        detalleEstructura[index];
+
+
+    if (!item) {
+
+        alert(
+            "No se encontró el componente seleccionado."
+        );
+
+        return;
+    }
+
+
+    indiceComponenteEditando =
+        index;
+
+
+    /*
+        Seleccionamos el componente en el combo.
+    */
+
+    document.getElementById(
+        "estructura-componente"
+    ).value =
+        item.componente_id;
+
+
+    /*
+        Cargamos código, tipo y unidad.
+    */
+
+    seleccionarComponente();
+
+
+    /*
+        Cargamos cantidad y merma.
+    */
+
+    document.getElementById(
+        "estructura-cantidad"
+    ).value =
+        item.cantidad;
+
+
+    document.getElementById(
+        "estructura-merma"
+    ).value =
+        item.merma;
+
+
+    /*
+        Cambiamos el texto del botón.
+    */
+
+    actualizarBotonComponente();
+}
+
+
+/* =========================================================
+   CANCELAR EDICION DE COMPONENTE
+   ========================================================= */
+
+function cancelarEdicionComponente() {
+
+    indiceComponenteEditando = -1;
+
+    limpiarComponente();
+
+    actualizarBotonComponente();
+
+    mostrarDetalle();
+}
+
+
+/* =========================================================
+   ACTUALIZAR TEXTO DEL BOTON DE COMPONENTE
+   ========================================================= */
+function actualizarBotonComponente() {
+
+    var boton =
+        document.getElementById(
+            "btn-agregar-componente"
+        );
+
+
+    if (!boton) {
+
+        return;
+    }
+
+
+    boton.textContent =
+        "Agregar componente";
+}
+
 
 
 /* =========================================================
@@ -533,6 +766,10 @@ function mostrarDetalle() {
             document.createElement("tr");
 
 
+        /*
+            CODIGO
+        */
+
         var columnaCodigo =
             document.createElement("td");
 
@@ -545,6 +782,10 @@ function mostrarDetalle() {
             columnaCodigo
         );
 
+
+        /*
+            NOMBRE
+        */
 
         var columnaNombre =
             document.createElement("td");
@@ -559,6 +800,10 @@ function mostrarDetalle() {
         );
 
 
+        /*
+            TIPO
+        */
+
         var columnaTipo =
             document.createElement("td");
 
@@ -571,6 +816,10 @@ function mostrarDetalle() {
             columnaTipo
         );
 
+
+        /*
+            UNIDAD
+        */
 
         var columnaUnidad =
             document.createElement("td");
@@ -585,6 +834,10 @@ function mostrarDetalle() {
         );
 
 
+        /*
+            CANTIDAD
+        */
+
         var columnaCantidad =
             document.createElement("td");
 
@@ -597,6 +850,10 @@ function mostrarDetalle() {
             columnaCantidad
         );
 
+
+        /*
+            MERMA
+        */
 
         var columnaMerma =
             document.createElement("td");
@@ -611,9 +868,62 @@ function mostrarDetalle() {
         );
 
 
+        /*
+            ACCIONES
+        */
+
         var columnaAccion =
             document.createElement("td");
 
+
+        /*
+            BOTON MODIFICAR
+        */
+
+        var botonModificar =
+            document.createElement("button");
+
+
+        botonModificar.type =
+            "button";
+
+
+        botonModificar.textContent =
+            "Modificar";
+
+
+        if (
+            modoEstructura === "MODIFICACION"
+        ) {
+
+            botonModificar.disabled =
+                false;
+
+
+            botonModificar.addEventListener(
+                "click",
+                function () {
+
+                    editarComponente(index);
+
+                }
+            );
+
+        } else {
+
+            botonModificar.disabled =
+                true;
+        }
+
+
+        columnaAccion.appendChild(
+            botonModificar
+        );
+
+
+        /*
+            BOTON ELIMINAR
+        */
 
         var botonEliminar =
             document.createElement("button");
@@ -628,13 +938,16 @@ function mostrarDetalle() {
 
 
         /*
-            En modo consulta el botón
-            queda deshabilitado.
+            En modo consulta los botones
+            quedan deshabilitados.
         */
 
-        if (modoEstructura === "CONSULTA") {
+        if (
+            modoEstructura === "CONSULTA"
+        ) {
 
-            botonEliminar.disabled = true;
+            botonEliminar.disabled =
+                true;
 
         } else {
 
@@ -683,6 +996,37 @@ function eliminarComponente(index) {
     }
 
 
+    /*
+        Si estamos editando este componente,
+        cancelamos la edición.
+    */
+
+    if (
+        indiceComponenteEditando === index
+    ) {
+
+        indiceComponenteEditando = -1;
+
+        limpiarComponente();
+
+        actualizarBotonComponente();
+    }
+
+
+    /*
+        Si estamos editando un componente
+        posterior al que eliminamos, ajustamos
+        el índice.
+    */
+
+    else if (
+        indiceComponenteEditando > index
+    ) {
+
+        indiceComponenteEditando--;
+    }
+
+
     detalleEstructura.splice(
         index,
         1
@@ -699,34 +1043,90 @@ function eliminarComponente(index) {
 
 function limpiarComponente() {
 
-    document.getElementById(
-        "estructura-componente"
-    ).value = "";
+    var combo =
+        document.getElementById(
+            "estructura-componente"
+        );
 
 
-    document.getElementById(
-        "estructura-componente-codigo"
-    ).value = "";
+    if (combo) {
+
+        combo.value = "";
+    }
 
 
-    document.getElementById(
-        "estructura-componente-tipo"
-    ).value = "";
+    limpiarDatosComponenteSinCombo();
 
 
-    document.getElementById(
-        "estructura-componente-unidad"
-    ).value = "";
+    actualizarBotonComponente();
+}
 
 
-    document.getElementById(
-        "estructura-cantidad"
-    ).value = "";
+/* =========================================================
+   LIMPIAR DATOS DEL COMPONENTE
+   SIN TOCAR EL COMBO
+   ========================================================= */
+
+function limpiarDatosComponenteSinCombo() {
+
+    var codigo =
+        document.getElementById(
+            "estructura-componente-codigo"
+        );
 
 
-    document.getElementById(
-        "estructura-merma"
-    ).value = "0";
+    var tipo =
+        document.getElementById(
+            "estructura-componente-tipo"
+        );
+
+
+    var unidad =
+        document.getElementById(
+            "estructura-componente-unidad"
+        );
+
+
+    var cantidad =
+        document.getElementById(
+            "estructura-cantidad"
+        );
+
+
+    var merma =
+        document.getElementById(
+            "estructura-merma"
+        );
+
+
+    if (codigo) {
+
+        codigo.value = "";
+    }
+
+
+    if (tipo) {
+
+        tipo.value = "";
+    }
+
+
+    if (unidad) {
+
+        unidad.value = "";
+    }
+
+
+    if (cantidad) {
+
+        cantidad.value = "";
+    }
+
+
+    if (merma) {
+
+        merma.value = "0";
+    }
 }
 
 
@@ -832,6 +1232,7 @@ function mostrarVersionEstado(
                 : "INACTIVA";
 
     }
+
 }
 
 
@@ -851,6 +1252,10 @@ function establecerModoNuevo() {
 
     detalleEstructura =
         [];
+
+
+    indiceComponenteEditando =
+        -1;
 
 
     var producto =
@@ -923,6 +1328,10 @@ async function consultarEstructura() {
 
             detalleEstructura =
                 [];
+
+
+            indiceComponenteEditando =
+                -1;
 
 
             mostrarDetalle();
@@ -1070,6 +1479,10 @@ async function consultarEstructura() {
             );
 
 
+        indiceComponenteEditando =
+            -1;
+
+
         document.getElementById(
             "estructura-producto"
         ).value =
@@ -1104,8 +1517,7 @@ async function consultarEstructura() {
 
 
         /*
-            NUEVO:
-            mostramos versión y estado
+            Mostramos versión y estado
             provenientes directamente de DB.
         */
 
@@ -1114,6 +1526,8 @@ async function consultarEstructura() {
             estructuraActual.activo
         );
 
+
+        limpiarComponente();
 
         mostrarDetalle();
 
@@ -1160,6 +1574,12 @@ function habilitarModificacion() {
     modoEstructura =
         "MODIFICACION";
 
+
+    indiceComponenteEditando =
+        -1;
+
+
+    limpiarComponente();
 
     actualizarEstadoBotones();
 }
@@ -1230,6 +1650,21 @@ async function guardarEstructura() {
 
         alert(
             "Debe agregar al menos un componente."
+        );
+
+        return;
+    }
+
+
+    /*
+        No permitimos guardar mientras
+        haya un componente en edición.
+    */
+
+    if (indiceComponenteEditando >= 0) {
+
+        alert(
+            "Primero debe actualizar el componente que está editando."
         );
 
         return;
@@ -1403,13 +1838,6 @@ async function guardarEstructura() {
 
         /*
             RESPUESTA DE MODIFICACION
-
-            El backend devuelve:
-
-            version_anterior
-            version
-
-            No devuelve nueva_version.
         */
 
         else {
@@ -1682,13 +2110,15 @@ function actualizarEstadoBotones() {
 
     actualizarCamposSegunModo();
 
+
     /*
         Volvemos a dibujar el detalle para que
-        los botones de eliminar de cada fila
-        respeten el modo actual.
+        los botones respeten el modo actual.
     */
 
     mostrarDetalle();
+
+    actualizarBotonComponente();
 }
 
 
