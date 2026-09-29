@@ -267,7 +267,7 @@ function seleccionarProductoEstructura() {
 
         limpiarDatosProducto();
 
-        mostrarDetalle();
+        mostrarDetalleEstructura();
 
         actualizarEstadoBotones();
 
@@ -329,7 +329,7 @@ function seleccionarProductoEstructura() {
 
     limpiarComponente();
 
-    mostrarDetalle();
+    mostrarDetalleEstructura();
 
     actualizarEstadoBotones();
 }
@@ -559,7 +559,7 @@ function agregarComponente() {
         indiceComponenteEditando = -1;
 
 
-        mostrarDetalle();
+        mostrarDetalleEstructura();
 
         limpiarComponente();
 
@@ -617,7 +617,7 @@ function agregarComponente() {
     });
 
 
-    mostrarDetalle();
+    mostrarDetalleEstructura();
 
     limpiarComponente();
 
@@ -712,7 +712,7 @@ function cancelarEdicionComponente() {
 
     actualizarBotonComponente();
 
-    mostrarDetalle();
+    mostrarDetalleEstructura();
 }
 
 
@@ -743,7 +743,7 @@ function actualizarBotonComponente() {
    MOSTRAR DETALLE
    ========================================================= */
 
-function mostrarDetalle() {
+function mostrarDetalleEstructura() {
 
     var tbody =
         document.getElementById(
@@ -1033,7 +1033,7 @@ function eliminarComponente(index) {
     );
 
 
-    mostrarDetalle();
+    mostrarDetalleEstructura();
 }
 
 
@@ -1275,7 +1275,7 @@ function establecerModoNuevo() {
 
     limpiarComponente();
 
-    mostrarDetalle();
+    mostrarDetalleEstructura();
 
     actualizarEstadoBotones();
 }
@@ -1334,7 +1334,7 @@ async function consultarEstructura() {
                 -1;
 
 
-            mostrarDetalle();
+            mostrarDetalleEstructura();
 
 
             modoEstructura =
@@ -1529,7 +1529,7 @@ async function consultarEstructura() {
 
         limpiarComponente();
 
-        mostrarDetalle();
+        mostrarDetalleEstructura();
 
 
         modoEstructura =
@@ -2116,7 +2116,7 @@ function actualizarEstadoBotones() {
         los botones respeten el modo actual.
     */
 
-    mostrarDetalle();
+    mostrarDetalleEstructura();
 
     actualizarBotonComponente();
 }
