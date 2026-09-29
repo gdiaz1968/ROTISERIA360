@@ -252,6 +252,7 @@ router.post(
     }
 );
 
+
 // ==========================================================
 // OBTENER ESTRUCTURA DE PRODUCTO
 // ==========================================================
@@ -328,48 +329,83 @@ router.get(
     }
 );
 
+
 // ======================================================
-// ESTRUCTURA + COSTOS ACTUALES
+// ESTRUCTURA + COSTO COMPLETO
 // ======================================================
 
-router.get("/estructura/:id/costos", async (req, res) => {
+router.get(
+    "/estructura/:id/costos",
+    async function (req, res) {
 
-    try {
+        try {
 
-        const idProducto = parseInt(req.params.id, 10);
+            const idProducto =
+                parseInt(
+                    req.params.id,
+                    10
+                );
 
-        if (isNaN(idProducto)) {
+
+            if (
+                isNaN(idProducto) ||
+                idProducto <= 0
+            ) {
+
+                return res.status(400).json({
+
+                    ok: false,
+
+                    mensaje:
+                        "ID de producto inválido"
+
+                });
+
+            }
+
+
+            console.log(
+                ">>> CALCULANDO COSTO DESDE ESTRUCTURA:",
+                idProducto
+            );
+
+
+            const resultado =
+                await calcularCostoProducto(
+                    idProducto
+                );
+
+
+            return res.json({
+
+                ok: true,
+
+                resultado: resultado
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "ERROR CALCULANDO COSTO DESDE ESTRUCTURA:",
+                error
+            );
+
 
             return res.status(400).json({
+
                 ok: false,
-                mensaje: "ID de producto inválido"
+
+                mensaje:
+                    error.message
+
             });
 
         }
 
-        const resultado =
-            await obtenerEstructuraConCostos(idProducto);
-
-        return res.json({
-            ok: true,
-            resultado: resultado
-        });
-
-    } catch (error) {
-
-        console.error(
-            "Error obteniendo estructura con costos:",
-            error
-        );
-
-        return res.status(400).json({
-            ok: false,
-            mensaje: error.message
-        });
-
     }
-
-});
+);
 
 
 // ==========================================================
