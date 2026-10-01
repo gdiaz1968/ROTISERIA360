@@ -62,7 +62,7 @@ const listarComponentes = async (req, res) => {
                 ON um.id = p.id_unidad
             WHERE p.activo = TRUE
               AND p.tipo IN ('INSUMO', 'ELABORADO')
-            ORDER BY p.nombre
+            ORDER BY p.codigo, p.nombre
         `);
 
         res.json(resultado.rows);

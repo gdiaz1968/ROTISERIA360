@@ -24,7 +24,7 @@ const listarProductos = async (req, res) => {
             LEFT JOIN unidades_medida um
                 ON um.id = p.id_unidad
             WHERE p.activo = TRUE
-            ORDER BY p.nombre
+            ORDER BY p.codigo, p.nombre
         `);
 
         res.json(resultado.rows);

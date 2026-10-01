@@ -1878,6 +1878,34 @@
                             }
 
 
+                            /*
+                             * =================================================
+                             * ACTUALIZAR ESTRUCTURA
+                             * =================================================
+                             *
+                             * Cada vez que se ingresa al módulo
+                             * Estructura de productos se vuelven
+                             * a cargar:
+                             *
+                             * 1. Productos elaborados
+                             * 2. Componentes
+                             *
+                             * Esto permite que los productos creados
+                             * recientemente en Productos aparezcan
+                             * inmediatamente en los combos.
+                             */
+
+                            if (
+                                modulo === "estructura"
+                            ) {
+
+                                cargarProductosElaborados();
+
+                                cargarComponentes();
+
+                            }
+
+
                             if (
                                 informacionModulos[
                                     modulo
