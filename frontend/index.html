@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 
 <html lang="es">
@@ -1513,11 +1514,12 @@
                         <div>
 
                             <h2>
-                                Detalle del costo
+                                Detalle del cálculo
+
                             </h2>
 
                             <span>
-                                Componentes que forman el costo del producto
+                                Componentes utilizados para determinar el costo
                             </span>
 
                         </div>
@@ -1587,6 +1589,151 @@
 
 
                 <!-- ================================================= -->
+                <!-- EXPLICACION DEL CALCULO -->
+                <!-- ================================================= -->
+
+                <section
+                    class="panel"
+                    id="costos-explicacion">
+
+                    <div class="titulo-listado">
+
+                        <div>
+
+                            <h2>
+                                Cómo se obtiene el costo
+                            </h2>
+
+                            <span>
+                                Relación entre los componentes, el rendimiento y el costo final
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="costos-calculo-explicacion">
+
+
+                        <div class="costos-calculo-paso">
+
+                            <strong>
+                                1. Costo de cada componente
+                            </strong>
+
+                            <p>
+                                Para cada componente se determina su cantidad efectiva,
+                                se aplica la merma y se multiplica por su costo unitario.
+                            </p>
+
+                            <div class="costos-formula">
+
+                                Cantidad efectiva × Costo unitario = Subtotal
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="costos-calculo-paso">
+
+                            <strong>
+                                2. Costo total del producto
+                            </strong>
+
+                            <p>
+                                Se suman los subtotales de todos los componentes
+                                que forman la estructura.
+                            </p>
+
+                            <div class="costos-formula">
+
+                                Σ Subtotales = Costo total
+
+                            </div>
+
+
+                            <div class="costos-formula-resultado">
+
+                                <span>
+                                    Costo total:
+                                </span>
+
+                                <strong id="costos-explicacion-total">
+                                    -
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="costos-calculo-paso">
+
+                            <strong>
+                                3. Costo unitario
+                            </strong>
+
+                            <p>
+                                El costo total se divide por el rendimiento
+                                definido para la estructura.
+                            </p>
+
+                            <div class="costos-formula">
+
+                                Costo total ÷ Rendimiento = Costo unitario
+
+                            </div>
+
+
+                            <div class="costos-formula-resultado">
+
+                                <span>
+                                    Costo total:
+                                </span>
+
+                                <strong id="costos-explicacion-total-2">
+                                    -
+                                </strong>
+
+                            </div>
+
+
+                            <div class="costos-formula-resultado">
+
+                                <span>
+                                    Rendimiento:
+                                </span>
+
+                                <strong id="costos-explicacion-rendimiento">
+                                    -
+                                </strong>
+
+                            </div>
+
+
+                            <div class="costos-formula-resultado">
+
+                                <span>
+                                    Costo unitario:
+                                </span>
+
+                                <strong id="costos-explicacion-unitario">
+                                    -
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+
+                <!-- ================================================= -->
                 <!-- RESUMEN DEL COSTO -->
                 <!-- ================================================= -->
 
@@ -1594,15 +1741,33 @@
                     class="panel costos-resultado"
                     id="costos-resultado">
 
+                    <div class="titulo-listado">
+
+                        <div>
+
+                            <h2>
+                                Resumen del costo
+                            </h2>
+
+                            <span>
+                                Resultado final del cálculo
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
                     <div class="costos-resumen">
+
 
                         <div class="costo-resumen-item">
 
                             <span>
-                                Costo unitario
+                                Costo total
                             </span>
 
-                            <strong id="costos-costo-unitario">
+                            <strong id="costos-costo-total">
                                 -
                             </strong>
 
@@ -1625,14 +1790,28 @@
                         <div class="costo-resumen-item">
 
                             <span>
-                                Costo total
+                                Costo unitario
                             </span>
 
-                            <strong id="costos-costo-total">
+                            <strong id="costos-costo-unitario">
                                 -
                             </strong>
 
                         </div>
+
+                    </div>
+
+
+                    <div class="costos-formula-final">
+
+                        <span>
+                            Costo unitario =
+                            Costo total ÷ Rendimiento
+                        </span>
+
+                        <strong id="costos-formula-final-resultado">
+                            -
+                        </strong>
 
                     </div>
 
@@ -1882,17 +2061,6 @@
                              * =================================================
                              * ACTUALIZAR ESTRUCTURA
                              * =================================================
-                             *
-                             * Cada vez que se ingresa al módulo
-                             * Estructura de productos se vuelven
-                             * a cargar:
-                             *
-                             * 1. Productos elaborados
-                             * 2. Componentes
-                             *
-                             * Esto permite que los productos creados
-                             * recientemente en Productos aparezcan
-                             * inmediatamente en los combos.
                              */
 
                             if (
@@ -1938,3 +2106,4 @@
 </body>
 
 </html>
+```

@@ -215,7 +215,6 @@ async function cargarProductosCostos() {
             }
         );
 
-
     }
     catch (error) {
 
@@ -322,12 +321,11 @@ async function cargarInsumosCostos() {
             }
         );
 
-
     }
     catch (error) {
 
         console.error(
-            "ERROR CARGANDO INSUMOS:",
+            "ERROR CARGANDO INSUMOS COSTOS:",
             error
         );
 
@@ -457,7 +455,6 @@ async function seleccionarInsumoCosto() {
             "",
             ""
         );
-
 
     }
     catch (error) {
@@ -597,7 +594,6 @@ async function guardarCostoInsumo() {
             "ok"
         );
 
-
     }
     catch (error) {
 
@@ -706,6 +702,13 @@ function seleccionarProductoCosto() {
         );
 
 
+    if (!combo) {
+
+        return;
+
+    }
+
+
     const id =
         Number(
             combo.value
@@ -779,11 +782,22 @@ function seleccionarProductoCosto() {
 
 async function consultarCosto() {
 
+    const combo =
+        document.getElementById(
+            "costos-producto"
+        );
+
+
+    if (!combo) {
+
+        return;
+
+    }
+
+
     const id =
         Number(
-            document.getElementById(
-                "costos-producto"
-            ).value
+            combo.value
         );
 
 
@@ -839,7 +853,6 @@ async function consultarCosto() {
             "Estructura consultada correctamente.",
             "ok"
         );
-
 
     }
     catch (error) {
@@ -908,17 +921,28 @@ function mostrarResultado(
 
 
     // --------------------------------------------------
+    // VARIABLES DEL RESULTADO
+    // --------------------------------------------------
+
+    let rendimiento = null;
+    let unidadRendimiento = "";
+
+    let costoTotal = null;
+    let costoUnitario = null;
+
+
+    // --------------------------------------------------
     // RENDIMIENTO
     // --------------------------------------------------
 
     if (resultado.estructura) {
 
-        const rendimiento =
-            resultado.estructura.rendimiento;
+        rendimiento =
+            resultado.rendimiento;
 
 
-        const unidad =
-            resultado.estructura.unidad_rendimiento ||
+        unidadRendimiento =
+            resultado.unidad_rendimiento ||
             "";
 
 
@@ -934,8 +958,8 @@ function mostrarResultado(
                     rendimiento
                 ) +
                 (
-                    unidad
-                        ? " " + unidad
+                    unidadRendimiento
+                        ? " " + unidadRendimiento
                         : ""
                 );
 
@@ -945,7 +969,32 @@ function mostrarResultado(
 
 
     // --------------------------------------------------
-    // COSTOS DEL RESULTADO
+    // COSTO TOTAL
+    // --------------------------------------------------
+
+    if (
+        resultado.costo_total !== null &&
+        resultado.costo_total !== undefined
+    ) {
+
+        costoTotal =
+            Number(
+                resultado.costo_total
+            );
+
+
+        document.getElementById(
+            "costos-costo-total"
+        ).textContent =
+            costosFormatearMoneda(
+                costoTotal
+            );
+
+    }
+
+
+    // --------------------------------------------------
+    // COSTO UNITARIO
     // --------------------------------------------------
 
     if (
@@ -953,29 +1002,32 @@ function mostrarResultado(
         resultado.costo_unitario !== undefined
     ) {
 
+        costoUnitario =
+            Number(
+                resultado.costo_unitario
+            );
+
+
         document.getElementById(
             "costos-costo-unitario"
         ).textContent =
             costosFormatearMoneda(
-                resultado.costo_unitario
+                costoUnitario
             );
 
     }
 
 
-    if (
-        resultado.costo_total !== null &&
-        resultado.costo_total !== undefined
-    ) {
+    // --------------------------------------------------
+    // MOSTRAR EXPLICACION DEL CALCULO
+    // --------------------------------------------------
 
-        document.getElementById(
-            "costos-costo-total"
-        ).textContent =
-            costosFormatearMoneda(
-                resultado.costo_total
-            );
-
-    }
+    mostrarExplicacionCosto(
+        costoTotal,
+        rendimiento,
+        unidadRendimiento,
+        costoUnitario
+    );
 
 
     // --------------------------------------------------
@@ -985,6 +1037,204 @@ function mostrarResultado(
     mostrarDetalleCosto(
         resultado.detalle || []
     );
+
+}
+
+
+// ======================================================
+// MOSTRAR EXPLICACION DEL COSTO
+// ======================================================
+
+function mostrarExplicacionCosto(
+    costoTotal,
+    rendimiento,
+    unidadRendimiento,
+    costoUnitario
+) {
+
+    const campoTotal =
+        document.getElementById(
+            "costos-explicacion-total"
+        );
+
+
+    const campoTotal2 =
+        document.getElementById(
+            "costos-explicacion-total-2"
+        );
+
+
+    const campoRendimiento =
+        document.getElementById(
+            "costos-explicacion-rendimiento"
+        );
+
+
+    const campoUnitario =
+        document.getElementById(
+            "costos-explicacion-unitario"
+        );
+
+
+    const campoFormulaFinal =
+        document.getElementById(
+            "costos-formula-final-resultado"
+        );
+
+
+    // --------------------------------------------------
+    // COSTO TOTAL
+    // --------------------------------------------------
+
+    if (campoTotal) {
+
+        if (
+            costoTotal !== null &&
+            !isNaN(costoTotal)
+        ) {
+
+            campoTotal.textContent =
+                costosFormatearMoneda(
+                    costoTotal
+                );
+
+        }
+        else {
+
+            campoTotal.textContent = "-";
+
+        }
+
+    }
+
+
+    // --------------------------------------------------
+    // COSTO TOTAL - SEGUNDA REFERENCIA
+    // --------------------------------------------------
+
+    if (campoTotal2) {
+
+        if (
+            costoTotal !== null &&
+            !isNaN(costoTotal)
+        ) {
+
+            campoTotal2.textContent =
+                costosFormatearMoneda(
+                    costoTotal
+                );
+
+        }
+        else {
+
+            campoTotal2.textContent = "-";
+
+        }
+
+    }
+
+
+    // --------------------------------------------------
+    // RENDIMIENTO
+    // --------------------------------------------------
+
+    if (campoRendimiento) {
+
+        if (
+            rendimiento !== null &&
+            rendimiento !== undefined &&
+            !isNaN(Number(rendimiento))
+        ) {
+
+            campoRendimiento.textContent =
+                costosFormatearNumero(
+                    rendimiento
+                ) +
+                (
+                    unidadRendimiento
+                        ? " " + unidadRendimiento
+                        : ""
+                );
+
+        }
+        else {
+
+            campoRendimiento.textContent = "-";
+
+        }
+
+    }
+
+
+    // --------------------------------------------------
+    // COSTO UNITARIO
+    // --------------------------------------------------
+
+    if (campoUnitario) {
+
+        if (
+            costoUnitario !== null &&
+            !isNaN(costoUnitario)
+        ) {
+
+            campoUnitario.textContent =
+                costosFormatearMoneda(
+                    costoUnitario
+                );
+
+        }
+        else {
+
+            campoUnitario.textContent = "-";
+
+        }
+
+    }
+
+
+    // --------------------------------------------------
+    // FORMULA FINAL
+    // --------------------------------------------------
+
+    if (campoFormulaFinal) {
+
+        if (
+            costoTotal !== null &&
+            !isNaN(costoTotal) &&
+            rendimiento !== null &&
+            rendimiento !== undefined &&
+            !isNaN(Number(rendimiento)) &&
+            Number(rendimiento) !== 0 &&
+            costoUnitario !== null &&
+            !isNaN(costoUnitario)
+        ) {
+
+            campoFormulaFinal.textContent =
+                costosFormatearMoneda(
+                    costoTotal
+                ) +
+                " ÷ " +
+                costosFormatearNumero(
+                    rendimiento
+                ) +
+                (
+                    unidadRendimiento
+                        ? " " + unidadRendimiento
+                        : ""
+                ) +
+                " = " +
+                costosFormatearMoneda(
+                    costoUnitario
+                );
+
+        }
+        else {
+
+            campoFormulaFinal.textContent = "-";
+
+        }
+
+    }
 
 }
 
@@ -1179,6 +1429,7 @@ function mostrarDetalleCosto(
                     ${costosFormatearNumero(
                         merma
                     )}
+                    %
                 </td>
 
                 <td>
@@ -1214,9 +1465,17 @@ function mostrarDetalleCosto(
 
 function limpiarCosto() {
 
-    document.getElementById(
-        "costos-producto"
-    ).value = "";
+    const combo =
+        document.getElementById(
+            "costos-producto"
+        );
+
+
+    if (combo) {
+
+        combo.value = "";
+
+    }
 
 
     limpiarDatosProducto();
@@ -1238,24 +1497,56 @@ function limpiarCosto() {
 
 function limpiarDatosProducto() {
 
-    document.getElementById(
-        "costos-codigo"
-    ).value = "";
+    const codigo =
+        document.getElementById(
+            "costos-codigo"
+        );
 
 
-    document.getElementById(
-        "costos-nombre"
-    ).value = "";
+    const nombre =
+        document.getElementById(
+            "costos-nombre"
+        );
 
 
-    document.getElementById(
-        "costos-tipo"
-    ).value = "";
+    const tipo =
+        document.getElementById(
+            "costos-tipo"
+        );
 
 
-    document.getElementById(
-        "costos-unidad"
-    ).value = "";
+    const unidad =
+        document.getElementById(
+            "costos-unidad"
+        );
+
+
+    if (codigo) {
+
+        codigo.value = "";
+
+    }
+
+
+    if (nombre) {
+
+        nombre.value = "";
+
+    }
+
+
+    if (tipo) {
+
+        tipo.value = "";
+
+    }
+
+
+    if (unidad) {
+
+        unidad.value = "";
+
+    }
 
 }
 
@@ -1266,24 +1557,125 @@ function limpiarDatosProducto() {
 
 function limpiarResultado() {
 
-    document.getElementById(
-        "tablaCostos"
-    ).innerHTML = "";
+    const tabla =
+        document.getElementById(
+            "tablaCostos"
+        );
 
 
-    document.getElementById(
-        "costos-rendimiento"
-    ).textContent = "-";
+    const rendimiento =
+        document.getElementById(
+            "costos-rendimiento"
+        );
 
 
-    document.getElementById(
-        "costos-costo-unitario"
-    ).textContent = "-";
+    const costoUnitario =
+        document.getElementById(
+            "costos-costo-unitario"
+        );
 
 
-    document.getElementById(
-        "costos-costo-total"
-    ).textContent = "-";
+    const costoTotal =
+        document.getElementById(
+            "costos-costo-total"
+        );
+
+
+    if (tabla) {
+
+        tabla.innerHTML = "";
+
+    }
+
+
+    if (rendimiento) {
+
+        rendimiento.textContent = "-";
+
+    }
+
+
+    if (costoUnitario) {
+
+        costoUnitario.textContent = "-";
+
+    }
+
+
+    if (costoTotal) {
+
+        costoTotal.textContent = "-";
+
+    }
+
+
+    // --------------------------------------------------
+    // LIMPIAR EXPLICACION
+    // --------------------------------------------------
+
+    const explicacionTotal =
+        document.getElementById(
+            "costos-explicacion-total"
+        );
+
+
+    const explicacionTotal2 =
+        document.getElementById(
+            "costos-explicacion-total-2"
+        );
+
+
+    const explicacionRendimiento =
+        document.getElementById(
+            "costos-explicacion-rendimiento"
+        );
+
+
+    const explicacionUnitario =
+        document.getElementById(
+            "costos-explicacion-unitario"
+        );
+
+
+    const formulaFinal =
+        document.getElementById(
+            "costos-formula-final-resultado"
+        );
+
+
+    if (explicacionTotal) {
+
+        explicacionTotal.textContent = "-";
+
+    }
+
+
+    if (explicacionTotal2) {
+
+        explicacionTotal2.textContent = "-";
+
+    }
+
+
+    if (explicacionRendimiento) {
+
+        explicacionRendimiento.textContent = "-";
+
+    }
+
+
+    if (explicacionUnitario) {
+
+        explicacionUnitario.textContent = "-";
+
+    }
+
+
+    if (formulaFinal) {
+
+        formulaFinal.textContent = "-";
+
+    }
 
 }
 
