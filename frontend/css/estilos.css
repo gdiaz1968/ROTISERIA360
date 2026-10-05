@@ -364,7 +364,7 @@ body {
 
 
 /* ========================================================= */
-/* FORMULARIO PRODUCTOS */
+/* FORMULARIOS */
 /* ========================================================= */
 
 .fila {
@@ -396,6 +396,7 @@ body {
 
 
 .campo input[type="text"],
+.campo input[type="number"],
 .campo select {
     height: 38px;
     padding: 8px 10px;
@@ -407,6 +408,7 @@ body {
 
 
 .campo input[type="text"]:focus,
+.campo input[type="number"]:focus,
 .campo select:focus {
     outline: none;
     border-color: #d35400;
@@ -492,7 +494,7 @@ body {
 
 
 /* ========================================================= */
-/* LISTADO */
+/* LISTADOS */
 /* ========================================================= */
 
 .titulo-listado {
@@ -611,261 +613,79 @@ tbody tr:hover {
 
 
 /* ========================================================= */
-/* FOOTER */
+/* ESTRUCTURA DE PRODUCTOS */
 /* ========================================================= */
 
-footer {
-    padding: 15px 30px 20px 30px;
-    color: #999999;
-    font-size: 11px;
+.estructura-panel {
+    width: 100%;
 }
 
 
-/* ========================================================= */
-/* RESPONSIVE */
-/* ========================================================= */
-
-@media (max-width: 1100px) {
-
-    .tarjetas-dashboard {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
+.estructura-seccion {
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eeeeee;
 }
 
 
-@media (max-width: 800px) {
-
-    .menu-lateral {
-        width: 210px;
-        min-width: 210px;
-    }
-
-
-    .cabecera {
-        padding-left: 20px;
-        padding-right: 20px;
-    }
-
-
-    .contenido-principal {
-        padding: 20px;
-    }
-
-
-    .fila {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-
-    .campo {
-        width: 100%;
-    }
-
-
-    .botones {
-        flex-wrap: wrap;
-    }
-
-
-    .titulo-listado {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-
+.estructura-seccion:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
 }
 
 
-@media (max-width: 600px) {
-
-    .aplicacion {
-        flex-direction: column;
-    }
-
-
-    .menu-lateral {
-        width: 100%;
-        min-width: 100%;
-        min-height: auto;
-    }
-
-
-    .logo {
-        padding: 15px 20px;
-    }
-
-
-    .menu {
-        padding: 8px 10px;
-    }
-
-
-    .menu-separador {
-        padding-top: 10px;
-    }
-
-
-    .menu-pie {
-        display: none;
-    }
-
-
-    .tarjetas-dashboard {
-        grid-template-columns: 1fr;
-    }
-
-
-    .estado-sistema {
-        grid-template-columns: 1fr;
-    }
-
-
-    .cabecera {
-        min-height: 70px;
-    }
-
-
-    .usuario {
-        display: none;
-    }
-
-    /* ========================================================= */
-    /* ESTRUCTURA DE PRODUCTOS                                   */
-    /* ========================================================= */
-
-    .estructura-panel {
-        width: 100%;
-    }
-
-
-    /* ========================================================= */
-    /* SECCIONES                                                  */
-    /* ========================================================= */
-
-    .estructura-seccion {
-        padding-bottom: 20px;
-        margin-bottom: 20px;
-        border-bottom: 1px solid #eeeeee;
-    }
-
-    .estructura-seccion:last-of-type {
-        border-bottom: none;
-        margin-bottom: 0;
-    }
-
-
-    .estructura-seccion-titulo {
-        margin-bottom: 15px;
-        font-size: 15px;
-        font-weight: bold;
-        color: #333333;
-    }
-
-
-    /* ========================================================= */
-    /* CAMPOS DE SOLO LECTURA                                    */
-    /* ========================================================= */
-
-    .estructura-panel input[readonly] {
-        background: #f5f6f7;
-        color: #666666;
-        cursor: default;
-    }
-
-
-    /* ========================================================= */
-    /* BOTON AGREGAR COMPONENTE                                  */
-    /* ========================================================= */
-
-    .estructura-campo-boton {
-        min-width: 190px;
-    }
-
-
-    /* ========================================================= */
-    /* TABLA DE DETALLE                                          */
-    /* ========================================================= */
-
-    .estructura-panel table {
-        min-width: 850px;
-    }
-
-    .estructura-panel th {
-        white-space: nowrap;
-    }
-
-    .estructura-panel td {
-        vertical-align: middle;
-    }
-
-
-    /* ========================================================= */
-    /* CANTIDADES                                                */
-    /* ========================================================= */
-
-    .estructura-panel td:nth-child(5),
-    .estructura-panel td:nth-child(6) {
-        text-align: right;
-        white-space: nowrap;
-    }
-
-
-    /* ========================================================= */
-    /* ACCIONES                                                  */
-    /* ========================================================= */
-
-    .estructura-acciones {
-        margin-top: 5px;
-        padding-top: 20px;
-    }
-
-    .estructura-acciones .btn {
-        min-width: 180px;
-    }
-
-
-    /* ========================================================= */
-    /* RESPONSIVE                                                */
-    /* ========================================================= */
-
-    @media (max-width: 1100px) {
-
-        .estructura-panel .fila {
-            flex-wrap: wrap;
-        }
-
-        .estructura-panel .campo {
-            min-width: 180px;
-        }
-
-    }
-
-
-    @media (max-width: 800px) {
-
-        .estructura-panel .fila {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .estructura-panel .campo {
-            width: 100%;
-            min-width: 100%;
-        }
-
-        .estructura-campo-boton {
-            min-width: 100%;
-        }
-
-        .estructura-campo-boton .btn {
-            width: 100%;
-        }
-
-    }
-
+.estructura-seccion-titulo {
+    margin-bottom: 15px;
+    font-size: 15px;
+    font-weight: bold;
+    color: #333333;
 }
+
+
+.estructura-panel input[readonly] {
+    background: #f5f6f7;
+    color: #666666;
+    cursor: default;
+}
+
+
+.estructura-campo-boton {
+    min-width: 190px;
+}
+
+
+.estructura-panel table {
+    min-width: 850px;
+}
+
+
+.estructura-panel th {
+    white-space: nowrap;
+}
+
+
+.estructura-panel td {
+    vertical-align: middle;
+}
+
+
+.estructura-panel td:nth-child(5),
+.estructura-panel td:nth-child(6) {
+    text-align: right;
+    white-space: nowrap;
+}
+
+
+.estructura-acciones {
+    margin-top: 5px;
+    padding-top: 20px;
+}
+
+
+.estructura-acciones .btn {
+    min-width: 180px;
+}
+
 
 /* ========================================================= */
 /* COSTOS */
@@ -997,10 +817,107 @@ footer {
 
 
 /* ========================================================= */
-/* RESPONSIVE COSTOS */
+/* PRESENTACIONES DE PRODUCTO */
+/* ========================================================= */
+
+#panelPresentaciones {
+    margin-top: 20px;
+}
+
+
+#panelPresentaciones .titulo-listado {
+    margin-bottom: 20px;
+}
+
+
+#panelPresentaciones .botones {
+    margin-top: 10px;
+}
+
+
+#panelPresentaciones .tabla-contenedor {
+    margin-top: 15px;
+}
+
+
+#panelPresentaciones table {
+    width: 100%;
+    min-width: 650px;
+}
+
+
+#panelPresentaciones th {
+    white-space: nowrap;
+}
+
+
+#panelPresentaciones td {
+    vertical-align: middle;
+}
+
+
+#panelPresentaciones tbody tr {
+    cursor: pointer;
+}
+
+
+#panelPresentaciones tbody tr:hover {
+    background: #f5f5f5;
+}
+
+
+#panelPresentaciones .fila-seleccionada {
+    background: #fff0e6 !important;
+}
+
+
+#presentacionMensaje {
+    margin-top: 15px;
+    min-height: 20px;
+}
+
+
+#panelPresentaciones input[type="number"] {
+    text-align: right;
+}
+
+
+#panelPresentaciones .campo-grande {
+    min-width: 280px;
+}
+
+
+/* ========================================================= */
+/* FOOTER */
+/* ========================================================= */
+
+footer {
+    padding: 15px 30px 20px 30px;
+    color: #999999;
+    font-size: 11px;
+}
+
+
+/* ========================================================= */
+/* RESPONSIVE */
 /* ========================================================= */
 
 @media (max-width: 1100px) {
+
+    .tarjetas-dashboard {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+
+    .estructura-panel .fila {
+        flex-wrap: wrap;
+    }
+
+
+    .estructura-panel .campo {
+        min-width: 180px;
+    }
+
 
     .costos-resumen {
         grid-template-columns: 1fr;
@@ -1011,6 +928,68 @@ footer {
 
 @media (max-width: 800px) {
 
+    .menu-lateral {
+        width: 210px;
+        min-width: 210px;
+    }
+
+
+    .cabecera {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+
+    .contenido-principal {
+        padding: 20px;
+    }
+
+
+    .fila {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+
+    .campo {
+        width: 100%;
+    }
+
+
+    .botones {
+        flex-wrap: wrap;
+    }
+
+
+    .titulo-listado {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+
+    .estructura-panel .fila {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+
+    .estructura-panel .campo {
+        width: 100%;
+        min-width: 100%;
+    }
+
+
+    .estructura-campo-boton {
+        min-width: 100%;
+    }
+
+
+    .estructura-campo-boton .btn {
+        width: 100%;
+    }
+
+
     .costos-boton {
         width: 100%;
     }
@@ -1018,6 +997,108 @@ footer {
 
     .costos-boton .btn {
         width: 100%;
+    }
+
+
+    #panelPresentaciones .campo {
+        width: 100%;
+        min-width: 100%;
+    }
+
+
+    #panelPresentaciones .campo-grande {
+        min-width: 100%;
+    }
+
+
+    #panelPresentaciones .botones {
+        width: 100%;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .aplicacion {
+        flex-direction: column;
+    }
+
+
+    .menu-lateral {
+        width: 100%;
+        min-width: 100%;
+        min-height: auto;
+    }
+
+
+    .logo {
+        padding: 15px 20px;
+    }
+
+
+    .menu {
+        padding: 8px 10px;
+    }
+
+
+    .menu-separador {
+        padding-top: 10px;
+    }
+
+
+    .menu-pie {
+        display: none;
+    }
+
+
+    .tarjetas-dashboard {
+        grid-template-columns: 1fr;
+    }
+
+
+    .estado-sistema {
+        grid-template-columns: 1fr;
+    }
+
+
+    .cabecera {
+        min-height: 70px;
+    }
+
+
+    .usuario {
+        display: none;
+    }
+
+
+    .contenido-principal {
+        padding: 15px;
+    }
+
+
+    .panel {
+        padding: 15px;
+    }
+
+
+    .botones {
+        flex-direction: column;
+    }
+
+
+    .botones .btn {
+        width: 100%;
+    }
+
+
+    .estructura-panel table {
+        min-width: 850px;
+    }
+
+
+    #panelPresentaciones table {
+        min-width: 650px;
     }
 
 }

@@ -4,6 +4,14 @@
 
 
 // ============================================================
+// VARIABLES
+// ============================================================
+
+let productoSeleccionado = null;
+let presentacionSeleccionada = null;
+
+
+// ============================================================
 // CARGAR UNIDADES
 // ============================================================
 
@@ -11,60 +19,105 @@ async function cargarUnidades() {
 
     try {
 
-        var respuesta =
+        const respuesta =
             await fetch("/api/unidades");
 
         if (!respuesta.ok) {
 
             throw new Error(
-                "Error al obtener las unidades"
+                "No se pudieron cargar las unidades."
             );
 
         }
 
-        var unidades =
+        const unidades =
             await respuesta.json();
 
-        var combo =
+
+        // ----------------------------------------------------
+        // Unidad del producto
+        // ----------------------------------------------------
+
+        const comboUnidad =
             document.getElementById("unidad");
 
-        if (!combo) {
-            return;
+
+        if (comboUnidad) {
+
+            comboUnidad.innerHTML =
+                `
+                <option value="">
+                    Seleccionar...
+                </option>
+                `;
+
+
+            unidades.forEach(
+                function (unidad) {
+
+                    const option =
+                        document.createElement("option");
+
+                    option.value =
+                        unidad.id;
+
+                    option.textContent =
+                        unidad.codigo +
+                        " - " +
+                        unidad.nombre;
+
+                    comboUnidad.appendChild(
+                        option
+                    );
+
+                }
+            );
+
         }
 
-        combo.innerHTML = "";
 
-        var opcionInicial =
-            document.createElement("option");
+        // ----------------------------------------------------
+        // Unidad de la presentación
+        // ----------------------------------------------------
 
-        opcionInicial.value = "";
-
-        opcionInicial.textContent =
-            "Seleccionar...";
-
-        combo.appendChild(
-            opcionInicial
-        );
+        const comboPresentacionUnidad =
+            document.getElementById(
+                "presentacionUnidad"
+            );
 
 
-        unidades.forEach(
-            function (unidad) {
+        if (comboPresentacionUnidad) {
 
-                var opcion =
-                    document.createElement("option");
+            comboPresentacionUnidad.innerHTML =
+                `
+                <option value="">
+                    Seleccionar...
+                </option>
+                `;
 
-                opcion.value =
-                    unidad.id;
 
-                opcion.textContent =
-                    unidad.codigo;
+            unidades.forEach(
+                function (unidad) {
 
-                combo.appendChild(
-                    opcion
-                );
+                    const option =
+                        document.createElement("option");
 
-            }
-        );
+                    option.value =
+                        unidad.id;
+
+                    option.textContent =
+                        unidad.codigo +
+                        " - " +
+                        unidad.nombre;
+
+                    comboPresentacionUnidad.appendChild(
+                        option
+                    );
+
+                }
+            );
+
+        }
 
     }
     catch (error) {
@@ -72,10 +125,6 @@ async function cargarUnidades() {
         console.error(
             "Error al cargar unidades:",
             error
-        );
-
-        alert(
-            "No se pudieron cargar las unidades de medida."
         );
 
     }
@@ -92,24 +141,28 @@ async function cargarProductos() {
 
     try {
 
-        var respuesta =
+        const respuesta =
             await fetch("/api/productos");
+
 
         if (!respuesta.ok) {
 
             throw new Error(
-                "Error al obtener los productos"
+                "No se pudieron cargar los productos."
             );
 
         }
 
-        var productos =
+
+        const productos =
             await respuesta.json();
 
-        var tabla =
+
+        const tabla =
             document.getElementById(
                 "tablaProductos"
             );
+
 
         tabla.innerHTML = "";
 
@@ -117,30 +170,16 @@ async function cargarProductos() {
         productos.forEach(
             function (producto) {
 
-                var fila =
+                const fila =
                     document.createElement("tr");
 
 
-                fila.setAttribute(
-                    "data-id",
-                    producto.id
-                );
+                fila.dataset.id =
+                    producto.id;
 
 
-                fila.addEventListener(
-                    "click",
-                    function () {
-
-                        seleccionarProducto(
-                            producto
-                        );
-
-                    }
-                );
-
-
-                fila.innerHTML = `
-
+                fila.innerHTML =
+                    `
                     <td>
                         ${producto.codigo}
                     </td>
@@ -158,10 +197,31 @@ async function cargarProductos() {
                     </td>
 
                     <td>
-                        ${producto.activo ? "Activo" : "Inactivo"}
+                        <span class="${
+                            producto.activo
+                                ? "estado-activo"
+                                : "estado-inactivo"
+                        }">
+                            ${
+                                producto.activo
+                                    ? "Activo"
+                                    : "Inactivo"
+                            }
+                        </span>
                     </td>
+                    `;
 
-                `;
+
+                fila.addEventListener(
+                    "click",
+                    function () {
+
+                        seleccionarProducto(
+                            producto
+                        );
+
+                    }
+                );
 
 
                 tabla.appendChild(
@@ -172,18 +232,22 @@ async function cargarProductos() {
         );
 
 
-        var cantidad =
+        const cantidad =
+            productos.length;
+
+
+        const textoCantidad =
             document.getElementById(
                 "cantidadProductos"
             );
 
 
-        if (cantidad) {
+        if (textoCantidad) {
 
-            cantidad.textContent =
-                productos.length +
+            textoCantidad.textContent =
+                cantidad +
                 (
-                    productos.length === 1
+                    cantidad === 1
                         ? " producto"
                         : " productos"
                 );
@@ -191,16 +255,16 @@ async function cargarProductos() {
         }
 
 
-        var dashboardCantidad =
+        const dashboard =
             document.getElementById(
                 "dashboardCantidadProductos"
             );
 
 
-        if (dashboardCantidad) {
+        if (dashboard) {
 
-            dashboardCantidad.textContent =
-                productos.length;
+            dashboard.textContent =
+                cantidad;
 
         }
 
@@ -367,6 +431,10 @@ function nuevoProducto() {
 
 function seleccionarProducto(producto) {
 
+    productoSeleccionado =
+        producto;
+
+
     document.getElementById(
         "idProducto"
     ).value =
@@ -376,25 +444,25 @@ function seleccionarProducto(producto) {
     document.getElementById(
         "codigo"
     ).value =
-        producto.codigo || "";
+        producto.codigo;
 
 
     document.getElementById(
         "nombre"
     ).value =
-        producto.nombre || "";
+        producto.nombre;
 
 
     document.getElementById(
         "tipo"
     ).value =
-        producto.tipo || "";
+        producto.tipo;
 
 
     document.getElementById(
         "unidad"
     ).value =
-        producto.id_unidad || "";
+        producto.id_unidad;
 
 
     document.getElementById(
@@ -403,27 +471,26 @@ function seleccionarProducto(producto) {
         producto.activo;
 
 
-    limpiarSeleccionProducto();
+    // --------------------------------------------------------
+    // Marcar fila seleccionada
+    // --------------------------------------------------------
 
-
-    var filas =
-        document.querySelectorAll(
+    document
+        .querySelectorAll(
             "#tablaProductos tr"
+        )
+        .forEach(
+            function (fila) {
+
+                fila.classList.remove(
+                    "fila-seleccionada"
+                );
+
+            }
         );
 
 
-    filas.forEach(
-        function (fila) {
-
-            fila.classList.remove(
-                "fila-seleccionada"
-            );
-
-        }
-    );
-
-
-    var filaSeleccionada =
+    const filaSeleccionada =
         document.querySelector(
             '#tablaProductos tr[data-id="' +
             producto.id +
@@ -439,31 +506,58 @@ function seleccionarProducto(producto) {
 
     }
 
+
+    // --------------------------------------------------------
+    // Presentaciones
+    // --------------------------------------------------------
+
+    if (
+        producto.tipo === "INSUMO"
+    ) {
+
+        mostrarPanelPresentaciones(
+            producto
+        );
+
+        cargarPresentacionesProducto();
+
+    }
+    else {
+
+        ocultarPanelPresentaciones();
+
+    }
+
 }
 
 
 
 // ============================================================
-// LIMPIAR SELECCION
+// LIMPIAR SELECCION PRODUCTO
 // ============================================================
 
 function limpiarSeleccionProducto() {
 
-    var filas =
-        document.querySelectorAll(
+    productoSeleccionado =
+        null;
+
+
+    document
+        .querySelectorAll(
             "#tablaProductos tr"
+        )
+        .forEach(
+            function (fila) {
+
+                fila.classList.remove(
+                    "fila-seleccionada"
+                );
+
+            }
         );
 
 
-    filas.forEach(
-        function (fila) {
-
-            fila.classList.remove(
-                "fila-seleccionada"
-            );
-
-        }
-    );
+    ocultarPanelPresentaciones();
 
 }
 
@@ -475,7 +569,7 @@ function limpiarSeleccionProducto() {
 
 async function guardarProducto() {
 
-    var datos =
+    const datos =
         obtenerDatosFormulario();
 
 
@@ -488,11 +582,10 @@ async function guardarProducto() {
 
     try {
 
-        var respuesta =
+        const respuesta =
             await fetch(
                 "/api/productos",
                 {
-
                     method: "POST",
 
                     headers: {
@@ -501,22 +594,19 @@ async function guardarProducto() {
                     },
 
                     body:
-                        JSON.stringify(
-                            datos
-                        )
-
+                        JSON.stringify(datos)
                 }
             );
 
 
-        var resultado =
+        const resultado =
             await respuesta.json();
 
 
         if (!respuesta.ok) {
 
             alert(
-                resultado.error ||
+                resultado.mensaje ||
                 "No se pudo guardar el producto."
             );
 
@@ -530,9 +620,10 @@ async function guardarProducto() {
         );
 
 
-        nuevoProducto();
-
         await cargarProductos();
+
+
+        nuevoProducto();
 
     }
     catch (error) {
@@ -543,7 +634,7 @@ async function guardarProducto() {
         );
 
         alert(
-            "Error de comunicación con el servidor."
+            "Error al guardar el producto."
         );
 
     }
@@ -558,16 +649,16 @@ async function guardarProducto() {
 
 async function modificarProducto() {
 
-    var id =
-        document
-            .getElementById("idProducto")
-            .value;
+    const id =
+        document.getElementById(
+            "idProducto"
+        ).value;
 
 
     if (!id) {
 
         alert(
-            "Seleccione un producto para modificar."
+            "Seleccione un producto."
         );
 
         return;
@@ -575,7 +666,7 @@ async function modificarProducto() {
     }
 
 
-    var datos =
+    const datos =
         obtenerDatosFormulario();
 
 
@@ -588,11 +679,10 @@ async function modificarProducto() {
 
     try {
 
-        var respuesta =
+        const respuesta =
             await fetch(
                 "/api/productos/" + id,
                 {
-
                     method: "PUT",
 
                     headers: {
@@ -601,22 +691,19 @@ async function modificarProducto() {
                     },
 
                     body:
-                        JSON.stringify(
-                            datos
-                        )
-
+                        JSON.stringify(datos)
                 }
             );
 
 
-        var resultado =
+        const resultado =
             await respuesta.json();
 
 
         if (!respuesta.ok) {
 
             alert(
-                resultado.error ||
+                resultado.mensaje ||
                 "No se pudo modificar el producto."
             );
 
@@ -630,9 +717,10 @@ async function modificarProducto() {
         );
 
 
-        nuevoProducto();
-
         await cargarProductos();
+
+
+        nuevoProducto();
 
     }
     catch (error) {
@@ -643,7 +731,7 @@ async function modificarProducto() {
         );
 
         alert(
-            "Error de comunicación con el servidor."
+            "Error al modificar el producto."
         );
 
     }
@@ -658,16 +746,16 @@ async function modificarProducto() {
 
 async function eliminarProducto() {
 
-    var id =
-        document
-            .getElementById("idProducto")
-            .value;
+    const id =
+        document.getElementById(
+            "idProducto"
+        ).value;
 
 
     if (!id) {
 
         alert(
-            "Seleccione un producto para eliminar."
+            "Seleccione un producto."
         );
 
         return;
@@ -675,9 +763,9 @@ async function eliminarProducto() {
     }
 
 
-    var confirmar =
+    const confirmar =
         confirm(
-            "¿Está seguro de eliminar el producto seleccionado?"
+            "¿Está seguro de eliminar el producto?"
         );
 
 
@@ -690,25 +778,23 @@ async function eliminarProducto() {
 
     try {
 
-        var respuesta =
+        const respuesta =
             await fetch(
                 "/api/productos/" + id,
                 {
-
                     method: "DELETE"
-
                 }
             );
 
 
-        var resultado =
+        const resultado =
             await respuesta.json();
 
 
         if (!respuesta.ok) {
 
             alert(
-                resultado.error ||
+                resultado.mensaje ||
                 "No se pudo eliminar el producto."
             );
 
@@ -722,9 +808,10 @@ async function eliminarProducto() {
         );
 
 
-        nuevoProducto();
-
         await cargarProductos();
+
+
+        nuevoProducto();
 
     }
     catch (error) {
@@ -735,7 +822,7 @@ async function eliminarProducto() {
         );
 
         alert(
-            "Error de comunicación con el servidor."
+            "Error al eliminar el producto."
         );
 
     }
@@ -745,16 +832,892 @@ async function eliminarProducto() {
 
 
 // ============================================================
-// INICIALIZACION
+// MOSTRAR PANEL PRESENTACIONES
+// ============================================================
+
+function mostrarPanelPresentaciones(
+    producto
+) {
+
+    const panel =
+        document.getElementById(
+            "panelPresentaciones"
+        );
+
+
+    if (!panel) {
+
+        return;
+
+    }
+
+
+    panel.style.display =
+        "block";
+
+
+    const titulo =
+        document.getElementById(
+            "presentacionProductoTitulo"
+        );
+
+
+    if (titulo) {
+
+        titulo.textContent =
+            producto.codigo +
+            " - " +
+            producto.nombre;
+
+    }
+
+}
+
+
+
+// ============================================================
+// OCULTAR PANEL PRESENTACIONES
+// ============================================================
+
+function ocultarPanelPresentaciones() {
+
+    const panel =
+        document.getElementById(
+            "panelPresentaciones"
+        );
+
+
+    if (!panel) {
+
+        return;
+
+    }
+
+
+    panel.style.display =
+        "none";
+
+
+    limpiarFormularioPresentacion();
+
+}
+
+
+
+// ============================================================
+// CARGAR PRESENTACIONES DEL PRODUCTO
+// ============================================================
+
+async function cargarPresentacionesProducto() {
+
+    if (!productoSeleccionado) {
+
+        return;
+
+    }
+
+
+    if (
+        productoSeleccionado.tipo !== "INSUMO"
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const respuesta =
+            await fetch(
+                "/api/presentaciones/producto/" +
+                productoSeleccionado.id
+            );
+
+
+        if (!respuesta.ok) {
+
+            throw new Error(
+                "No se pudieron cargar las presentaciones."
+            );
+
+        }
+
+
+        const presentaciones =
+            await respuesta.json();
+
+
+        const tabla =
+            document.getElementById(
+                "tablaPresentaciones"
+            );
+
+
+        tabla.innerHTML = "";
+
+
+        presentaciones.forEach(
+            function (presentacion) {
+
+                const fila =
+                    document.createElement("tr");
+
+
+                fila.dataset.id =
+                    presentacion.id;
+
+
+                fila.innerHTML =
+                    `
+                    <td>
+                        ${presentacion.nombre}
+                    </td>
+
+                    <td>
+                        ${presentacion.cantidad_contenida}
+                    </td>
+
+                    <td>
+                        ${presentacion.unidad || ""}
+                    </td>
+
+                    <td>
+                        <span class="${
+                            presentacion.activo
+                                ? "estado-activo"
+                                : "estado-inactivo"
+                        }">
+                            ${
+                                presentacion.activo
+                                    ? "Activo"
+                                    : "Inactivo"
+                            }
+                        </span>
+                    </td>
+                    `;
+
+
+                fila.addEventListener(
+                    "click",
+                    function () {
+
+                        seleccionarPresentacion(
+                            presentacion
+                        );
+
+                    }
+                );
+
+
+                tabla.appendChild(
+                    fila
+                );
+
+            }
+        );
+
+
+        const cantidad =
+            presentaciones.length;
+
+
+        const contador =
+            document.getElementById(
+                "cantidadPresentaciones"
+            );
+
+
+        if (contador) {
+
+            contador.textContent =
+                cantidad +
+                (
+                    cantidad === 1
+                        ? " presentación"
+                        : " presentaciones"
+                );
+
+        }
+
+    }
+    catch (error) {
+
+        console.error(
+            "Error al cargar presentaciones:",
+            error
+        );
+
+    }
+
+}
+
+
+
+// ============================================================
+// NUEVA PRESENTACIÓN
+// ============================================================
+
+function nuevaPresentacion() {
+
+    presentacionSeleccionada =
+        null;
+
+
+    document.getElementById(
+        "idPresentacion"
+    ).value = "";
+
+
+    document.getElementById(
+        "presentacionNombre"
+    ).value = "";
+
+
+    document.getElementById(
+        "presentacionCantidad"
+    ).value = "";
+
+
+    document.getElementById(
+        "presentacionUnidad"
+    ).value = "";
+
+
+    document.getElementById(
+        "presentacionActivo"
+    ).checked = true;
+
+
+    document
+        .querySelectorAll(
+            "#tablaPresentaciones tr"
+        )
+        .forEach(
+            function (fila) {
+
+                fila.classList.remove(
+                    "fila-seleccionada"
+                );
+
+            }
+        );
+
+
+    limpiarMensajePresentacion();
+
+}
+
+
+
+// ============================================================
+// SELECCIONAR PRESENTACIÓN
+// ============================================================
+
+function seleccionarPresentacion(
+    presentacion
+) {
+
+    presentacionSeleccionada =
+        presentacion;
+
+
+    document.getElementById(
+        "idPresentacion"
+    ).value =
+        presentacion.id;
+
+
+    document.getElementById(
+        "presentacionNombre"
+    ).value =
+        presentacion.nombre;
+
+
+    document.getElementById(
+        "presentacionCantidad"
+    ).value =
+        presentacion.cantidad_contenida;
+
+
+    document.getElementById(
+        "presentacionUnidad"
+    ).value =
+        presentacion.id_unidad_contenido;
+
+
+    document.getElementById(
+        "presentacionActivo"
+    ).checked =
+        presentacion.activo;
+
+
+    document
+        .querySelectorAll(
+            "#tablaPresentaciones tr"
+        )
+        .forEach(
+            function (fila) {
+
+                fila.classList.remove(
+                    "fila-seleccionada"
+                );
+
+            }
+        );
+
+
+    const fila =
+        document.querySelector(
+            '#tablaPresentaciones tr[data-id="' +
+            presentacion.id +
+            '"]'
+        );
+
+
+    if (fila) {
+
+        fila.classList.add(
+            "fila-seleccionada"
+        );
+
+    }
+
+}
+
+
+
+// ============================================================
+// OBTENER DATOS PRESENTACIÓN
+// ============================================================
+
+function obtenerDatosPresentacion() {
+
+    return {
+
+        id_producto:
+            productoSeleccionado
+                ? productoSeleccionado.id
+                : null,
+
+        nombre:
+            document
+                .getElementById(
+                    "presentacionNombre"
+                )
+                .value
+                .trim(),
+
+        cantidad_contenida:
+            document
+                .getElementById(
+                    "presentacionCantidad"
+                )
+                .value,
+
+        id_unidad_contenido:
+            document
+                .getElementById(
+                    "presentacionUnidad"
+                )
+                .value,
+
+        activo:
+            document
+                .getElementById(
+                    "presentacionActivo"
+                )
+                .checked
+
+    };
+
+}
+
+
+
+// ============================================================
+// VALIDAR PRESENTACIÓN
+// ============================================================
+
+function validarPresentacion(
+    datos
+) {
+
+    if (!productoSeleccionado) {
+
+        mostrarMensajePresentacion(
+            "Seleccione primero un producto."
+        );
+
+        return false;
+
+    }
+
+
+    if (
+        productoSeleccionado.tipo !== "INSUMO"
+    ) {
+
+        mostrarMensajePresentacion(
+            "Las presentaciones corresponden a INSUMOS."
+        );
+
+        return false;
+
+    }
+
+
+    if (!datos.nombre) {
+
+        mostrarMensajePresentacion(
+            "Ingrese el nombre de la presentación."
+        );
+
+        return false;
+
+    }
+
+
+    if (
+        !datos.cantidad_contenida ||
+        Number(datos.cantidad_contenida) <= 0
+    ) {
+
+        mostrarMensajePresentacion(
+            "La cantidad contenida debe ser mayor que cero."
+        );
+
+        return false;
+
+    }
+
+
+    if (!datos.id_unidad_contenido) {
+
+        mostrarMensajePresentacion(
+            "Seleccione la unidad de contenido."
+        );
+
+        return false;
+
+    }
+
+
+    return true;
+
+}
+
+
+
+// ============================================================
+// GUARDAR PRESENTACIÓN
+// ============================================================
+
+async function guardarPresentacion() {
+
+    const datos =
+        obtenerDatosPresentacion();
+
+
+    if (
+        !validarPresentacion(datos)
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const respuesta =
+            await fetch(
+                "/api/presentaciones",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(datos)
+                }
+            );
+
+
+        const resultado =
+            await respuesta.json();
+
+
+        if (!respuesta.ok) {
+
+            mostrarMensajePresentacion(
+                resultado.mensaje ||
+                "No se pudo guardar la presentación."
+            );
+
+            return;
+
+        }
+
+
+        mostrarMensajePresentacion(
+            "Presentación guardada correctamente."
+        );
+
+
+        await cargarPresentacionesProducto();
+
+
+        nuevaPresentacion();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Error al guardar presentación:",
+            error
+        );
+
+        mostrarMensajePresentacion(
+            "Error al guardar la presentación."
+        );
+
+    }
+
+}
+
+
+
+// ============================================================
+// MODIFICAR PRESENTACIÓN
+// ============================================================
+
+async function modificarPresentacion() {
+
+    const id =
+        document.getElementById(
+            "idPresentacion"
+        ).value;
+
+
+    if (!id) {
+
+        mostrarMensajePresentacion(
+            "Seleccione una presentación."
+        );
+
+        return;
+
+    }
+
+
+    const datos =
+        obtenerDatosPresentacion();
+
+
+    if (
+        !validarPresentacion(datos)
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const respuesta =
+            await fetch(
+                "/api/presentaciones/" + id,
+                {
+                    method: "PUT",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(datos)
+                }
+            );
+
+
+        const resultado =
+            await respuesta.json();
+
+
+        if (!respuesta.ok) {
+
+            mostrarMensajePresentacion(
+                resultado.mensaje ||
+                "No se pudo modificar la presentación."
+            );
+
+            return;
+
+        }
+
+
+        mostrarMensajePresentacion(
+            "Presentación modificada correctamente."
+        );
+
+
+        await cargarPresentacionesProducto();
+
+
+        nuevaPresentacion();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Error al modificar presentación:",
+            error
+        );
+
+        mostrarMensajePresentacion(
+            "Error al modificar la presentación."
+        );
+
+    }
+
+}
+
+
+
+// ============================================================
+// ELIMINAR PRESENTACIÓN
+// ============================================================
+
+async function eliminarPresentacion() {
+
+    const id =
+        document.getElementById(
+            "idPresentacion"
+        ).value;
+
+
+    if (!id) {
+
+        mostrarMensajePresentacion(
+            "Seleccione una presentación."
+        );
+
+        return;
+
+    }
+
+
+    const confirmar =
+        confirm(
+            "¿Está seguro de eliminar la presentación?"
+        );
+
+
+    if (!confirmar) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const respuesta =
+            await fetch(
+                "/api/presentaciones/" + id,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        const resultado =
+            await respuesta.json();
+
+
+        if (!respuesta.ok) {
+
+            mostrarMensajePresentacion(
+                resultado.mensaje ||
+                "No se pudo eliminar la presentación."
+            );
+
+            return;
+
+        }
+
+
+        mostrarMensajePresentacion(
+            "Presentación eliminada correctamente."
+        );
+
+
+        await cargarPresentacionesProducto();
+
+
+        nuevaPresentacion();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Error al eliminar presentación:",
+            error
+        );
+
+        mostrarMensajePresentacion(
+            "Error al eliminar la presentación."
+        );
+
+    }
+
+}
+
+
+
+// ============================================================
+// LIMPIAR FORMULARIO PRESENTACIÓN
+// ============================================================
+
+function limpiarFormularioPresentacion() {
+
+    const id =
+        document.getElementById(
+            "idPresentacion"
+        );
+
+
+    if (id) {
+
+        id.value = "";
+
+    }
+
+
+    const nombre =
+        document.getElementById(
+            "presentacionNombre"
+        );
+
+
+    if (nombre) {
+
+        nombre.value = "";
+
+    }
+
+
+    const cantidad =
+        document.getElementById(
+            "presentacionCantidad"
+        );
+
+
+    if (cantidad) {
+
+        cantidad.value = "";
+
+    }
+
+
+    const unidad =
+        document.getElementById(
+            "presentacionUnidad"
+        );
+
+
+    if (unidad) {
+
+        unidad.value = "";
+
+    }
+
+
+    const activo =
+        document.getElementById(
+            "presentacionActivo"
+        );
+
+
+    if (activo) {
+
+        activo.checked = true;
+
+    }
+
+
+    presentacionSeleccionada =
+        null;
+
+}
+
+
+
+// ============================================================
+// MENSAJE PRESENTACIÓN
+// ============================================================
+
+function mostrarMensajePresentacion(
+    mensaje
+) {
+
+    const elemento =
+        document.getElementById(
+            "presentacionMensaje"
+        );
+
+
+    if (elemento) {
+
+        elemento.textContent =
+            mensaje;
+
+    }
+
+}
+
+
+
+// ============================================================
+// LIMPIAR MENSAJE
+// ============================================================
+
+function limpiarMensajePresentacion() {
+
+    const elemento =
+        document.getElementById(
+            "presentacionMensaje"
+        );
+
+
+    if (elemento) {
+
+        elemento.textContent =
+            "";
+
+    }
+
+}
+
+
+
+// ============================================================
+// INICIALIZACIÓN
 // ============================================================
 
 document.addEventListener(
     "DOMContentLoaded",
-    async function () {
+    function () {
 
-        await cargarUnidades();
+        cargarUnidades();
 
-        await cargarProductos();
+        cargarProductos();
 
     }
 );

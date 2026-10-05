@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 
 <html lang="es">
@@ -77,6 +76,17 @@
 
                     <span>
                         Productos
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="menu-item"
+                    data-modulo="proveedores">
+
+                    <span>
+                        Proveedores
                     </span>
 
                 </div>
@@ -686,6 +696,508 @@
 
 
                             <tbody id="tablaProductos">
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+            </section>
+
+            <!-- ================================================= -->
+            <!-- PRESENTACIONES DEL PRODUCTO -->
+            <!-- ================================================= -->
+
+                <section
+                    class="panel"
+                    id="panelPresentaciones"
+                    style="display: none;">
+
+                    <div class="titulo-listado">
+
+                        <div>
+
+                            <h2>
+                                Presentaciones del producto
+                            </h2>
+
+                            <span id="presentacionProductoTitulo">
+                                Seleccione un INSUMO
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ============================================= -->
+                    <!-- FORMULARIO PRESENTACION -->
+                    <!-- ============================================= -->
+
+                    <input
+                        type="hidden"
+                        id="idPresentacion">
+
+
+                    <div class="fila">
+
+                        <div class="campo campo-grande">
+
+                            <label for="presentacionNombre">
+                                Presentación
+                            </label>
+
+                            <input
+                                type="text"
+                                id="presentacionNombre"
+                                maxlength="100"
+                                placeholder="Ej: Bolsa 25 KG">
+
+                        </div>
+
+
+                        <div class="campo">
+
+                            <label for="presentacionCantidad">
+                                Cantidad contenida
+                            </label>
+
+                            <input
+                                type="number"
+                                id="presentacionCantidad"
+                                min="0.000001"
+                                step="0.001"
+                                placeholder="0.000">
+
+                        </div>
+
+
+                        <div class="campo">
+
+                            <label for="presentacionUnidad">
+                                Unidad
+                            </label>
+
+                            <select id="presentacionUnidad">
+
+                                <option value="">
+                                    Seleccionar...
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="campo campo-activo">
+
+                            <label>
+                                Estado
+                            </label>
+
+                            <label class="check">
+
+                                <input
+                                    type="checkbox"
+                                    id="presentacionActivo"
+                                    checked>
+
+                                Activo
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ============================================= -->
+                    <!-- BOTONES -->
+                    <!-- ============================================= -->
+
+                    <div class="botones">
+
+                        <button
+                            type="button"
+                            class="btn btn-nuevo"
+                            onclick="nuevaPresentacion()">
+
+                            Nueva
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-guardar"
+                            onclick="guardarPresentacion()">
+
+                            Guardar
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-modificar"
+                            onclick="modificarPresentacion()">
+
+                            Modificar
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-eliminar"
+                            onclick="eliminarPresentacion()">
+
+                            Eliminar
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-actualizar"
+                            onclick="cargarPresentacionesProducto()">
+
+                            Actualizar
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- ============================================= -->
+                    <!-- MENSAJE -->
+                    <!-- ============================================= -->
+
+                    <div
+                        id="presentacionMensaje"
+                        class="costos-mensaje">
+
+                    </div>
+
+
+                    <!-- ============================================= -->
+                    <!-- GRILLA -->
+                    <!-- ============================================= -->
+
+                    <div class="titulo-listado">
+
+                        <div>
+
+                            <h2>
+                                Presentaciones
+                            </h2>
+
+                            <span id="cantidadPresentaciones">
+                                0 presentaciones
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="tabla-contenedor">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Presentación
+                                    </th>
+
+                                    <th>
+                                        Cantidad
+                                    </th>
+
+                                    <th>
+                                        Unidad
+                                    </th>
+
+                                    <th>
+                                        Estado
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="tablaPresentaciones">
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+
+
+            <!-- ================================================= -->
+            <!-- PROVEEDORES -->
+            <!-- ================================================= -->
+
+            <section
+                id="modulo-proveedores"
+                class="modulo oculto">
+
+
+                <section class="panel formulario">
+
+                    <h2>
+                        Proveedor
+                    </h2>
+
+
+                    <input
+                        type="hidden"
+                        id="idProveedor">
+
+
+                    <div class="fila">
+
+                        <div class="campo">
+
+                            <label for="proveedorCodigo">
+                                Código
+                            </label>
+
+                            <input
+                                type="text"
+                                id="proveedorCodigo"
+                                maxlength="20"
+                                placeholder="Ej: PR001">
+
+                        </div>
+
+
+                        <div class="campo campo-grande">
+
+                            <label for="proveedorNombre">
+                                Nombre
+                            </label>
+
+                            <input
+                                type="text"
+                                id="proveedorNombre"
+                                maxlength="150"
+                                placeholder="Nombre del proveedor">
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="fila">
+
+                        <div class="campo">
+
+                            <label for="proveedorCuit">
+                                CUIT
+                            </label>
+
+                            <input
+                                type="text"
+                                id="proveedorCuit"
+                                maxlength="20"
+                                placeholder="Ej: 20-12345678-9">
+
+                        </div>
+
+
+                        <div class="campo">
+
+                            <label for="proveedorTelefono">
+                                Teléfono
+                            </label>
+
+                            <input
+                                type="text"
+                                id="proveedorTelefono"
+                                maxlength="50">
+
+                        </div>
+
+
+                        <div class="campo campo-grande">
+
+                            <label for="proveedorEmail">
+                                Email
+                            </label>
+
+                            <input
+                                type="email"
+                                id="proveedorEmail"
+                                maxlength="150">
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="fila">
+
+                        <div class="campo campo-grande">
+
+                            <label for="proveedorDireccion">
+                                Dirección
+                            </label>
+
+                            <input
+                                type="text"
+                                id="proveedorDireccion"
+                                maxlength="200">
+
+                        </div>
+
+
+                        <div class="campo campo-activo">
+
+                            <label>
+                                Estado
+                            </label>
+
+                            <label class="check">
+
+                                <input
+                                    type="checkbox"
+                                    id="proveedorActivo"
+                                    checked>
+
+                                Activo
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="botones">
+
+                        <button
+                            type="button"
+                            class="btn btn-nuevo"
+                            onclick="nuevoProveedor()">
+
+                            Nuevo
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-guardar"
+                            onclick="guardarProveedor()">
+
+                            Guardar
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-modificar"
+                            onclick="modificarProveedor()">
+
+                            Modificar
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-eliminar"
+                            onclick="eliminarProveedor()">
+
+                            Eliminar
+
+                        </button>
+
+                    </div>
+
+                </section>
+
+
+                <section class="panel">
+
+                    <div class="titulo-listado">
+
+                        <div>
+
+                            <h2>
+                                Proveedores
+                            </h2>
+
+                            <span id="cantidadProveedores">
+                                0 proveedores
+                            </span>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-actualizar"
+                            onclick="cargarProveedores()">
+
+                            Actualizar
+
+                        </button>
+
+                    </div>
+
+
+                    <div class="tabla-contenedor">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Código
+                                    </th>
+
+                                    <th>
+                                        Proveedor
+                                    </th>
+
+                                    <th>
+                                        CUIT
+                                    </th>
+
+                                    <th>
+                                        Teléfono
+                                    </th>
+
+                                    <th>
+                                        Email
+                                    </th>
+
+                                    <th>
+                                        Estado
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="tablaProveedores">
 
                             </tbody>
 
@@ -1903,6 +2415,8 @@
 
 <script src="js/productos.js"></script>
 
+<script src="js/proveedores.js"></script>
+
 <script src="js/estructura.js"></script>
 
 <script src="js/costos.js"></script>
@@ -1952,6 +2466,12 @@
                     titulo: "Productos",
                     subtitulo:
                         "Alta, modificación y consulta de productos"
+                },
+
+                proveedores: {
+                    titulo: "Proveedores",
+                    subtitulo:
+                        "Alta, modificación y consulta de proveedores"
                 },
 
                 estructura: {
@@ -2106,4 +2626,3 @@
 </body>
 
 </html>
-```

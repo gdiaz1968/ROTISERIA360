@@ -4,10 +4,13 @@ const path = require("path");
 
 const pool = require("./db");
 
+
 const productosRoutes = require("./routes/productos");
 const estructuraRoutes = require("./routes/estructura");
 const costosRoutes = require("./routes/costos");
 const unidadesRoutes = require("./routes/unidades");
+const proveedoresRoutes = require("./routes/proveedores");
+const presentacionesRoutes = require("./routes/presentaciones");
 
 const app = express();
 
@@ -63,6 +66,8 @@ app.use(
     estructuraRoutes
 );
 
+
+
 app.get(
     "/api/costos-prueba-directa",
     function (req, res) {
@@ -80,9 +85,14 @@ app.use(
     costosRoutes
 );
 
+app.use("/api/proveedores", proveedoresRoutes);
+
+app.use("/api/presentaciones", presentacionesRoutes);
+
 console.log("ROUTER PRODUCTOS MONTADO");
 console.log("ROUTER ESTRUCTURA MONTADO");
 console.log("ROUTER COSTOS MONTADO");
+console.log("ROUTER PROVEEDORES MONTADO");
 
 app.get(
     "/api/prueba-directa",
