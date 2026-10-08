@@ -11,6 +11,7 @@ const costosRoutes = require("./routes/costos");
 const unidadesRoutes = require("./routes/unidades");
 const proveedoresRoutes = require("./routes/proveedores");
 const presentacionesRoutes = require("./routes/presentaciones");
+const preciosCompraRoutes = require("./routes/preciosCompra");
 
 const app = express();
 
@@ -88,6 +89,8 @@ app.use(
 app.use("/api/proveedores", proveedoresRoutes);
 
 app.use("/api/presentaciones", presentacionesRoutes);
+
+app.use("/api/precios-compra", preciosCompraRoutes);
 
 console.log("ROUTER PRODUCTOS MONTADO");
 console.log("ROUTER ESTRUCTURA MONTADO");
