@@ -3,1024 +3,586 @@
 // COSTOS
 // ======================================================
 
-
-// ======================================================
-// VARIABLES
-// ======================================================
-
 let productosCostos = [];
 let insumosCostos = [];
 
+document.addEventListener("DOMContentLoaded", function () {
+    cargarProductosCostos();
+    cargarInsumosCostos();
 
-// ======================================================
-// INICIO
-// ======================================================
-
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-        cargarProductosCostos();
-
-        cargarInsumosCostos();
-
-
-        var comboProducto =
-            document.getElementById(
-                "costos-producto"
-            );
-
-        if (comboProducto) {
-
-            comboProducto.addEventListener(
-                "change",
-                seleccionarProductoCosto
-            );
-
-        }
-
-
-        var btnCalcular =
-            document.getElementById(
-                "btn-calcular-costo"
-            );
-
-        if (btnCalcular) {
-
-            btnCalcular.addEventListener(
-                "click",
-                consultarCosto
-            );
-
-        }
-
-
-        var btnLimpiar =
-            document.getElementById(
-                "btn-limpiar-costo"
-            );
-
-        if (btnLimpiar) {
-
-            btnLimpiar.addEventListener(
-                "click",
-                limpiarCosto
-            );
-
-        }
-
-
-        // --------------------------------------------------
-        // COSTOS DE INSUMOS
-        // --------------------------------------------------
-
-        var comboInsumo =
-            document.getElementById(
-                "costo-insumo"
-            );
-
-        if (comboInsumo) {
-
-            comboInsumo.addEventListener(
-                "change",
-                seleccionarInsumoCosto
-            );
-
-        }
-
-
-        var btnGuardarInsumo =
-            document.getElementById(
-                "btn-guardar-costo-insumo"
-            );
-
-        if (btnGuardarInsumo) {
-
-            btnGuardarInsumo.addEventListener(
-                "click",
-                guardarCostoInsumo
-            );
-
-        }
-
-
-        var btnLimpiarInsumo =
-            document.getElementById(
-                "btn-limpiar-costo-insumo"
-            );
-
-        if (btnLimpiarInsumo) {
-
-            btnLimpiarInsumo.addEventListener(
-                "click",
-                limpiarCostoInsumo
-            );
-
-        }
-
+    const comboProducto = document.getElementById("costos-producto");
+    if (comboProducto) {
+        comboProducto.addEventListener("change", seleccionarProductoCosto);
     }
-);
 
+    const btnCalcular = document.getElementById("btn-calcular-costo");
+    if (btnCalcular) {
+        btnCalcular.addEventListener("click", consultarCosto);
+    }
+
+    const btnLimpiar = document.getElementById("btn-limpiar-costo");
+    if (btnLimpiar) {
+        btnLimpiar.addEventListener("click", limpiarCosto);
+    }
+
+    const comboInsumo = document.getElementById("costo-insumo");
+    if (comboInsumo) {
+        comboInsumo.addEventListener("change", seleccionarInsumoCosto);
+    }
+
+    const btnGuardarInsumo = document.getElementById("btn-guardar-costo-insumo");
+    if (btnGuardarInsumo) {
+        btnGuardarInsumo.addEventListener("click", guardarCostoInsumo);
+    }
+
+    const btnLimpiarInsumo = document.getElementById("btn-limpiar-costo-insumo");
+    if (btnLimpiarInsumo) {
+        btnLimpiarInsumo.addEventListener("click", limpiarCostoInsumo);
+    }
+});
 
 // ======================================================
-// CARGAR PRODUCTOS
+// UTILIDADES
+// ======================================================
+
+async function costosLeerRespuesta(respuesta) {
+    const texto = await respuesta.text();
+
+    let datos = {};
+
+    if (texto) {
+        try {
+            datos = JSON.parse(texto);
+        } catch {
+            throw new Error("El servidor devolvió una respuesta no válida.");
+        }
+    }
+
+    if (!respuesta.ok) {
+        throw new Error(
+            datos.error ||
+            datos.mensaje ||
+            `Error del servidor (${respuesta.status}).`
+        );
+    }
+
+    return datos;
+}
+
+function costosObtenerLista(datos, propiedad) {
+    if (Array.isArray(datos)) {
+        return datos;
+    }
+
+    if (datos && Array.isArray(datos[propiedad])) {
+        return datos[propiedad];
+    }
+
+    return [];
+}
+
+function costosElemento(id) {
+    return document.getElementById(id);
+}
+
+function costosAsignarValor(id, valor) {
+    const elemento = costosElemento(id);
+
+    if (elemento) {
+        elemento.value = valor ?? "";
+    }
+}
+
+function costosAsignarTexto(id, valor) {
+    const elemento = costosElemento(id);
+
+    if (elemento) {
+        elemento.textContent = valor ?? "";
+    }
+}
+
+function costosTipoProducto(producto) {
+    return String(producto?.tipo ?? "").trim().toUpperCase();
+}
+
+// ======================================================
+// CARGAR PRODUCTOS ELABORADOS
 // ======================================================
 
 async function cargarProductosCostos() {
-
     try {
+        const respuesta = await fetch("/api/productos");
+        const datos = await costosLeerRespuesta(respuesta);
 
-        const respuesta =
-            await fetch("/api/productos");
+        const todos = costosObtenerLista(datos, "productos");
 
+        // El cálculo de recetas corresponde a productos ELABORADOS.
+        productosCostos = todos.filter(function (producto) {
+            return producto.activo !== false &&
+                costosTipoProducto(producto) === "ELABORADO";
+        });
 
-        if (!respuesta.ok) {
-
-            throw new Error(
-                "No se pudieron cargar los productos."
-            );
-
-        }
-
-
-        const datos =
-            await respuesta.json();
-
-
-        if (Array.isArray(datos)) {
-
-            productosCostos = datos;
-
-        }
-        else {
-
-            productosCostos =
-                datos.productos || [];
-
-        }
-
-
-        const combo =
-            document.getElementById(
-                "costos-producto"
-            );
-
+        const combo = costosElemento("costos-producto");
 
         if (!combo) {
-
             return;
-
         }
 
+        combo.replaceChildren();
 
-        combo.innerHTML = `
-            <option value="">
-                Seleccionar producto...
-            </option>
-        `;
+        const opcionInicial = document.createElement("option");
+        opcionInicial.value = "";
+        opcionInicial.textContent = "Seleccionar producto elaborado...";
+        combo.appendChild(opcionInicial);
 
+        productosCostos.forEach(function (producto) {
+            const opcion = document.createElement("option");
+            opcion.value = producto.id;
+            opcion.textContent =
+                `${producto.codigo || ""} - ${producto.nombre || ""}`;
 
-        productosCostos.forEach(
-            function (producto) {
+            combo.appendChild(opcion);
+        });
 
-                if (
-                    producto.activo === false
-                ) {
-
-                    return;
-
-                }
-
-
-                const opcion =
-                    document.createElement(
-                        "option"
-                    );
-
-
-                opcion.value =
-                    producto.id;
-
-
-                opcion.textContent =
-                    producto.codigo +
-                    " - " +
-                    producto.nombre;
-
-
-                combo.appendChild(
-                    opcion
-                );
-
-            }
-        );
-
+        if (productosCostos.length === 0) {
+            mostrarMensajeCosto(
+                "No hay productos elaborados activos para calcular.",
+                "info"
+            );
+        }
+    } catch (error) {
+        console.error("ERROR CARGANDO PRODUCTOS ELABORADOS:", error);
+        mostrarMensajeCosto(error.message, "error");
     }
-    catch (error) {
-
-        console.error(
-            "ERROR CARGANDO PRODUCTOS COSTOS:",
-            error
-        );
-
-
-        mostrarMensajeCosto(
-            error.message,
-            "error"
-        );
-
-    }
-
 }
-
 
 // ======================================================
 // CARGAR INSUMOS
 // ======================================================
 
 async function cargarInsumosCostos() {
-
     try {
+        const respuesta = await fetch("/api/costos/insumos");
+        const datos = await costosLeerRespuesta(respuesta);
 
-        const respuesta =
-            await fetch(
-                "/api/costos/insumos"
-            );
+        insumosCostos = costosObtenerLista(datos, "insumos");
 
-
-        if (!respuesta.ok) {
-
-            throw new Error(
-                "No se pudieron cargar los insumos."
-            );
-
-        }
-
-
-        const datos =
-            await respuesta.json();
-
-
-        if (Array.isArray(datos)) {
-
-            insumosCostos =
-                datos;
-
-        }
-        else {
-
-            insumosCostos =
-                datos.insumos || [];
-
-        }
-
-
-        const combo =
-            document.getElementById(
-                "costo-insumo"
-            );
-
+        const combo = costosElemento("costo-insumo");
 
         if (!combo) {
-
             return;
-
         }
 
+        combo.replaceChildren();
 
-        combo.innerHTML = `
-            <option value="">
-                Seleccionar insumo...
-            </option>
-        `;
+        const opcionInicial = document.createElement("option");
+        opcionInicial.value = "";
+        opcionInicial.textContent = "Seleccionar insumo...";
+        combo.appendChild(opcionInicial);
 
+        insumosCostos.forEach(function (insumo) {
+            const opcion = document.createElement("option");
+            opcion.value = insumo.id;
+            opcion.textContent =
+                `${insumo.codigo || ""} - ${insumo.nombre || ""}`;
 
-        insumosCostos.forEach(
-            function (insumo) {
-
-                const opcion =
-                    document.createElement(
-                        "option"
-                    );
-
-
-                opcion.value =
-                    insumo.id;
-
-
-                opcion.textContent =
-                    insumo.codigo +
-                    " - " +
-                    insumo.nombre;
-
-
-                combo.appendChild(
-                    opcion
-                );
-
-            }
-        );
-
+            combo.appendChild(opcion);
+        });
+    } catch (error) {
+        console.error("ERROR CARGANDO INSUMOS:", error);
+        mostrarMensajeCostoInsumo(error.message, "error");
     }
-    catch (error) {
-
-        console.error(
-            "ERROR CARGANDO INSUMOS COSTOS:",
-            error
-        );
-
-
-        mostrarMensajeCostoInsumo(
-            error.message,
-            "error"
-        );
-
-    }
-
 }
-
 
 // ======================================================
 // SELECCIONAR INSUMO
 // ======================================================
 
 async function seleccionarInsumoCosto() {
+    const combo = costosElemento("costo-insumo");
 
-    const combo =
-        document.getElementById(
-            "costo-insumo"
-        );
-
-
-    if (!combo) {
-
-        return;
-
-    }
-
-
-    const id =
-        Number(
-            combo.value
-        );
-
-
-    if (!id) {
-
+    if (!combo || !combo.value) {
         limpiarDatosInsumo();
-
         return;
-
     }
 
+    const id = Number(combo.value);
 
-    const insumo =
-        insumosCostos.find(
-            function (item) {
-
-                return Number(item.id) === id;
-
-            }
-        );
-
+    const insumo = insumosCostos.find(function (item) {
+        return Number(item.id) === id;
+    });
 
     if (insumo) {
-
-        document.getElementById(
-            "costo-insumo-unidad"
-        ).value =
-            insumo.unidad || "";
-
+        costosAsignarValor("costo-insumo-unidad", insumo.unidad || "");
     }
 
+    costosAsignarValor("costo-insumo-actual", "Consultando...");
+    mostrarMensajeCostoInsumo("", "");
 
     try {
+        const respuesta = await fetch(`/api/costos/insumo/${id}`);
+        const datos = await costosLeerRespuesta(respuesta);
 
-        const respuesta =
-            await fetch(
-                "/api/costos/insumo/" + id
-            );
-
-
-        if (!respuesta.ok) {
-
-            throw new Error(
-                "No se pudo consultar el costo del insumo."
-            );
-
-        }
-
-
-        const datos =
-            await respuesta.json();
-
-
-        const campoCosto =
-            document.getElementById(
-                "costo-insumo-actual"
-            );
-
-
-        if (!campoCosto) {
-
-            return;
-
-        }
-
+        // Admite respuesta directa o respuesta envuelta.
+        const costo = datos?.resultado ?? datos?.insumo ?? datos;
 
         if (
-            datos === null ||
-            datos === undefined
+            !costo ||
+            costo.costo === null ||
+            costo.costo === undefined
         ) {
-
-            campoCosto.value = "-";
-
-        }
-        else {
-
-            campoCosto.value =
-                costosFormatearMoneda(
-                    datos.costo
-                );
-
+            costosAsignarValor("costo-insumo-actual", "-");
+        } else {
+            costosAsignarValor(
+                "costo-insumo-actual",
+                costosFormatearMoneda(costo.costo)
+            );
         }
 
+        costosAsignarValor("costo-insumo-nuevo", "");
 
-        document.getElementById(
-            "costo-insumo-nuevo"
-        ).value = "";
-
-
-        mostrarMensajeCostoInsumo(
-            "",
-            ""
-        );
-
+        await cargarHistorialCostoInsumo(id);
+    } catch (error) {
+        console.error("ERROR CONSULTANDO COSTO INSUMO:", error);
+        costosAsignarValor("costo-insumo-actual", "-");
+        mostrarMensajeCostoInsumo(error.message, "error");
     }
-    catch (error) {
-
-        console.error(
-            "ERROR CONSULTANDO COSTO INSUMO:",
-            error
-        );
-
-
-        mostrarMensajeCostoInsumo(
-            error.message,
-            "error"
-        );
-
-    }
-
 }
 
+// ======================================================
+// HISTORIAL DE COSTOS DEL INSUMO
+// ======================================================
+
+async function cargarHistorialCostoInsumo(idProducto) {
+    try {
+        const respuesta = await fetch(
+            `/api/costos/insumo/${idProducto}/historial`
+        );
+
+        const datos = await costosLeerRespuesta(respuesta);
+        const historial = costosObtenerLista(datos, "historial");
+
+        mostrarHistorialCostoInsumo(historial);
+    } catch (error) {
+        console.error("ERROR CONSULTANDO HISTORIAL DE COSTOS:", error);
+        mostrarHistorialCostoInsumo([]);
+        mostrarMensajeCostoInsumo(
+            "El costo actual se consultó, pero no se pudo cargar el historial.",
+            "error"
+        );
+    }
+}
+
+function mostrarHistorialCostoInsumo(historial) {
+    let contenedor = costosElemento("costo-insumo-historial");
+
+    // El HTML actual no contiene un contenedor para el historial.
+    // Se crea debajo del formulario de costos de insumos.
+    if (!contenedor) {
+        const combo = costosElemento("costo-insumo");
+
+        const panel = combo
+            ? combo.closest(".costos-panel")
+            : null;
+
+        if (!panel) {
+            return;
+        }
+
+        contenedor = document.createElement("div");
+        contenedor.id = "costo-insumo-historial";
+        contenedor.className = "tabla-contenedor";
+        contenedor.style.marginTop = "16px";
+        panel.appendChild(contenedor);
+    }
+
+    contenedor.replaceChildren();
+
+    const titulo = document.createElement("h3");
+    titulo.textContent = "Historial de costos";
+    contenedor.appendChild(titulo);
+
+    if (!historial.length) {
+        const mensaje = document.createElement("p");
+        mensaje.textContent = "No hay registros de historial para mostrar.";
+        contenedor.appendChild(mensaje);
+        return;
+    }
+
+    const tabla = document.createElement("table");
+    tabla.className = "tabla-costos";
+
+    const encabezado = document.createElement("thead");
+    const filaEncabezado = document.createElement("tr");
+
+    ["Costo", "Desde", "Hasta", "Estado"].forEach(function (texto) {
+        const th = document.createElement("th");
+        th.textContent = texto;
+        filaEncabezado.appendChild(th);
+    });
+
+    encabezado.appendChild(filaEncabezado);
+    tabla.appendChild(encabezado);
+
+    const cuerpo = document.createElement("tbody");
+
+    historial.forEach(function (registro) {
+        const fila = document.createElement("tr");
+
+        const costo = registro.costo;
+        const desde = registro.fecha_desde;
+        const hasta = registro.fecha_hasta;
+        const activo = registro.activo;
+
+        [
+            costosFormatearMoneda(costo),
+            costosFormatearFecha(desde),
+            costosFormatearFecha(hasta),
+            activo === true ? "Vigente" : "Histórico"
+        ].forEach(function (valor) {
+            const celda = document.createElement("td");
+            celda.textContent = valor;
+            fila.appendChild(celda);
+        });
+
+        cuerpo.appendChild(fila);
+    });
+
+    tabla.appendChild(cuerpo);
+    contenedor.appendChild(tabla);
+}
+
+function costosFormatearFecha(valor) {
+    if (!valor) {
+        return "-";
+    }
+
+    const fecha = new Date(valor);
+
+    if (Number.isNaN(fecha.getTime())) {
+        return String(valor);
+    }
+
+    return fecha.toLocaleString("es-AR");
+}
 
 // ======================================================
-// GUARDAR COSTO INSUMO
+// GUARDAR COSTO DE INSUMO
 // ======================================================
 
 async function guardarCostoInsumo() {
-
-    const combo =
-        document.getElementById(
-            "costo-insumo"
-        );
-
-
-    const campoCosto =
-        document.getElementById(
-            "costo-insumo-nuevo"
-        );
-
+    const combo = costosElemento("costo-insumo");
+    const campoCosto = costosElemento("costo-insumo-nuevo");
 
     if (!combo || !campoCosto) {
-
         return;
-
     }
 
-
-    const idProducto =
-        Number(
-            combo.value
-        );
-
-
-    const costo =
-        Number(
-            campoCosto.value
-        );
-
+    const idProducto = Number(combo.value);
+    const textoCosto = campoCosto.value.trim();
+    const costo = Number(textoCosto);
 
     if (!idProducto) {
-
-        mostrarMensajeCostoInsumo(
-            "Seleccione un insumo.",
-            "error"
-        );
-
+        mostrarMensajeCostoInsumo("Seleccione un insumo.", "error");
         return;
-
     }
 
-
-    if (
-        isNaN(costo) ||
-        costo < 0
-    ) {
-
-        mostrarMensajeCostoInsumo(
-            "Ingrese un costo válido.",
-            "error"
-        );
-
+    if (textoCosto === "" || !Number.isFinite(costo) || costo < 0) {
+        mostrarMensajeCostoInsumo("Ingrese un costo válido.", "error");
         return;
-
     }
-
 
     try {
+        const respuesta = await fetch("/api/costos/insumo", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                id_producto: idProducto,
+                costo: costo
+            })
+        });
 
-        const respuesta =
-            await fetch(
-                "/api/costos/insumo",
-                {
-                    method: "POST",
+        await costosLeerRespuesta(respuesta);
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        id_producto:
-                            idProducto,
-
-                        costo:
-                            costo
-                    })
-                }
-            );
-
-
-        const datos =
-            await respuesta.json();
-
-
-        if (!respuesta.ok) {
-
-            throw new Error(
-                datos.error ||
-                datos.mensaje ||
-                "No se pudo registrar el costo."
-            );
-
-        }
-
-
-        document.getElementById(
-            "costo-insumo-actual"
-        ).value =
-            costosFormatearMoneda(
-                costo
-            );
-
+        costosAsignarValor(
+            "costo-insumo-actual",
+            costosFormatearMoneda(costo)
+        );
 
         campoCosto.value = "";
-
 
         mostrarMensajeCostoInsumo(
             "Costo registrado correctamente.",
             "ok"
         );
 
+        await cargarInsumosCostos();
+        await cargarHistorialCostoInsumo(idProducto);
+    } catch (error) {
+        console.error("ERROR GUARDANDO COSTO INSUMO:", error);
+        mostrarMensajeCostoInsumo(error.message, "error");
     }
-    catch (error) {
-
-        console.error(
-            "ERROR GUARDANDO COSTO INSUMO:",
-            error
-        );
-
-
-        mostrarMensajeCostoInsumo(
-            error.message,
-            "error"
-        );
-
-    }
-
 }
-
 
 // ======================================================
 // LIMPIAR INSUMO
 // ======================================================
 
 function limpiarCostoInsumo() {
-
-    const combo =
-        document.getElementById(
-            "costo-insumo"
-        );
-
-
-    if (combo) {
-
-        combo.value = "";
-
-    }
-
-
+    costosAsignarValor("costo-insumo", "");
     limpiarDatosInsumo();
+    mostrarMensajeCostoInsumo("", "");
 
+    const historial = costosElemento("costo-insumo-historial");
 
-    mostrarMensajeCostoInsumo(
-        "",
-        ""
-    );
-
+    if (historial) {
+        historial.replaceChildren();
+    }
 }
-
-
-// ======================================================
-// LIMPIAR DATOS INSUMO
-// ======================================================
 
 function limpiarDatosInsumo() {
-
-    const unidad =
-        document.getElementById(
-            "costo-insumo-unidad"
-        );
-
-
-    const actual =
-        document.getElementById(
-            "costo-insumo-actual"
-        );
-
-
-    const nuevo =
-        document.getElementById(
-            "costo-insumo-nuevo"
-        );
-
-
-    if (unidad) {
-
-        unidad.value = "";
-
-    }
-
-
-    if (actual) {
-
-        actual.value = "-";
-
-    }
-
-
-    if (nuevo) {
-
-        nuevo.value = "";
-
-    }
-
+    costosAsignarValor("costo-insumo-unidad", "");
+    costosAsignarValor("costo-insumo-actual", "-");
+    costosAsignarValor("costo-insumo-nuevo", "");
 }
 
-
 // ======================================================
-// SELECCIONAR PRODUCTO
+// SELECCIONAR PRODUCTO ELABORADO
 // ======================================================
 
 function seleccionarProductoCosto() {
+    const combo = costosElemento("costos-producto");
 
-    const combo =
-        document.getElementById(
-            "costos-producto"
-        );
-
-
-    if (!combo) {
-
-        return;
-
-    }
-
-
-    const id =
-        Number(
-            combo.value
-        );
-
-
-    if (!id) {
-
+    if (!combo || !combo.value) {
         limpiarDatosProducto();
-
         limpiarResultado();
-
         return;
-
     }
 
+    const id = Number(combo.value);
 
-    const producto =
-        productosCostos.find(
-            function (item) {
-
-                return Number(item.id) === id;
-
-            }
-        );
-
+    const producto = productosCostos.find(function (item) {
+        return Number(item.id) === id;
+    });
 
     if (!producto) {
-
         limpiarDatosProducto();
-
         limpiarResultado();
-
         return;
-
     }
 
-
-    document.getElementById(
-        "costos-codigo"
-    ).value =
-        producto.codigo || "";
-
-
-    document.getElementById(
-        "costos-nombre"
-    ).value =
-        producto.nombre || "";
-
-
-    document.getElementById(
-        "costos-tipo"
-    ).value =
-        producto.tipo || "";
-
-
-    document.getElementById(
-        "costos-unidad"
-    ).value =
-        producto.unidad || "";
-
+    costosAsignarValor("costos-codigo", producto.codigo || "");
+    costosAsignarValor("costos-nombre", producto.nombre || "");
+    costosAsignarValor("costos-tipo", producto.tipo || "");
+    costosAsignarValor("costos-unidad", producto.unidad || "");
 
     limpiarResultado();
-
+    mostrarMensajeCosto("", "");
 }
 
-
 // ======================================================
-// CONSULTAR COSTO
+// CONSULTAR COSTO DEL PRODUCTO
 // ======================================================
 
 async function consultarCosto() {
+    const combo = costosElemento("costos-producto");
 
-    const combo =
-        document.getElementById(
-            "costos-producto"
-        );
-
-
-    if (!combo) {
-
+    if (!combo || !combo.value) {
+        mostrarMensajeCosto("Seleccione un producto elaborado.", "error");
         return;
-
     }
 
+    const id = Number(combo.value);
 
-    const id =
-        Number(
-            combo.value
-        );
+    mostrarMensajeCosto("Consultando estructura y calculando costo...", "info");
 
+    const boton = costosElemento("btn-calcular-costo");
 
-    if (!id) {
-
-        mostrarMensajeCosto(
-            "Seleccione un producto.",
-            "error"
-        );
-
-        return;
-
+    if (boton) {
+        boton.disabled = true;
     }
-
-
-    mostrarMensajeCosto(
-        "Consultando estructura...",
-        "info"
-    );
-
 
     try {
-
-        const respuesta =
-            await fetch(
-                "/api/costos/estructura/" +
-                id +
-                "/costos"
-            );
-
-
-        const datos =
-            await respuesta.json();
-
-
-        if (!respuesta.ok) {
-
-            throw new Error(
-                datos.error ||
-                datos.mensaje ||
-                "No se pudo consultar la estructura."
-            );
-
-        }
-
-
-        mostrarResultado(
-            datos.resultado
+        const respuesta = await fetch(
+            `/api/costos/estructura/${id}/costos`
         );
 
+        const datos = await costosLeerRespuesta(respuesta);
+
+        // El router puede devolver { resultado: ... } o el resultado directo.
+        const resultado = datos?.resultado ?? datos;
+
+        if (!resultado || typeof resultado !== "object") {
+            throw new Error("El servidor no devolvió un resultado de cálculo válido.");
+        }
+
+        mostrarResultado(resultado);
 
         mostrarMensajeCosto(
-            "Estructura consultada correctamente.",
+            "Cálculo consultado correctamente.",
             "ok"
         );
-
+    } catch (error) {
+        console.error("ERROR CALCULANDO COSTO:", error);
+        mostrarMensajeCosto(error.message, "error");
+    } finally {
+        if (boton) {
+            boton.disabled = false;
+        }
     }
-    catch (error) {
-
-        console.error(
-            "ERROR CONSULTANDO COSTO:",
-            error
-        );
-
-
-        mostrarMensajeCosto(
-            error.message,
-            "error"
-        );
-
-    }
-
 }
 
-
 // ======================================================
-// MOSTRAR RESULTADO
+// MOSTRAR RESULTADO DEL CÁLCULO
 // ======================================================
 
-function mostrarResultado(
-    resultado
-) {
-
+function mostrarResultado(resultado) {
     if (!resultado) {
-
+        mostrarMensajeCosto("No hay datos para mostrar.", "error");
         return;
-
     }
 
+    const producto = resultado.producto || {};
 
-    // --------------------------------------------------
-    // PRODUCTO
-    // --------------------------------------------------
-
-    if (resultado.producto) {
-
-        document.getElementById(
-            "costos-codigo"
-        ).value =
-            resultado.producto.codigo || "";
-
-
-        document.getElementById(
-            "costos-nombre"
-        ).value =
-            resultado.producto.nombre || "";
-
-
-        document.getElementById(
-            "costos-tipo"
-        ).value =
-            resultado.producto.tipo || "";
-
-
-        document.getElementById(
-            "costos-unidad"
-        ).value =
-            resultado.producto.unidad || "";
-
+    if (producto.codigo !== undefined) {
+        costosAsignarValor("costos-codigo", producto.codigo);
     }
 
-
-    // --------------------------------------------------
-    // VARIABLES DEL RESULTADO
-    // --------------------------------------------------
-
-    let rendimiento = null;
-    let unidadRendimiento = "";
-
-    let costoTotal = null;
-    let costoUnitario = null;
-
-
-    // --------------------------------------------------
-    // RENDIMIENTO
-    // --------------------------------------------------
-
-    if (resultado.estructura) {
-
-        rendimiento =
-            resultado.rendimiento;
-
-
-        unidadRendimiento =
-            resultado.unidad_rendimiento ||
-            "";
-
-
-        if (
-            rendimiento !== null &&
-            rendimiento !== undefined
-        ) {
-
-            document.getElementById(
-                "costos-rendimiento"
-            ).textContent =
-                costosFormatearNumero(
-                    rendimiento
-                ) +
-                (
-                    unidadRendimiento
-                        ? " " + unidadRendimiento
-                        : ""
-                );
-
-        }
-
+    if (producto.nombre !== undefined) {
+        costosAsignarValor("costos-nombre", producto.nombre);
     }
 
-
-    // --------------------------------------------------
-    // COSTO TOTAL
-    // --------------------------------------------------
-
-    if (
-        resultado.costo_total !== null &&
-        resultado.costo_total !== undefined
-    ) {
-
-        costoTotal =
-            Number(
-                resultado.costo_total
-            );
-
-
-        document.getElementById(
-            "costos-costo-total"
-        ).textContent =
-            costosFormatearMoneda(
-                costoTotal
-            );
-
+    if (producto.tipo !== undefined) {
+        costosAsignarValor("costos-tipo", producto.tipo);
     }
 
-
-    // --------------------------------------------------
-    // COSTO UNITARIO
-    // --------------------------------------------------
-
-    if (
-        resultado.costo_unitario !== null &&
-        resultado.costo_unitario !== undefined
-    ) {
-
-        costoUnitario =
-            Number(
-                resultado.costo_unitario
-            );
-
-
-        document.getElementById(
-            "costos-costo-unitario"
-        ).textContent =
-            costosFormatearMoneda(
-                costoUnitario
-            );
-
+    if (producto.unidad !== undefined) {
+        costosAsignarValor("costos-unidad", producto.unidad);
     }
 
+    const rendimiento = resultado.rendimiento ?? null;
+    const unidadRendimiento = resultado.unidad_rendimiento || "";
+    const costoTotal = costosNumeroOpcional(resultado.costo_total);
+    const costoUnitario = costosNumeroOpcional(resultado.costo_unitario);
 
-    // --------------------------------------------------
-    // MOSTRAR EXPLICACION DEL CALCULO
-    // --------------------------------------------------
+    costosAsignarTexto(
+        "costos-rendimiento",
+        rendimiento === null
+            ? "-"
+            : `${costosFormatearNumero(rendimiento)}${unidadRendimiento ? " " + unidadRendimiento : ""}`
+    );
+
+    costosAsignarTexto(
+        "costos-costo-total",
+        costoTotal === null ? "-" : costosFormatearMoneda(costoTotal)
+    );
+
+    costosAsignarTexto(
+        "costos-costo-unitario",
+        costoUnitario === null ? "-" : costosFormatearMoneda(costoUnitario)
+    );
 
     mostrarExplicacionCosto(
         costoTotal,
@@ -1029,20 +591,21 @@ function mostrarResultado(
         costoUnitario
     );
 
-
-    // --------------------------------------------------
-    // DETALLE
-    // --------------------------------------------------
-
-    mostrarDetalleCosto(
-        resultado.detalle || []
-    );
-
+    mostrarDetalleCosto(resultado.detalle || []);
 }
 
+function costosNumeroOpcional(valor) {
+    if (valor === null || valor === undefined || valor === "") {
+        return null;
+    }
+
+    const numero = Number(valor);
+
+    return Number.isFinite(numero) ? numero : null;
+}
 
 // ======================================================
-// MOSTRAR EXPLICACION DEL COSTO
+// EXPLICACIÓN DEL COSTO
 // ======================================================
 
 function mostrarExplicacionCosto(
@@ -1051,796 +614,220 @@ function mostrarExplicacionCosto(
     unidadRendimiento,
     costoUnitario
 ) {
-
-    const campoTotal =
-        document.getElementById(
-            "costos-explicacion-total"
-        );
-
-
-    const campoTotal2 =
-        document.getElementById(
-            "costos-explicacion-total-2"
-        );
-
-
-    const campoRendimiento =
-        document.getElementById(
-            "costos-explicacion-rendimiento"
-        );
-
-
-    const campoUnitario =
-        document.getElementById(
-            "costos-explicacion-unitario"
-        );
-
-
-    const campoFormulaFinal =
-        document.getElementById(
-            "costos-formula-final-resultado"
-        );
-
-
-    // --------------------------------------------------
-    // COSTO TOTAL
-    // --------------------------------------------------
-
-    if (campoTotal) {
-
-        if (
-            costoTotal !== null &&
-            !isNaN(costoTotal)
-        ) {
-
-            campoTotal.textContent =
-                costosFormatearMoneda(
-                    costoTotal
-                );
-
-        }
-        else {
-
-            campoTotal.textContent = "-";
-
-        }
-
-    }
-
-
-    // --------------------------------------------------
-    // COSTO TOTAL - SEGUNDA REFERENCIA
-    // --------------------------------------------------
-
-    if (campoTotal2) {
-
-        if (
-            costoTotal !== null &&
-            !isNaN(costoTotal)
-        ) {
-
-            campoTotal2.textContent =
-                costosFormatearMoneda(
-                    costoTotal
-                );
-
-        }
-        else {
-
-            campoTotal2.textContent = "-";
-
-        }
-
-    }
-
-
-    // --------------------------------------------------
-    // RENDIMIENTO
-    // --------------------------------------------------
-
-    if (campoRendimiento) {
-
-        if (
-            rendimiento !== null &&
-            rendimiento !== undefined &&
-            !isNaN(Number(rendimiento))
-        ) {
-
-            campoRendimiento.textContent =
-                costosFormatearNumero(
-                    rendimiento
-                ) +
-                (
-                    unidadRendimiento
-                        ? " " + unidadRendimiento
-                        : ""
-                );
-
-        }
-        else {
-
-            campoRendimiento.textContent = "-";
-
-        }
-
-    }
-
-
-    // --------------------------------------------------
-    // COSTO UNITARIO
-    // --------------------------------------------------
-
-    if (campoUnitario) {
-
-        if (
-            costoUnitario !== null &&
-            !isNaN(costoUnitario)
-        ) {
-
-            campoUnitario.textContent =
-                costosFormatearMoneda(
-                    costoUnitario
-                );
-
-        }
-        else {
-
-            campoUnitario.textContent = "-";
-
-        }
-
-    }
-
-
-    // --------------------------------------------------
-    // FORMULA FINAL
-    // --------------------------------------------------
-
-    if (campoFormulaFinal) {
-
-        if (
-            costoTotal !== null &&
-            !isNaN(costoTotal) &&
-            rendimiento !== null &&
-            rendimiento !== undefined &&
-            !isNaN(Number(rendimiento)) &&
-            Number(rendimiento) !== 0 &&
-            costoUnitario !== null &&
-            !isNaN(costoUnitario)
-        ) {
-
-            campoFormulaFinal.textContent =
-                costosFormatearMoneda(
-                    costoTotal
-                ) +
-                " ÷ " +
-                costosFormatearNumero(
-                    rendimiento
-                ) +
-                (
-                    unidadRendimiento
-                        ? " " + unidadRendimiento
-                        : ""
-                ) +
-                " = " +
-                costosFormatearMoneda(
-                    costoUnitario
-                );
-
-        }
-        else {
-
-            campoFormulaFinal.textContent = "-";
-
-        }
-
-    }
-
-}
-
-
-// ======================================================
-// MOSTRAR DETALLE DE COSTOS
-// ======================================================
-
-function mostrarDetalleCosto(
-    detalle
-) {
-
-    const tabla =
-        document.getElementById(
-            "tablaCostos"
-        );
-
-
-    if (!tabla) {
-
-        return;
-
-    }
-
-
-    tabla.innerHTML = "";
-
+    const textoTotal = costoTotal === null
+        ? "-"
+        : costosFormatearMoneda(costoTotal);
+
+    const textoRendimiento =
+        rendimiento === null || rendimiento === undefined
+            ? "-"
+            : `${costosFormatearNumero(rendimiento)}${unidadRendimiento ? " " + unidadRendimiento : ""}`;
+
+    const textoUnitario = costoUnitario === null
+        ? "-"
+        : costosFormatearMoneda(costoUnitario);
+
+    costosAsignarTexto("costos-explicacion-total", textoTotal);
+    costosAsignarTexto("costos-explicacion-total-2", textoTotal);
+    costosAsignarTexto("costos-explicacion-rendimiento", textoRendimiento);
+    costosAsignarTexto("costos-explicacion-unitario", textoUnitario);
+
+    let formula = "-";
 
     if (
-        !detalle ||
-        detalle.length === 0
+        costoTotal !== null &&
+        rendimiento !== null &&
+        rendimiento !== undefined &&
+        Number(rendimiento) > 0 &&
+        costoUnitario !== null
     ) {
-
-        tabla.innerHTML = `
-            <tr>
-                <td colspan="9">
-                    No hay componentes en la estructura.
-                </td>
-            </tr>
-        `;
-
-        return;
-
+        formula =
+            `${costosFormatearMoneda(costoTotal)} ÷ ` +
+            `${costosFormatearNumero(rendimiento)}` +
+            `${unidadRendimiento ? " " + unidadRendimiento : ""} = ` +
+            `${costosFormatearMoneda(costoUnitario)}`;
     }
 
-
-    detalle.forEach(
-        function (item) {
-
-            const fila =
-                document.createElement(
-                    "tr"
-                );
-
-
-            const cantidad =
-                Number(
-                    item.cantidad
-                ) || 0;
-
-
-            const merma =
-                Number(
-                    item.merma
-                ) || 0;
-
-
-            let cantidadEfectiva;
-
-
-            if (
-                item.cantidad_efectiva !== null &&
-                item.cantidad_efectiva !== undefined
-            ) {
-
-                cantidadEfectiva =
-                    Number(
-                        item.cantidad_efectiva
-                    );
-
-            }
-            else {
-
-                cantidadEfectiva =
-                    cantidad *
-                    (
-                        1 +
-                        (
-                            merma / 100
-                        )
-                    );
-
-            }
-
-
-            const costo =
-                item.costo_unitario;
-
-
-            let subtotal;
-
-
-            if (
-                item.subtotal !== null &&
-                item.subtotal !== undefined
-            ) {
-
-                subtotal =
-                    Number(
-                        item.subtotal
-                    );
-
-            }
-            else if (
-                costo !== null &&
-                costo !== undefined &&
-                costo !== ""
-            ) {
-
-                subtotal =
-                    cantidadEfectiva *
-                    Number(costo);
-
-            }
-            else {
-
-                subtotal = null;
-
-            }
-
-
-            let textoCosto =
-                "Sin costo";
-
-
-            if (
-                costo !== null &&
-                costo !== undefined &&
-                costo !== ""
-            ) {
-
-                textoCosto =
-                    costosFormatearMoneda(
-                        costo
-                    );
-
-            }
-
-
-            let textoSubtotal =
-                "-";
-
-
-            if (
-                subtotal !== null &&
-                !isNaN(subtotal)
-            ) {
-
-                textoSubtotal =
-                    costosFormatearMoneda(
-                        subtotal
-                    );
-
-            }
-
-
-            fila.innerHTML = `
-
-                <td>
-                    ${item.codigo || ""}
-                </td>
-
-                <td>
-                    ${item.nombre || ""}
-                </td>
-
-                <td>
-                    ${item.tipo || ""}
-                </td>
-
-                <td>
-                    ${item.unidad || ""}
-                </td>
-
-                <td>
-                    ${costosFormatearNumero(
-                        cantidad
-                    )}
-                </td>
-
-                <td>
-                    ${costosFormatearNumero(
-                        merma
-                    )}
-                    %
-                </td>
-
-                <td>
-                    ${costosFormatearNumero(
-                        cantidadEfectiva
-                    )}
-                </td>
-
-                <td>
-                    ${textoCosto}
-                </td>
-
-                <td>
-                    ${textoSubtotal}
-                </td>
-
-            `;
-
-
-            tabla.appendChild(
-                fila
-            );
-
-        }
-    );
-
+    costosAsignarTexto("costos-formula-final-resultado", formula);
 }
 
+// ======================================================
+// DETALLE DE COMPONENTES
+// ======================================================
+
+function mostrarDetalleCosto(detalle) {
+    const tabla = costosElemento("tablaCostos");
+
+    if (!tabla) {
+        return;
+    }
+
+    tabla.replaceChildren();
+
+    if (!Array.isArray(detalle) || detalle.length === 0) {
+        const fila = document.createElement("tr");
+        const celda = document.createElement("td");
+
+        celda.colSpan = 9;
+        celda.textContent = "No hay componentes en la estructura.";
+
+        fila.appendChild(celda);
+        tabla.appendChild(fila);
+        return;
+    }
+
+    detalle.forEach(function (item) {
+        const fila = document.createElement("tr");
+
+        const cantidad = Number(item.cantidad) || 0;
+        const merma = Number(item.merma) || 0;
+
+        const cantidadEfectiva =
+            item.cantidad_efectiva !== null &&
+            item.cantidad_efectiva !== undefined
+                ? Number(item.cantidad_efectiva)
+                : cantidad * (1 + merma / 100);
+
+        const costo = costosNumeroOpcional(item.costo_unitario);
+
+        let subtotal = costosNumeroOpcional(item.subtotal);
+
+        if (subtotal === null && costo !== null) {
+            subtotal = cantidadEfectiva * costo;
+        }
+
+        const valores = [
+            item.codigo || "",
+            item.nombre || "",
+            item.tipo || "",
+            item.unidad || "",
+            costosFormatearNumero(cantidad),
+            `${costosFormatearNumero(merma)} %`,
+            costosFormatearNumero(cantidadEfectiva),
+            costo === null ? "Sin costo" : costosFormatearMoneda(costo),
+            subtotal === null ? "-" : costosFormatearMoneda(subtotal)
+        ];
+
+        valores.forEach(function (valor) {
+            const celda = document.createElement("td");
+            celda.textContent = String(valor);
+            fila.appendChild(celda);
+        });
+
+        tabla.appendChild(fila);
+    });
+}
 
 // ======================================================
-// LIMPIAR COSTOS PRODUCTO
+// LIMPIAR CÁLCULO
 // ======================================================
 
 function limpiarCosto() {
-
-    const combo =
-        document.getElementById(
-            "costos-producto"
-        );
-
-
-    if (combo) {
-
-        combo.value = "";
-
-    }
-
-
+    costosAsignarValor("costos-producto", "");
     limpiarDatosProducto();
-
     limpiarResultado();
-
-
-    mostrarMensajeCosto(
-        "",
-        ""
-    );
-
+    mostrarMensajeCosto("", "");
 }
-
-
-// ======================================================
-// LIMPIAR DATOS PRODUCTO
-// ======================================================
 
 function limpiarDatosProducto() {
-
-    const codigo =
-        document.getElementById(
-            "costos-codigo"
-        );
-
-
-    const nombre =
-        document.getElementById(
-            "costos-nombre"
-        );
-
-
-    const tipo =
-        document.getElementById(
-            "costos-tipo"
-        );
-
-
-    const unidad =
-        document.getElementById(
-            "costos-unidad"
-        );
-
-
-    if (codigo) {
-
-        codigo.value = "";
-
-    }
-
-
-    if (nombre) {
-
-        nombre.value = "";
-
-    }
-
-
-    if (tipo) {
-
-        tipo.value = "";
-
-    }
-
-
-    if (unidad) {
-
-        unidad.value = "";
-
-    }
-
+    costosAsignarValor("costos-codigo", "");
+    costosAsignarValor("costos-nombre", "");
+    costosAsignarValor("costos-tipo", "");
+    costosAsignarValor("costos-unidad", "");
 }
-
-
-// ======================================================
-// LIMPIAR RESULTADO
-// ======================================================
 
 function limpiarResultado() {
-
-    const tabla =
-        document.getElementById(
-            "tablaCostos"
-        );
-
-
-    const rendimiento =
-        document.getElementById(
-            "costos-rendimiento"
-        );
-
-
-    const costoUnitario =
-        document.getElementById(
-            "costos-costo-unitario"
-        );
-
-
-    const costoTotal =
-        document.getElementById(
-            "costos-costo-total"
-        );
-
+    const tabla = costosElemento("tablaCostos");
 
     if (tabla) {
-
-        tabla.innerHTML = "";
-
+        tabla.replaceChildren();
     }
 
-
-    if (rendimiento) {
-
-        rendimiento.textContent = "-";
-
-    }
-
-
-    if (costoUnitario) {
-
-        costoUnitario.textContent = "-";
-
-    }
-
-
-    if (costoTotal) {
-
-        costoTotal.textContent = "-";
-
-    }
-
-
-    // --------------------------------------------------
-    // LIMPIAR EXPLICACION
-    // --------------------------------------------------
-
-    const explicacionTotal =
-        document.getElementById(
-            "costos-explicacion-total"
-        );
-
-
-    const explicacionTotal2 =
-        document.getElementById(
-            "costos-explicacion-total-2"
-        );
-
-
-    const explicacionRendimiento =
-        document.getElementById(
-            "costos-explicacion-rendimiento"
-        );
-
-
-    const explicacionUnitario =
-        document.getElementById(
-            "costos-explicacion-unitario"
-        );
-
-
-    const formulaFinal =
-        document.getElementById(
-            "costos-formula-final-resultado"
-        );
-
-
-    if (explicacionTotal) {
-
-        explicacionTotal.textContent = "-";
-
-    }
-
-
-    if (explicacionTotal2) {
-
-        explicacionTotal2.textContent = "-";
-
-    }
-
-
-    if (explicacionRendimiento) {
-
-        explicacionRendimiento.textContent = "-";
-
-    }
-
-
-    if (explicacionUnitario) {
-
-        explicacionUnitario.textContent = "-";
-
-    }
-
-
-    if (formulaFinal) {
-
-        formulaFinal.textContent = "-";
-
-    }
-
+    [
+        "costos-rendimiento",
+        "costos-costo-unitario",
+        "costos-costo-total",
+        "costos-explicacion-total",
+        "costos-explicacion-total-2",
+        "costos-explicacion-rendimiento",
+        "costos-explicacion-unitario",
+        "costos-formula-final-resultado"
+    ].forEach(function (id) {
+        costosAsignarTexto(id, "-");
+    });
 }
 
-
 // ======================================================
-// MENSAJE GENERAL
+// MENSAJES
 // ======================================================
 
-function mostrarMensajeCosto(
-    mensaje,
-    tipo
-) {
-
-    const elemento =
-        document.getElementById(
-            "costos-mensaje"
-        );
-
+function mostrarMensajeCosto(mensaje, tipo) {
+    const elemento = costosElemento("costos-mensaje");
 
     if (!elemento) {
-
         return;
-
     }
 
-
-    elemento.textContent =
-        mensaje || "";
-
-
-    elemento.className =
-        "costos-mensaje";
-
+    elemento.textContent = mensaje || "";
+    elemento.className = "costos-mensaje";
 
     if (tipo) {
-
-        elemento.classList.add(
-            "costos-mensaje-" + tipo
-        );
-
+        elemento.classList.add(`costos-mensaje-${tipo}`);
     }
-
 }
 
-
-// ======================================================
-// MENSAJE INSUMO
-// ======================================================
-
-function mostrarMensajeCostoInsumo(
-    mensaje,
-    tipo
-) {
-
-    const elemento =
-        document.getElementById(
-            "costo-insumo-mensaje"
-        );
-
+function mostrarMensajeCostoInsumo(mensaje, tipo) {
+    const elemento = costosElemento("costo-insumo-mensaje");
 
     if (!elemento) {
-
         return;
-
     }
 
-
-    elemento.textContent =
-        mensaje || "";
-
-
-    elemento.className =
-        "costos-mensaje";
-
+    elemento.textContent = mensaje || "";
+    elemento.className = "costos-mensaje";
 
     if (tipo) {
-
-        elemento.classList.add(
-            "costos-mensaje-" + tipo
-        );
-
+        elemento.classList.add(`costos-mensaje-${tipo}`);
     }
-
 }
 
-
 // ======================================================
-// FORMATEAR NUMERO - COSTOS
+// FORMATEAR NÚMEROS
 // ======================================================
 
-function costosFormatearNumero(
-    valor
-) {
-
-    if (
-        valor === null ||
-        valor === undefined ||
-        valor === ""
-    ) {
-
+function costosFormatearNumero(valor) {
+    if (valor === null || valor === undefined || valor === "") {
         return "-";
-
     }
 
+    const numero = Number(valor);
 
-    const numero =
-        Number(valor);
-
-
-    if (isNaN(numero)) {
-
+    if (!Number.isFinite(numero)) {
         return "-";
-
     }
 
-
-    return numero.toLocaleString(
-        "es-AR",
-        {
-            minimumFractionDigits: 3,
-            maximumFractionDigits: 3
-        }
-    );
-
+    return numero.toLocaleString("es-AR", {
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3
+    });
 }
 
-
-// ======================================================
-// FORMATEAR MONEDA - COSTOS
-// ======================================================
-
-function costosFormatearMoneda(
-    valor
-) {
-
-    if (
-        valor === null ||
-        valor === undefined ||
-        valor === ""
-    ) {
-
+function costosFormatearMoneda(valor) {
+    if (valor === null || valor === undefined || valor === "") {
         return "-";
-
     }
 
+    const numero = Number(valor);
 
-    const numero =
-        Number(valor);
-
-
-    if (isNaN(numero)) {
-
+    if (!Number.isFinite(numero)) {
         return "-";
-
     }
 
-
-    return numero.toLocaleString(
-        "es-AR",
-        {
-            style: "currency",
-            currency: "ARS",
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 4
-        }
-    );
-
+    return numero.toLocaleString("es-AR", {
+        style: "currency",
+        currency: "ARS",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 4
+    });
 }
+
