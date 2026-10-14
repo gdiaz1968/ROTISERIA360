@@ -1,12 +1,12 @@
-const pool = require("../db");
 
+const pool = require("../db");
 
 // ==========================================================
 // LISTAR INSUMOS
+// El costo_actual devuelve el costo ajustado.
 // ==========================================================
 
 async function listarInsumos() {
-
     const resultado = await pool.query(`
         SELECT
             p.id,
@@ -18,31 +18,47 @@ async function listarInsumos() {
             um.nombre AS unidad_nombre,
 
             (
+                SELECT
+                    cp.costo * COALESCE(cp.factor_ajuste, 1)
+                FROM costos_productos cp
+                WHERE cp.id_producto = p.id
+                  AND cp.activo = TRUE
+                ORDER BY cp.fecha_desde DESC, cp.id DESC
+                LIMIT 1
+            ) AS costo_actual,
+
+            (
                 SELECT cp.costo
                 FROM costos_productos cp
                 WHERE cp.id_producto = p.id
                   AND cp.activo = TRUE
-                ORDER BY cp.fecha_desde DESC
+                ORDER BY cp.fecha_desde DESC, cp.id DESC
                 LIMIT 1
-            ) AS costo_actual,
+            ) AS costo_base,
+
+            (
+                SELECT COALESCE(cp.factor_ajuste, 1)
+                FROM costos_productos cp
+                WHERE cp.id_producto = p.id
+                  AND cp.activo = TRUE
+                ORDER BY cp.fecha_desde DESC, cp.id DESC
+                LIMIT 1
+            ) AS factor_ajuste,
 
             (
                 SELECT cp.fecha_desde
                 FROM costos_productos cp
                 WHERE cp.id_producto = p.id
                   AND cp.activo = TRUE
-                ORDER BY cp.fecha_desde DESC
+                ORDER BY cp.fecha_desde DESC, cp.id DESC
                 LIMIT 1
             ) AS costo_fecha_desde
 
         FROM productos p
-
         LEFT JOIN unidades_medida um
             ON um.id = p.id_unidad
-
         WHERE p.activo = TRUE
           AND p.tipo = 'INSUMO'
-
         ORDER BY p.nombre
     `);
 
@@ -55,7 +71,6 @@ async function listarInsumos() {
 // ==========================================================
 
 async function obtenerCostoInsumo(idProducto) {
-
     const producto = await pool.query(`
         SELECT
             p.id,
@@ -72,52 +87,46 @@ async function obtenerCostoInsumo(idProducto) {
           AND p.activo = TRUE
     `, [idProducto]);
 
-
     if (producto.rows.length === 0) {
-
         throw new Error(
             "El producto no existe o está inactivo."
         );
-
     }
 
-
-    const datosProducto =
-        producto.rows[0];
-
+    const datosProducto = producto.rows[0];
 
     if (datosProducto.tipo !== "INSUMO") {
-
         throw new Error(
             "El producto seleccionado no es un INSUMO."
         );
-
     }
 
-
-    const costo = await pool.query(`
+    const resultadoCosto = await pool.query(`
         SELECT
             id,
             costo,
+            COALESCE(factor_ajuste, 1) AS factor_ajuste,
+            ROUND(
+                (
+                    costo * COALESCE(factor_ajuste, 1)
+                )::numeric,
+                4
+            ) AS costo_ajustado,
             fecha_desde,
             fecha_hasta,
             activo
         FROM costos_productos
         WHERE id_producto = $1
           AND activo = TRUE
-        ORDER BY fecha_desde DESC
+        ORDER BY fecha_desde DESC, id DESC
         LIMIT 1
     `, [idProducto]);
 
-
     return {
-
         producto: datosProducto,
-
-        costo: costo.rows.length > 0
-            ? costo.rows[0]
+        costo: resultadoCosto.rows.length > 0
+            ? resultadoCosto.rows[0]
             : null
-
     };
 }
 
@@ -127,11 +136,17 @@ async function obtenerCostoInsumo(idProducto) {
 // ==========================================================
 
 async function listarHistorialCosto(idProducto) {
-
     const resultado = await pool.query(`
         SELECT
             id,
             costo,
+            COALESCE(factor_ajuste, 1) AS factor_ajuste,
+            ROUND(
+                (
+                    costo * COALESCE(factor_ajuste, 1)
+                )::numeric,
+                4
+            ) AS costo_ajustado,
             fecha_desde,
             fecha_hasta,
             activo
@@ -146,269 +161,197 @@ async function listarHistorialCosto(idProducto) {
 
 // ==========================================================
 // REGISTRAR NUEVO COSTO DE INSUMO
+// costo = costo base
+// factorAjuste = factor de ajuste
 // ==========================================================
 
 async function registrarCostoInsumo(
     idProducto,
-    costo
+    costo,
+    factorAjuste = 1
 ) {
+    const id = Number(idProducto);
+    const costoBase = Number(costo);
+    const factor = Number(factorAjuste);
 
-    const client =
-        await pool.connect();
+    if (!Number.isInteger(id) || id <= 0) {
+        throw new Error(
+            "El insumo seleccionado no es válido."
+        );
+    }
+
+    if (!Number.isFinite(costoBase) || costoBase < 0) {
+        throw new Error(
+            "El costo base debe ser mayor o igual a cero."
+        );
+    }
+
+    if (!Number.isFinite(factor) || factor <= 0) {
+        throw new Error(
+            "El factor de ajuste debe ser mayor que cero."
+        );
+    }
+
+    const client = await pool.connect();
 
     try {
-
         await client.query("BEGIN");
 
-
-        // --------------------------------------------------
-        // Verificar producto
-        // --------------------------------------------------
-
-        const producto =
-            await client.query(`
-                SELECT
-                    p.id,
-                    p.codigo,
-                    p.nombre,
-                    p.tipo,
-                    p.id_unidad,
-                    um.codigo AS unidad,
-                    um.nombre AS unidad_nombre
-                FROM productos p
-                LEFT JOIN unidades_medida um
-                    ON um.id = p.id_unidad
-                WHERE p.id = $1
-                  AND p.activo = TRUE
-            `, [idProducto]);
-
-
-        if (producto.rows.length === 0) {
-
-            throw new Error(
-                "El producto no existe o está inactivo."
-            );
-
-        }
-
-
-        const datosProducto =
-            producto.rows[0];
-
-
-        if (datosProducto.tipo !== "INSUMO") {
-
-            throw new Error(
-                "Solo se puede registrar costo para productos INSUMO."
-            );
-
-        }
-
-
-        if (!datosProducto.id_unidad) {
-
-            throw new Error(
-                "El INSUMO no tiene una unidad de medida asignada."
-            );
-
-        }
-
-
-        // --------------------------------------------------
-        // Obtener costo activo actual
-        // --------------------------------------------------
-
-        const costoActual =
-            await client.query(`
-                SELECT
-                    id,
-                    costo,
-                    fecha_desde
-                FROM costos_productos
-                WHERE id_producto = $1
-                  AND activo = TRUE
-                ORDER BY fecha_desde DESC
-                LIMIT 1
-            `, [idProducto]);
-
-
-        const ahora =
-            new Date();
-
-
-        // --------------------------------------------------
-        // Cerrar costo anterior
-        // --------------------------------------------------
-
-        if (costoActual.rows.length > 0) {
-
-            await client.query(`
-                UPDATE costos_productos
-                SET
-                    fecha_hasta = $1,
-                    activo = FALSE
-                WHERE id = $2
-            `, [
-                ahora,
-                costoActual.rows[0].id
-            ]);
-
-        }
-
-
-        // --------------------------------------------------
-        // Crear nuevo costo
-        // --------------------------------------------------
-
-        const nuevoCosto =
-            await client.query(`
-                INSERT INTO costos_productos
-                (
-                    id_producto,
-                    costo,
-                    fecha_desde,
-                    fecha_hasta,
-                    activo
-                )
-                VALUES
-                (
-                    $1,
-                    $2,
-                    $3,
-                    NULL,
-                    TRUE
-                )
-                RETURNING
-                    id,
-                    id_producto,
-                    costo,
-                    fecha_desde,
-                    fecha_hasta,
-                    activo
-            `, [
-                idProducto,
-                costo,
-                ahora
-            ]);
-
-
-        await client.query("COMMIT");
-
-
-        return {
-
-            producto: datosProducto,
-
-            costo: nuevoCosto.rows[0]
-
-        };
-
-    } catch (error) {
-
-        await client.query("ROLLBACK");
-
-        throw error;
-
-    } finally {
-
-        client.release();
-
-    }
-}
-
-// ==========================================================
-// OBTENER ESTRUCTURA ACTIVA DE UN PRODUCTO
-// ==========================================================
-
-async function obtenerEstructuraProducto(
-    idProducto
-) {
-
-    // ------------------------------------------------------
-    // PRODUCTO
-    // ------------------------------------------------------
-
-    const productoResultado =
-        await pool.query(`
+        const producto = await client.query(`
             SELECT
                 p.id,
                 p.codigo,
                 p.nombre,
                 p.tipo,
                 p.id_unidad,
-                u.codigo AS unidad_codigo,
-                u.nombre AS unidad_nombre
+                um.codigo AS unidad,
+                um.nombre AS unidad_nombre
             FROM productos p
-
-            LEFT JOIN unidades_medida u
-                ON u.id = p.id_unidad
-
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
             WHERE p.id = $1
               AND p.activo = TRUE
+            FOR UPDATE OF p
+        `, [id]);
+
+        if (producto.rows.length === 0) {
+            throw new Error(
+                "El producto no existe o está inactivo."
+            );
+        }
+
+        const datosProducto = producto.rows[0];
+
+        if (datosProducto.tipo !== "INSUMO") {
+            throw new Error(
+                "Solo se puede registrar costo para productos INSUMO."
+            );
+        }
+
+        if (!datosProducto.id_unidad) {
+            throw new Error(
+                "El INSUMO no tiene una unidad de medida asignada."
+            );
+        }
+
+        const ahora = new Date();
+
+        // Cerrar todos los costos activos anteriores.
+        await client.query(`
+            UPDATE costos_productos
+            SET
+                fecha_hasta = $1,
+                activo = FALSE
+            WHERE id_producto = $2
+              AND activo = TRUE
+        `, [ahora, id]);
+
+        // Guardar el costo base y su factor de ajuste.
+        const nuevoCosto = await client.query(`
+            INSERT INTO costos_productos
+            (
+                id_producto,
+                costo,
+                factor_ajuste,
+                fecha_desde,
+                fecha_hasta,
+                activo
+            )
+            VALUES
+            (
+                $1,
+                $2,
+                $3,
+                $4,
+                NULL,
+                TRUE
+            )
+            RETURNING
+                id,
+                id_producto,
+                costo,
+                factor_ajuste,
+                ROUND(
+                    (costo * factor_ajuste)::numeric,
+                    4
+                ) AS costo_ajustado,
+                fecha_desde,
+                fecha_hasta,
+                activo
         `, [
-            idProducto
+            id,
+            costoBase,
+            factor,
+            ahora
         ]);
 
+        await client.query("COMMIT");
 
-    if (
-        productoResultado.rows.length === 0
-    ) {
+        return {
+            producto: datosProducto,
+            costo: nuevoCosto.rows[0]
+        };
 
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+
+    } finally {
+        client.release();
+    }
+}
+
+
+// ==========================================================
+// OBTENER ESTRUCTURA ACTIVA DE UN PRODUCTO
+// ==========================================================
+
+async function obtenerEstructuraProducto(idProducto) {
+    const productoResultado = await pool.query(`
+        SELECT
+            p.id,
+            p.codigo,
+            p.nombre,
+            p.tipo,
+            p.id_unidad,
+            u.codigo AS unidad_codigo,
+            u.nombre AS unidad_nombre
+        FROM productos p
+        LEFT JOIN unidades_medida u
+            ON u.id = p.id_unidad
+        WHERE p.id = $1
+          AND p.activo = TRUE
+    `, [idProducto]);
+
+    if (productoResultado.rows.length === 0) {
         throw new Error(
             "El producto no existe o está inactivo."
         );
-
     }
 
+    const producto = productoResultado.rows[0];
 
-    const producto =
-        productoResultado.rows[0];
-
-
-    // ------------------------------------------------------
-    // VALIDAR TIPO
-    // ------------------------------------------------------
-
-    if (
-        producto.tipo !== "ELABORADO"
-    ) {
-
+    if (producto.tipo !== "ELABORADO") {
         throw new Error(
             "El producto seleccionado no es un producto ELABORADO."
         );
-
     }
 
+    const estructuraResultado = await pool.query(`
+        SELECT
+            pe.id,
+            pe.version,
+            pe.rendimiento,
+            pe.unidad_rendimiento,
+            pe.activo
+        FROM producto_estructura pe
+        WHERE pe.producto_id = $1
+          AND pe.activo = TRUE
+        ORDER BY pe.version DESC
+        LIMIT 1
+    `, [idProducto]);
 
-    // ------------------------------------------------------
-    // BUSCAR ESTRUCTURA ACTIVA
-    // ------------------------------------------------------
-
-    const estructuraResultado =
-        await pool.query(`
-            SELECT
-                pe.id,
-                pe.version,
-                pe.rendimiento,
-                pe.unidad_rendimiento,
-                pe.activo
-            FROM producto_estructura pe
-
-            WHERE pe.producto_id = $1
-              AND pe.activo = TRUE
-
-            ORDER BY pe.version DESC
-
-            LIMIT 1
-        `, [
-            idProducto
-        ]);
-
-
-    if (
-        estructuraResultado.rows.length === 0
-    ) {
-
+    if (estructuraResultado.rows.length === 0) {
         throw new Error(
             "El producto " +
             producto.codigo +
@@ -416,261 +359,143 @@ async function obtenerEstructuraProducto(
             producto.nombre +
             " no posee una estructura activa."
         );
-
     }
 
+    const estructura = estructuraResultado.rows[0];
 
-    const estructura =
-        estructuraResultado.rows[0];
-
-
-    // ------------------------------------------------------
-    // BUSCAR COMPONENTES
-    // ------------------------------------------------------
-
-    const detalleResultado =
-        await pool.query(`
-            SELECT
-
-                d.id,
-                d.componente_id,
-                d.cantidad,
-                d.merma,
-                d.activo,
-
-                p.codigo AS componente_codigo,
-                p.nombre AS componente_nombre,
-                p.tipo AS componente_tipo,
-                p.id_unidad AS componente_id_unidad,
-
-                u.codigo AS componente_unidad,
-                u.nombre AS componente_unidad_nombre
-
-            FROM producto_estructura_detalle d
-
-            INNER JOIN productos p
-                ON p.id = d.componente_id
-
-            LEFT JOIN unidades_medida u
-                ON u.id = p.id_unidad
-
-            WHERE d.estructura_id = $1
-              AND d.activo = TRUE
-
-            ORDER BY d.id
-        `, [
-            estructura.id
-        ]);
-
-
-    // ------------------------------------------------------
-    // DEVOLVER ESTRUCTURA
-    // ------------------------------------------------------
+    const detalleResultado = await pool.query(`
+        SELECT
+            d.id,
+            d.componente_id,
+            d.cantidad,
+            d.merma,
+            d.activo,
+            p.codigo AS componente_codigo,
+            p.nombre AS componente_nombre,
+            p.tipo AS componente_tipo,
+            p.id_unidad AS componente_id_unidad,
+            u.codigo AS componente_unidad,
+            u.nombre AS componente_unidad_nombre
+        FROM producto_estructura_detalle d
+        INNER JOIN productos p
+            ON p.id = d.componente_id
+        LEFT JOIN unidades_medida u
+            ON u.id = p.id_unidad
+        WHERE d.estructura_id = $1
+          AND d.activo = TRUE
+        ORDER BY d.id
+    `, [estructura.id]);
 
     return {
-
         producto: {
-
-            id:
-                producto.id,
-
-            codigo:
-                producto.codigo,
-
-            nombre:
-                producto.nombre,
-
-            tipo:
-                producto.tipo,
-
-            id_unidad:
-                producto.id_unidad,
-
-            unidad:
-                producto.unidad_codigo,
-
-            unidad_nombre:
-                producto.unidad_nombre
-
+            id: producto.id,
+            codigo: producto.codigo,
+            nombre: producto.nombre,
+            tipo: producto.tipo,
+            id_unidad: producto.id_unidad,
+            unidad: producto.unidad_codigo,
+            unidad_nombre: producto.unidad_nombre
         },
 
         estructura: {
-
-            id:
-                estructura.id,
-
-            version:
-                estructura.version,
-
-            rendimiento:
-                Number(
-                    estructura.rendimiento
-                ),
-
-            unidad_rendimiento:
-                estructura.unidad_rendimiento,
-
-            activo:
-                estructura.activo
-
+            id: estructura.id,
+            version: estructura.version,
+            rendimiento: Number(estructura.rendimiento),
+            unidad_rendimiento: estructura.unidad_rendimiento,
+            activo: estructura.activo
         },
 
-        detalle:
-            detalleResultado.rows.map(
-                function (item) {
-
-                    return {
-
-                        id:
-                            item.id,
-
-                        componente_id:
-                            item.componente_id,
-
-                        codigo:
-                            item.componente_codigo,
-
-                        nombre:
-                            item.componente_nombre,
-
-                        tipo:
-                            item.componente_tipo,
-
-                        id_unidad:
-                            item.componente_id_unidad,
-
-                        unidad:
-                            item.componente_unidad,
-
-                        unidad_nombre:
-                            item.componente_unidad_nombre,
-
-                        cantidad:
-                            Number(
-                                item.cantidad
-                            ),
-
-                        merma:
-                            Number(
-                                item.merma
-                            )
-
-                    };
-
-                }
-            )
-
+        detalle: detalleResultado.rows.map((item) => ({
+            id: item.id,
+            componente_id: item.componente_id,
+            codigo: item.componente_codigo,
+            nombre: item.componente_nombre,
+            tipo: item.componente_tipo,
+            id_unidad: item.componente_id_unidad,
+            unidad: item.componente_unidad,
+            unidad_nombre: item.componente_unidad_nombre,
+            cantidad: Number(item.cantidad),
+            merma: Number(item.merma)
+        }))
     };
-
 }
 
 
 // ==========================================================
 // CALCULAR COSTO DE PRODUCTO
+// INSUMO: costo base x factor de ajuste.
+// ELABORADO: suma componentes con merma y divide rendimiento.
 // ==========================================================
 
 async function calcularCostoProducto(
     idProducto,
     camino = []
 ) {
+    const id = Number(idProducto);
 
-    // ------------------------------------------------------
-    // Validación
-    // ------------------------------------------------------
-
-    if (
-        !Number.isInteger(idProducto) ||
-        idProducto <= 0
-    ) {
-
+    if (!Number.isInteger(id) || id <= 0) {
         throw new Error(
             "El ID del producto no es válido."
         );
-
     }
 
-
-    // ------------------------------------------------------
-    // Detectar ciclo
-    // ------------------------------------------------------
-
-    if (camino.includes(idProducto)) {
-
-        const ciclo =
-            camino.concat(idProducto);
+    if (camino.includes(id)) {
+        const ciclo = camino.concat(id);
 
         throw new Error(
             "Se detectó una dependencia circular: " +
             ciclo.join(" -> ")
         );
-
     }
 
+    const nuevoCamino = camino.concat(id);
 
-    const nuevoCamino =
-        camino.concat(idProducto);
-
-
-    // ------------------------------------------------------
-    // Producto
-    // ------------------------------------------------------
-
-    const productoResultado =
-        await pool.query(`
-            SELECT
-                p.id,
-                p.codigo,
-                p.nombre,
-                p.tipo,
-                p.id_unidad,
-                u.codigo AS unidad_codigo,
-                u.nombre AS unidad_nombre
-            FROM productos p
-            LEFT JOIN unidades_medida u
-                ON u.id = p.id_unidad
-            WHERE p.id = $1
-              AND p.activo = TRUE
-        `, [idProducto]);
-
+    const productoResultado = await pool.query(`
+        SELECT
+            p.id,
+            p.codigo,
+            p.nombre,
+            p.tipo,
+            p.id_unidad,
+            u.codigo AS unidad_codigo,
+            u.nombre AS unidad_nombre
+        FROM productos p
+        LEFT JOIN unidades_medida u
+            ON u.id = p.id_unidad
+        WHERE p.id = $1
+          AND p.activo = TRUE
+    `, [id]);
 
     if (productoResultado.rows.length === 0) {
-
         throw new Error(
             "El producto con ID " +
-            idProducto +
+            id +
             " no existe o está inactivo."
         );
-
     }
 
-
-    const producto =
-        productoResultado.rows[0];
-
+    const producto = productoResultado.rows[0];
 
     // ======================================================
     // INSUMO
     // ======================================================
 
     if (producto.tipo === "INSUMO") {
-
-        const costoResultado =
-            await pool.query(`
-                SELECT
-                    id,
-                    costo,
-                    fecha_desde,
-                    fecha_hasta
-                FROM costos_productos
-                WHERE id_producto = $1
-                  AND activo = TRUE
-                ORDER BY fecha_desde DESC
-                LIMIT 1
-            `, [idProducto]);
-
+        const costoResultado = await pool.query(`
+            SELECT
+                id,
+                costo,
+                COALESCE(factor_ajuste, 1) AS factor_ajuste,
+                fecha_desde,
+                fecha_hasta
+            FROM costos_productos
+            WHERE id_producto = $1
+              AND activo = TRUE
+            ORDER BY fecha_desde DESC, id DESC
+            LIMIT 1
+        `, [id]);
 
         if (costoResultado.rows.length === 0) {
-
             throw new Error(
                 "El producto " +
                 producto.codigo +
@@ -678,18 +503,15 @@ async function calcularCostoProducto(
                 producto.nombre +
                 " no posee un costo vigente."
             );
-
         }
 
-
-        const costo =
-            costoResultado.rows[0];
-
+        const registro = costoResultado.rows[0];
+        const costoBase = Number(registro.costo);
+        const factorAjuste = Number(registro.factor_ajuste);
+        const costoAjustado = costoBase * factorAjuste;
 
         return {
-
             producto: {
-
                 id: producto.id,
                 codigo: producto.codigo,
                 nombre: producto.nombre,
@@ -697,68 +519,52 @@ async function calcularCostoProducto(
                 id_unidad: producto.id_unidad,
                 unidad: producto.unidad_codigo,
                 unidad_nombre: producto.unidad_nombre
-
             },
 
-            costo_unitario:
-                Number(costo.costo),
-
-            costo_total:
-                Number(costo.costo),
+            costo_base: costoBase,
+            factor_ajuste: factorAjuste,
+            costo_ajustado: costoAjustado,
+            costo_unitario: costoAjustado,
+            costo_total: costoAjustado,
 
             rendimiento: 1,
-
-            unidad_rendimiento:
-                producto.unidad_codigo,
-
+            unidad_rendimiento: producto.unidad_codigo,
             detalle: [],
-
-            fecha_costo:
-                costo.fecha_desde,
-
+            fecha_costo: registro.fecha_desde,
             tipo_calculo: "INSUMO"
-
         };
-
     }
 
-
     // ======================================================
-    // ELABORADO
+    // VALIDAR PRODUCTO ELABORADO
     // ======================================================
 
     if (producto.tipo !== "ELABORADO") {
-
         throw new Error(
             "El tipo de producto " +
             producto.tipo +
             " no es válido para cálculo de costos."
         );
-
     }
 
+    // ======================================================
+    // BUSCAR ESTRUCTURA ACTIVA
+    // ======================================================
 
-    // ------------------------------------------------------
-    // Buscar estructura activa
-    // ------------------------------------------------------
-
-    const estructuraResultado =
-        await pool.query(`
-            SELECT
-                pe.id,
-                pe.version,
-                pe.rendimiento,
-                pe.unidad_rendimiento
-            FROM producto_estructura pe
-            WHERE pe.producto_id = $1
-              AND pe.activo = TRUE
-            ORDER BY pe.version DESC
-            LIMIT 1
-        `, [idProducto]);
-
+    const estructuraResultado = await pool.query(`
+        SELECT
+            pe.id,
+            pe.version,
+            pe.rendimiento,
+            pe.unidad_rendimiento
+        FROM producto_estructura pe
+        WHERE pe.producto_id = $1
+          AND pe.activo = TRUE
+        ORDER BY pe.version DESC
+        LIMIT 1
+    `, [id]);
 
     if (estructuraResultado.rows.length === 0) {
-
         throw new Error(
             "El producto " +
             producto.codigo +
@@ -766,272 +572,153 @@ async function calcularCostoProducto(
             producto.nombre +
             " no posee una estructura activa."
         );
-
     }
 
+    const estructura = estructuraResultado.rows[0];
+    const rendimiento = Number(estructura.rendimiento);
 
-    const estructura =
-        estructuraResultado.rows[0];
-
-
-    const rendimiento =
-        Number(estructura.rendimiento);
-
-
-    if (
-        !Number.isFinite(rendimiento) ||
-        rendimiento <= 0
-    ) {
-
+    if (!Number.isFinite(rendimiento) || rendimiento <= 0) {
         throw new Error(
             "El rendimiento de la estructura no es válido."
         );
-
     }
 
+    // ======================================================
+    // DETALLE DE ESTRUCTURA
+    // ======================================================
 
-    // ------------------------------------------------------
-    // Detalle de estructura
-    // ------------------------------------------------------
-
-    const detalleResultado =
-        await pool.query(`
-            SELECT
-                d.id,
-                d.componente_id,
-                d.cantidad,
-                d.merma,
-
-                p.codigo AS componente_codigo,
-                p.nombre AS componente_nombre,
-                p.tipo AS componente_tipo,
-                p.id_unidad AS componente_id_unidad,
-
-                u.codigo AS componente_unidad,
-                u.nombre AS componente_unidad_nombre
-
-            FROM producto_estructura_detalle d
-
-            INNER JOIN productos p
-                ON p.id = d.componente_id
-
-            LEFT JOIN unidades_medida u
-                ON u.id = p.id_unidad
-
-            WHERE d.estructura_id = $1
-              AND d.activo = TRUE
-
-            ORDER BY d.id
-        `, [estructura.id]);
-
+    const detalleResultado = await pool.query(`
+        SELECT
+            d.id,
+            d.componente_id,
+            d.cantidad,
+            d.merma,
+            p.codigo AS componente_codigo,
+            p.nombre AS componente_nombre,
+            p.tipo AS componente_tipo,
+            p.id_unidad AS componente_id_unidad,
+            u.codigo AS componente_unidad,
+            u.nombre AS componente_unidad_nombre
+        FROM producto_estructura_detalle d
+        INNER JOIN productos p
+            ON p.id = d.componente_id
+        LEFT JOIN unidades_medida u
+            ON u.id = p.id_unidad
+        WHERE d.estructura_id = $1
+          AND d.activo = TRUE
+        ORDER BY d.id
+    `, [estructura.id]);
 
     let costoTotal = 0;
-
     const detalle = [];
 
+    // ======================================================
+    // CALCULAR COMPONENTES
+    // ======================================================
 
-    // ------------------------------------------------------
-    // Calcular componentes
-    // ------------------------------------------------------
+    for (const item of detalleResultado.rows) {
+        const cantidad = Number(item.cantidad);
+        const merma = Number(item.merma);
 
-    for (
-        const item of detalleResultado.rows
-    ) {
-
-        const cantidad =
-            Number(item.cantidad);
-
-        const merma =
-            Number(item.merma);
-
-
-        if (
-            !Number.isFinite(cantidad) ||
-            cantidad < 0
-        ) {
-
+        if (!Number.isFinite(cantidad) || cantidad < 0) {
             throw new Error(
                 "La cantidad del componente " +
                 item.componente_nombre +
                 " no es válida."
             );
-
         }
-
 
         if (
             !Number.isFinite(merma) ||
-            merma < 0
+            merma < 0 ||
+            merma > 100
         ) {
-
             throw new Error(
                 "La merma del componente " +
                 item.componente_nombre +
-                " no es válida."
+                " debe estar entre 0 y 100."
             );
-
         }
 
-
-        // --------------------------------------------------
-        // Cantidad efectiva
-        // --------------------------------------------------
-
+        // La merma afecta a la cantidad utilizada.
+        // No modifica el factor de ajuste del costo.
         const cantidadEfectiva =
-            cantidad *
-            (1 + merma / 100);
-
-
-        // --------------------------------------------------
-        // Calcular costo componente
-        // --------------------------------------------------
+            cantidad * (1 + merma / 100);
 
         const costoComponente =
             await calcularCostoProducto(
-                item.componente_id,
+                Number(item.componente_id),
                 nuevoCamino
             );
 
-
         const costoUnitarioComponente =
-            Number(
-                costoComponente.costo_unitario
-            );
-
+            Number(costoComponente.costo_unitario);
 
         const subtotal =
-            cantidadEfectiva *
-            costoUnitarioComponente;
-
+            cantidadEfectiva * costoUnitarioComponente;
 
         costoTotal += subtotal;
 
-
         detalle.push({
-
-            id:
-                item.id,
-
-            componente_id:
-                item.componente_id,
-
-            codigo:
-                item.componente_codigo,
-
-            nombre:
-                item.componente_nombre,
-
-            tipo:
-                item.componente_tipo,
-
-            unidad:
-                item.componente_unidad,
-
-            unidad_nombre:
-                item.componente_unidad_nombre,
-
-            cantidad:
-                cantidad,
-
-            merma:
-                merma,
-
-            cantidad_efectiva:
-                cantidadEfectiva,
-
-            costo_unitario:
-                costoUnitarioComponente,
-
-            subtotal:
-                subtotal,
-
-            calculo:
-                costoComponente
-
+            id: item.id,
+            componente_id: item.componente_id,
+            codigo: item.componente_codigo,
+            nombre: item.componente_nombre,
+            tipo: item.componente_tipo,
+            unidad: item.componente_unidad,
+            unidad_nombre: item.componente_unidad_nombre,
+            cantidad: cantidad,
+            merma: merma,
+            cantidad_efectiva: cantidadEfectiva,
+            costo_unitario: costoUnitarioComponente,
+            subtotal: subtotal,
+            calculo: costoComponente
         });
-
     }
 
+    // ======================================================
+    // COSTO UNITARIO DEL PRODUCTO ELABORADO
+    // ======================================================
 
-    // ------------------------------------------------------
-    // Costo unitario
-    // ------------------------------------------------------
-
-    const costoUnitario =
-        costoTotal / rendimiento;
-
+    const costoUnitario = costoTotal / rendimiento;
 
     return {
-
         producto: {
-
-            id:
-                producto.id,
-
-            codigo:
-                producto.codigo,
-
-            nombre:
-                producto.nombre,
-
-            tipo:
-                producto.tipo,
-
-            id_unidad:
-                producto.id_unidad,
-
-            unidad:
-                producto.unidad_codigo,
-
-            unidad_nombre:
-                producto.unidad_nombre
-
+            id: producto.id,
+            codigo: producto.codigo,
+            nombre: producto.nombre,
+            tipo: producto.tipo,
+            id_unidad: producto.id_unidad,
+            unidad: producto.unidad_codigo,
+            unidad_nombre: producto.unidad_nombre
         },
 
         estructura: {
-
-            id:
-                estructura.id,
-
-            version:
-                estructura.version
-
+            id: estructura.id,
+            version: estructura.version
         },
 
-        rendimiento:
-            rendimiento,
-
-        unidad_rendimiento:
-            estructura.unidad_rendimiento,
-
-        costo_total:
-            costoTotal,
-
-        costo_unitario:
-            costoUnitario,
-
-        detalle:
-            detalle,
-
-        tipo_calculo:
-            "ELABORADO"
-
+        rendimiento: rendimiento,
+        unidad_rendimiento: estructura.unidad_rendimiento,
+        costo_total: costoTotal,
+        costo_unitario: costoUnitario,
+        detalle: detalle,
+        tipo_calculo: "ELABORADO"
     };
 }
 
-// ======================================================
+
+// ==========================================================
 // OBTENER ESTRUCTURA + COSTO ACTUAL DE COMPONENTES
-// ======================================================
+// Devuelve el costo base y el ajustado de cada componente.
+// ==========================================================
 
 const obtenerEstructuraConCostos = async (idProducto) => {
+    const id = Number(idProducto);
 
-    if (!idProducto || isNaN(idProducto)) {
+    if (!Number.isInteger(id) || id <= 0) {
         throw new Error("ID de producto inválido");
     }
-
-    // --------------------------------------------------
-    // PRODUCTO
-    // --------------------------------------------------
 
     const productoResult = await pool.query(`
         SELECT
@@ -1047,7 +734,7 @@ const obtenerEstructuraConCostos = async (idProducto) => {
             ON um.id = p.id_unidad
         WHERE p.id = $1
           AND p.activo = TRUE
-    `, [idProducto]);
+    `, [id]);
 
     if (productoResult.rows.length === 0) {
         throw new Error("Producto no encontrado");
@@ -1055,19 +742,11 @@ const obtenerEstructuraConCostos = async (idProducto) => {
 
     const producto = productoResult.rows[0];
 
-    // --------------------------------------------------
-    // DEBE SER PRODUCTO ELABORADO
-    // --------------------------------------------------
-
     if (producto.tipo !== "ELABORADO") {
         throw new Error(
             "El producto seleccionado no es un producto ELABORADO"
         );
     }
-
-    // --------------------------------------------------
-    // ÚLTIMA ESTRUCTURA ACTIVA
-    // --------------------------------------------------
 
     const estructuraResult = await pool.query(`
         SELECT
@@ -1081,7 +760,7 @@ const obtenerEstructuraConCostos = async (idProducto) => {
           AND pe.activo = TRUE
         ORDER BY pe.version DESC
         LIMIT 1
-    `, [idProducto]);
+    `, [id]);
 
     if (estructuraResult.rows.length === 0) {
         throw new Error(
@@ -1091,28 +770,34 @@ const obtenerEstructuraConCostos = async (idProducto) => {
 
     const estructura = estructuraResult.rows[0];
 
-    // --------------------------------------------------
-    // COMPONENTES
-    // --------------------------------------------------
-
     const detalleResult = await pool.query(`
         SELECT
             ped.id,
             ped.componente_id,
-
             p.codigo,
             p.nombre,
             p.tipo,
-
             p.id_unidad,
-
             um.codigo AS unidad,
             um.nombre AS unidad_nombre,
-
             ped.cantidad,
             ped.merma,
 
-            cp.costo AS costo_unitario
+            cp.costo AS costo_base,
+
+            COALESCE(cp.factor_ajuste, 1) AS factor_ajuste,
+
+            cp.costo * COALESCE(cp.factor_ajuste, 1)
+                AS costo_unitario,
+
+            ROUND(
+                (
+                    cp.costo * COALESCE(cp.factor_ajuste, 1)
+                )::numeric,
+                4
+            ) AS costo_ajustado,
+
+            cp.fecha_desde AS fecha_costo
 
         FROM producto_estructura_detalle ped
 
@@ -1122,9 +807,18 @@ const obtenerEstructuraConCostos = async (idProducto) => {
         LEFT JOIN unidades_medida um
             ON um.id = p.id_unidad
 
-        LEFT JOIN costos_productos cp
-            ON cp.id_producto = ped.componente_id
-           AND cp.activo = TRUE
+        LEFT JOIN LATERAL (
+            SELECT
+                c.id,
+                c.costo,
+                c.factor_ajuste,
+                c.fecha_desde
+            FROM costos_productos c
+            WHERE c.id_producto = ped.componente_id
+              AND c.activo = TRUE
+            ORDER BY c.fecha_desde DESC, c.id DESC
+            LIMIT 1
+        ) cp ON TRUE
 
         WHERE ped.estructura_id = $1
           AND ped.activo = TRUE
@@ -1133,28 +827,41 @@ const obtenerEstructuraConCostos = async (idProducto) => {
         ORDER BY ped.id
     `, [estructura.id]);
 
-    // --------------------------------------------------
-    // RESULTADO
-    // --------------------------------------------------
-
     return {
-
         producto: producto,
 
         estructura: {
             id: estructura.id,
             version: estructura.version,
-            rendimiento: estructura.rendimiento,
+            rendimiento: Number(estructura.rendimiento),
             unidad_rendimiento: estructura.unidad_rendimiento,
             activo: estructura.activo
         },
 
-        detalle: detalleResult.rows
-
+        detalle: detalleResult.rows.map((item) => ({
+            ...item,
+            cantidad: Number(item.cantidad),
+            merma: Number(item.merma),
+            costo_base: item.costo_base === null
+                ? null
+                : Number(item.costo_base),
+            factor_ajuste: item.factor_ajuste === null
+                ? null
+                : Number(item.factor_ajuste),
+            costo_unitario: item.costo_unitario === null
+                ? null
+                : Number(item.costo_unitario),
+            costo_ajustado: item.costo_ajustado === null
+                ? null
+                : Number(item.costo_ajustado)
+        }))
     };
-
 };
 
+
+// ==========================================================
+// EXPORTACIONES
+// ==========================================================
 
 module.exports = {
     calcularCostoProducto,

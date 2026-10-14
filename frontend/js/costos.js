@@ -198,23 +198,26 @@ async function cargarInsumosCostos() {
 // SELECCIONAR INSUMO
 // ======================================================
 
+
 async function seleccionarInsumoCosto() {
     const combo = costosElemento("costo-insumo");
 
     if (!combo || !combo.value) {
         limpiarDatosInsumo();
+        mostrarHistorialCostoInsumo([]);
         return;
     }
 
     const id = Number(combo.value);
 
-    const insumo = insumosCostos.find(function (item) {
-        return Number(item.id) === id;
-    });
+    const insumo = insumosCostos.find(
+        item => Number(item.id) === id
+    );
 
-    if (insumo) {
-        costosAsignarValor("costo-insumo-unidad", insumo.unidad || "");
-    }
+    costosAsignarValor(
+        "costo-insumo-unidad",
+        insumo?.unidad || ""
+    );
 
     costosAsignarValor("costo-insumo-actual", "Consultando...");
     mostrarMensajeCostoInsumo("", "");
@@ -223,31 +226,59 @@ async function seleccionarInsumoCosto() {
         const respuesta = await fetch(`/api/costos/insumo/${id}`);
         const datos = await costosLeerRespuesta(respuesta);
 
-        // Admite respuesta directa o respuesta envuelta.
-        const costo = datos?.resultado ?? datos?.insumo ?? datos;
+        const resultado = datos?.resultado ?? datos?.insumo ?? datos;
+        const registro = resultado?.costo ?? null;
 
         if (
-            !costo ||
-            costo.costo === null ||
-            costo.costo === undefined
+            !registro ||
+            registro.costo === null ||
+            registro.costo === undefined
         ) {
-            costosAsignarValor("costo-insumo-actual", "-");
-        } else {
+            costosAsignarValor("costo-insumo-nuevo", "");
+            costosAsignarValor("costo-insumo-factor", "1.00");
             costosAsignarValor(
                 "costo-insumo-actual",
-                costosFormatearMoneda(costo.costo)
+                "Sin costo directo vigente"
+            );
+        } else {
+            const costoBase = Number(registro.costo);
+            const factor = Number(registro.factor_ajuste ?? 1);
+
+            const costoAjustado =
+                registro.costo_ajustado !== null &&
+                registro.costo_ajustado !== undefined
+                    ? Number(registro.costo_ajustado)
+                    : costoBase * factor;
+
+            costosAsignarValor(
+                "costo-insumo-nuevo",
+                costoBase
+            );
+
+            costosAsignarValor(
+                "costo-insumo-factor",
+                factor
+            );
+
+            costosAsignarValor(
+                "costo-insumo-actual",
+                `${costosFormatearMoneda(costoAjustado)} / ${insumo?.unidad || ""}`
             );
         }
-
-        costosAsignarValor("costo-insumo-nuevo", "");
 
         await cargarHistorialCostoInsumo(id);
     } catch (error) {
         console.error("ERROR CONSULTANDO COSTO INSUMO:", error);
+
         costosAsignarValor("costo-insumo-actual", "-");
-        mostrarMensajeCostoInsumo(error.message, "error");
+
+        mostrarMensajeCostoInsumo(
+            error.message,
+            "error"
+        );
     }
 }
+
 
 // ======================================================
 // HISTORIAL DE COSTOS DEL INSUMO
@@ -273,41 +304,15 @@ async function cargarHistorialCostoInsumo(idProducto) {
     }
 }
 
+
 function mostrarHistorialCostoInsumo(historial) {
-    let contenedor = costosElemento("costo-insumo-historial");
+    const contenedor = costosElemento("costo-insumo-historial");
 
-    // El HTML actual no contiene un contenedor para el historial.
-    // Se crea debajo del formulario de costos de insumos.
     if (!contenedor) {
-        const combo = costosElemento("costo-insumo");
-
-        const panel = combo
-            ? combo.closest(".costos-panel")
-            : null;
-
-        if (!panel) {
-            return;
-        }
-
-        contenedor = document.createElement("div");
-        contenedor.id = "costo-insumo-historial";
-        contenedor.className = "tabla-contenedor";
-        contenedor.style.marginTop = "16px";
-        panel.appendChild(contenedor);
+        return;
     }
 
     contenedor.replaceChildren();
-
-    const titulo = document.createElement("h3");
-    titulo.textContent = "Historial de costos";
-    contenedor.appendChild(titulo);
-
-    if (!historial.length) {
-        const mensaje = document.createElement("p");
-        mensaje.textContent = "No hay registros de historial para mostrar.";
-        contenedor.appendChild(mensaje);
-        return;
-    }
 
     const tabla = document.createElement("table");
     tabla.className = "tabla-costos";
@@ -315,7 +320,14 @@ function mostrarHistorialCostoInsumo(historial) {
     const encabezado = document.createElement("thead");
     const filaEncabezado = document.createElement("tr");
 
-    ["Costo", "Desde", "Hasta", "Estado"].forEach(function (texto) {
+    [
+        "Costo base",
+        "Factor",
+        "Costo ajustado",
+        "Desde",
+        "Hasta",
+        "Estado"
+    ].forEach(function (texto) {
         const th = document.createElement("th");
         th.textContent = texto;
         filaEncabezado.appendChild(th);
@@ -326,31 +338,58 @@ function mostrarHistorialCostoInsumo(historial) {
 
     const cuerpo = document.createElement("tbody");
 
-    historial.forEach(function (registro) {
+    if (!Array.isArray(historial) || historial.length === 0) {
         const fila = document.createElement("tr");
+        const celda = document.createElement("td");
 
-        const costo = registro.costo;
-        const desde = registro.fecha_desde;
-        const hasta = registro.fecha_hasta;
-        const activo = registro.activo;
+        celda.colSpan = 6;
+        celda.textContent = "No hay registros de costos.";
 
-        [
-            costosFormatearMoneda(costo),
-            costosFormatearFecha(desde),
-            costosFormatearFecha(hasta),
-            activo === true ? "Vigente" : "Histórico"
-        ].forEach(function (valor) {
-            const celda = document.createElement("td");
-            celda.textContent = valor;
-            fila.appendChild(celda);
-        });
-
+        fila.appendChild(celda);
         cuerpo.appendChild(fila);
-    });
+    } else {
+        historial.forEach(function (registro) {
+            const fila = document.createElement("tr");
+
+            const costoBase = Number(registro.costo);
+            const factor = Number(registro.factor_ajuste ?? 1);
+
+            const costoAjustado =
+                registro.costo_ajustado !== null &&
+                registro.costo_ajustado !== undefined
+                    ? Number(registro.costo_ajustado)
+                    : costoBase * factor;
+
+            const valores = [
+                costosFormatearMoneda(costoBase),
+                factor.toLocaleString("es-AR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 4
+                }),
+                costosFormatearMoneda(costoAjustado),
+                costosFormatearFecha(registro.fecha_desde),
+                costosFormatearFecha(registro.fecha_hasta),
+                registro.activo === true ||
+                registro.activo === "true" ||
+                registro.activo === 1
+                    ? "Vigente"
+                    : "Histórico"
+            ];
+
+            valores.forEach(function (valor) {
+                const celda = document.createElement("td");
+                celda.textContent = valor;
+                fila.appendChild(celda);
+            });
+
+            cuerpo.appendChild(fila);
+        });
+    }
 
     tabla.appendChild(cuerpo);
     contenedor.appendChild(tabla);
 }
+
 
 function costosFormatearFecha(valor) {
     if (!valor) {
@@ -370,17 +409,26 @@ function costosFormatearFecha(valor) {
 // GUARDAR COSTO DE INSUMO
 // ======================================================
 
+
 async function guardarCostoInsumo() {
     const combo = costosElemento("costo-insumo");
     const campoCosto = costosElemento("costo-insumo-nuevo");
+    const campoFactor = costosElemento("costo-insumo-factor");
 
-    if (!combo || !campoCosto) {
+    if (!combo || !campoCosto || !campoFactor) {
+        mostrarMensajeCostoInsumo(
+            "Falta el campo de costo, factor de ajuste o selección de insumo en el HTML.",
+            "error"
+        );
         return;
     }
 
     const idProducto = Number(combo.value);
-    const textoCosto = campoCosto.value.trim();
+    const textoCosto = campoCosto.value.trim().replace(",", ".");
+    const textoFactor = campoFactor.value.trim().replace(",", ".");
+
     const costo = Number(textoCosto);
+    const factorAjuste = Number(textoFactor);
 
     if (!idProducto) {
         mostrarMensajeCostoInsumo("Seleccione un insumo.", "error");
@@ -388,7 +436,22 @@ async function guardarCostoInsumo() {
     }
 
     if (textoCosto === "" || !Number.isFinite(costo) || costo < 0) {
-        mostrarMensajeCostoInsumo("Ingrese un costo válido.", "error");
+        mostrarMensajeCostoInsumo(
+            "Ingrese un costo base válido.",
+            "error"
+        );
+        return;
+    }
+
+    if (
+        textoFactor === "" ||
+        !Number.isFinite(factorAjuste) ||
+        factorAjuste <= 0
+    ) {
+        mostrarMensajeCostoInsumo(
+            "El factor de ajuste debe ser mayor que cero.",
+            "error"
+        );
         return;
     }
 
@@ -400,31 +463,50 @@ async function guardarCostoInsumo() {
             },
             body: JSON.stringify({
                 id_producto: idProducto,
-                costo: costo
+                costo: costo,
+                factor_ajuste: factorAjuste
             })
         });
 
-        await costosLeerRespuesta(respuesta);
+        const datos = await costosLeerRespuesta(respuesta);
+
+        if (datos.ok === false) {
+            throw new Error(
+                datos.error || datos.mensaje || "No se pudo registrar el costo."
+            );
+        }
+
+        const costoAjustado = costo * factorAjuste;
+        const insumo = insumosCostos.find(
+            item => Number(item.id) === idProducto
+        );
+        const unidad = insumo?.unidad || "unidad";
 
         costosAsignarValor(
             "costo-insumo-actual",
-            costosFormatearMoneda(costo)
+            `${costosFormatearMoneda(costoAjustado)} / ${unidad}`
         );
 
         campoCosto.value = "";
+        campoFactor.value = "1.00";
 
         mostrarMensajeCostoInsumo(
-            "Costo registrado correctamente.",
+            `Costo registrado. Base: ${costosFormatearMoneda(costo)}; factor: ${factorAjuste}; costo ajustado: ${costosFormatearMoneda(costoAjustado)} por ${unidad}.`,
             "ok"
         );
 
         await cargarInsumosCostos();
+        combo.value = String(idProducto);
+
+        await seleccionarInsumoCosto();
         await cargarHistorialCostoInsumo(idProducto);
+
     } catch (error) {
         console.error("ERROR GUARDANDO COSTO INSUMO:", error);
         mostrarMensajeCostoInsumo(error.message, "error");
     }
 }
+
 
 // ======================================================
 // LIMPIAR INSUMO
@@ -442,11 +524,14 @@ function limpiarCostoInsumo() {
     }
 }
 
+
 function limpiarDatosInsumo() {
     costosAsignarValor("costo-insumo-unidad", "");
     costosAsignarValor("costo-insumo-actual", "-");
     costosAsignarValor("costo-insumo-nuevo", "");
+    costosAsignarValor("costo-insumo-factor", "1.00");
 }
+
 
 // ======================================================
 // SELECCIONAR PRODUCTO ELABORADO
