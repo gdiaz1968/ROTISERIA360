@@ -165,31 +165,34 @@ async function listarHistorialCosto(idProducto) {
 // factorAjuste = factor de ajuste
 // ==========================================================
 
+
 async function registrarCostoInsumo(
     idProducto,
-    costo,
+    idPresentacion,
+    precioPresentacion,
     factorAjuste = 1
 ) {
     const id = Number(idProducto);
-    const costoBase = Number(costo);
+    const idPres = Number(idPresentacion);
+    const precio = Number(precioPresentacion);
     const factor = Number(factorAjuste);
 
     if (!Number.isInteger(id) || id <= 0) {
-        throw new Error(
-            "El insumo seleccionado no es válido."
-        );
+        throw new Error("El producto seleccionado no es válido.");
     }
 
-    if (!Number.isFinite(costoBase) || costoBase < 0) {
+    if (!Number.isInteger(idPres) || idPres <= 0) {
+        throw new Error("Debe seleccionar una presentación válida.");
+    }
+
+    if (!Number.isFinite(precio) || precio < 0) {
         throw new Error(
-            "El costo base debe ser mayor o igual a cero."
+            "El precio de la presentación debe ser mayor o igual a cero."
         );
     }
 
     if (!Number.isFinite(factor) || factor <= 0) {
-        throw new Error(
-            "El factor de ajuste debe ser mayor que cero."
-        );
+        throw new Error("El factor de ajuste debe ser mayor que cero.");
     }
 
     const client = await pool.connect();
@@ -215,9 +218,7 @@ async function registrarCostoInsumo(
         `, [id]);
 
         if (producto.rows.length === 0) {
-            throw new Error(
-                "El producto no existe o está inactivo."
-            );
+            throw new Error("El producto no existe o está inactivo.");
         }
 
         const datosProducto = producto.rows[0];
@@ -228,15 +229,73 @@ async function registrarCostoInsumo(
             );
         }
 
-        if (!datosProducto.id_unidad) {
+        if (!datosProducto.id_unidad || !datosProducto.unidad) {
             throw new Error(
                 "El INSUMO no tiene una unidad de medida asignada."
             );
         }
 
+        // Obtener y validar la presentación elegida.
+        const presentacionResultado = await client.query(`
+            SELECT
+                pp.id,
+                pp.id_producto,
+                pp.nombre,
+                pp.cantidad_contenida,
+                pp.id_unidad_contenido,
+                um.codigo AS unidad_presentacion
+            FROM presentaciones_producto pp
+            INNER JOIN unidades_medida um
+                ON um.id = pp.id_unidad
+            WHERE pp.id = $1
+              AND pp.id_producto = $2
+              AND pp.activo = TRUE
+            FOR UPDATE OF pp
+        `, [idPres, id]);
+
+        if (presentacionResultado.rows.length === 0) {
+            throw new Error(
+                "La presentación no existe, está inactiva o no corresponde al insumo."
+            );
+        }
+
+        const presentacion = presentacionResultado.rows[0];
+        const cantidad = Number(presentacion.cantidad_contenida);
+
+        if (!Number.isFinite(cantidad) || cantidad <= 0) {
+            throw new Error(
+                "La cantidad contenida de la presentación debe ser mayor que cero."
+            );
+        }
+
+        // Por ahora se exige que ambas unidades coincidan.
+        // Las conversiones entre KG/G, L/ML, etc. se incorporarán
+        // mediante conversiones_unidad cuando corresponda.
+        const unidadProducto = String(datosProducto.unidad)
+            .trim()
+            .toUpperCase();
+
+        const unidadPresentacion = String(presentacion.unidad_presentacion)
+            .trim()
+            .toUpperCase();
+
+        if (unidadProducto !== unidadPresentacion) {
+            throw new Error(
+                `La unidad de la presentación (${unidadPresentacion}) ` +
+                `no coincide con la unidad base del insumo (${unidadProducto}).`
+            );
+        }
+
+        // Convertir el precio de la presentación a costo por unidad base.
+        const costoBase = precio / cantidad;
+
+        if (!Number.isFinite(costoBase)) {
+            throw new Error("No se pudo calcular el costo por unidad.");
+        }
+
         const ahora = new Date();
 
-        // Cerrar todos los costos activos anteriores.
+        // Cerrar los costos activos anteriores del insumo.
         await client.query(`
             UPDATE costos_productos
             SET
@@ -246,7 +305,7 @@ async function registrarCostoInsumo(
               AND activo = TRUE
         `, [ahora, id]);
 
-        // Guardar el costo base y su factor de ajuste.
+        // Guardar el costo por unidad base, no el precio de la bolsa.
         const nuevoCosto = await client.query(`
             INSERT INTO costos_productos
             (
@@ -289,6 +348,13 @@ async function registrarCostoInsumo(
 
         return {
             producto: datosProducto,
+            presentacion: {
+                id: presentacion.id,
+                nombre: presentacion.nombre,
+                cantidad_contenida: cantidad,
+                unidad: unidadPresentacion,
+                precio_compra: precio
+            },
             costo: nuevoCosto.rows[0]
         };
 

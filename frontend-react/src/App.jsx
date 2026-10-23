@@ -1,6 +1,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import './App.css'
+import EstructuraProductos from './components/EstructuraProductos'
+import Costos from './components/Costos'
 
 const API_BASE =
   import.meta.env.VITE_API_URL ||
@@ -45,7 +47,9 @@ async function consultarApi(ruta, opciones = {}) {
 
   if (!respuesta.ok) {
     throw new Error(
-      datos?.error || `Error del servidor (${respuesta.status})`,
+      datos?.mensaje ||
+        datos?.error ||
+        `Error del servidor (${respuesta.status})`,
     )
   }
 
@@ -90,10 +94,28 @@ function App() {
     }
   }, [])
 
+  // Cargar los datos al entrar en Productos.
+  // La tarea se difiere a una microtarea para evitar ejecutar
+  // las actualizaciones de estado durante la ejecución síncrona del efecto.
   useEffect(() => {
-    if (moduloActivo === 'productos') {
-      cargarProductos()
-      cargarUnidades()
+    if (moduloActivo !== 'productos') return undefined
+
+    let cancelado = false
+
+    const cargarDatos = async () => {
+      if (cancelado) return
+
+      await Promise.all([cargarProductos(), cargarUnidades()])
+    }
+
+    queueMicrotask(() => {
+      if (!cancelado) {
+        void cargarDatos()
+      }
+    })
+
+    return () => {
+      cancelado = true
     }
   }, [moduloActivo, cargarProductos, cargarUnidades])
 
@@ -105,8 +127,12 @@ function App() {
         if (!termino) return true
 
         return (
-          String(producto.codigo ?? '').toLocaleLowerCase('es').includes(termino) ||
-          String(producto.nombre ?? '').toLocaleLowerCase('es').includes(termino)
+          String(producto.codigo ?? '')
+            .toLocaleLowerCase('es')
+            .includes(termino) ||
+          String(producto.nombre ?? '')
+            .toLocaleLowerCase('es')
+            .includes(termino)
         )
       })
       .sort((a, b) => {
@@ -116,10 +142,11 @@ function App() {
           { numeric: true, sensitivity: 'base' },
         )
 
-        return porCodigo || String(a.nombre ?? '').localeCompare(
-          String(b.nombre ?? ''),
-          'es',
-          { sensitivity: 'base' },
+        return (
+          porCodigo ||
+          String(a.nombre ?? '').localeCompare(String(b.nombre ?? ''), 'es', {
+            sensitivity: 'base',
+          })
         )
       })
   }, [productos, busqueda])
@@ -129,18 +156,13 @@ function App() {
     Math.ceil(productosFiltrados.length / filasPorPagina),
   )
 
+  // Mantener la página dentro de los límites sin otro useEffect.
+  const paginaActual = Math.min(pagina, totalPaginas)
+
   const productosPagina = productosFiltrados.slice(
-    (pagina - 1) * filasPorPagina,
-    pagina * filasPorPagina,
+    (paginaActual - 1) * filasPorPagina,
+    paginaActual * filasPorPagina,
   )
-
-  useEffect(() => {
-    setPagina(1)
-  }, [busqueda, filasPorPagina])
-
-  useEffect(() => {
-    if (pagina > totalPaginas) setPagina(totalPaginas)
-  }, [pagina, totalPaginas])
 
   function abrirNuevoProducto() {
     setProductoEditando(null)
@@ -189,7 +211,9 @@ function App() {
     const idUnidad = Number(formulario.id_unidad)
 
     if (!codigo || !nombre || !idUnidad || !formulario.tipo) {
-      setError('Completá el código, el nombre, el tipo y la unidad de medida.')
+      setError(
+        'Completá el código, el nombre, el tipo y la unidad de medida.',
+      )
       return
     }
 
@@ -301,7 +325,13 @@ function App() {
         <header className="topbar">
           <div>
             <span className="breadcrumb">Sistema / {nombreModulo}</span>
-            <h1>{moduloActivo === 'productos' ? 'Gestión de productos' : moduloActivo === 'dashboard' ? 'Panel de gestión' : nombreModulo}</h1>
+            <h1>
+              {moduloActivo === 'productos'
+                ? 'Gestión de productos'
+                : moduloActivo === 'dashboard'
+                  ? 'Panel de gestión'
+                  : nombreModulo}
+            </h1>
           </div>
 
           <div className="user-info">
@@ -356,7 +386,9 @@ function App() {
                 <div className="status-dot" />
                 <div>
                   <strong>Interfaz React iniciada</strong>
-                  <p>El módulo Productos ya está conectado a las API existentes.</p>
+                  <p>
+                    El módulo Productos ya está conectado a las API existentes.
+                  </p>
                 </div>
               </div>
             </>
@@ -382,7 +414,11 @@ function App() {
               {error && (
                 <div className="alert alert-error" role="alert">
                   <span>{error}</span>
-                  <button type="button" onClick={() => setError('')} aria-label="Cerrar error">
+                  <button
+                    type="button"
+                    onClick={() => setError('')}
+                    aria-label="Cerrar error"
+                  >
                     ×
                   </button>
                 </div>
@@ -391,7 +427,11 @@ function App() {
               {mensaje && (
                 <div className="alert alert-success" role="status">
                   <span>{mensaje}</span>
-                  <button type="button" onClick={() => setMensaje('')} aria-label="Cerrar mensaje">
+                  <button
+                    type="button"
+                    onClick={() => setMensaje('')}
+                    aria-label="Cerrar mensaje"
+                  >
                     ×
                   </button>
                 </div>
@@ -404,7 +444,10 @@ function App() {
                     <input
                       type="search"
                       value={busqueda}
-                      onChange={(evento) => setBusqueda(evento.target.value)}
+                      onChange={(evento) => {
+                        setBusqueda(evento.target.value)
+                        setPagina(1)
+                      }}
                       placeholder="Código o nombre del producto..."
                     />
                   </label>
@@ -413,7 +456,10 @@ function App() {
                     <span>Filas por página</span>
                     <select
                       value={filasPorPagina}
-                      onChange={(evento) => setFilasPorPagina(Number(evento.target.value))}
+                      onChange={(evento) => {
+                        setFilasPorPagina(Number(evento.target.value))
+                        setPagina(1)
+                      }}
                     >
                       <option value={5}>5</option>
                       <option value={10}>10</option>
@@ -461,7 +507,13 @@ function App() {
                             <td className="product-code">{producto.codigo}</td>
                             <td>{producto.nombre}</td>
                             <td>
-                              <span className={`type-tag ${producto.tipo === 'ELABORADO' ? 'type-elaborado' : 'type-insumo'}`}>
+                              <span
+                                className={`type-tag ${
+                                  producto.tipo === 'ELABORADO'
+                                    ? 'type-elaborado'
+                                    : 'type-insumo'
+                                }`}
+                              >
                                 {producto.tipo}
                               </span>
                             </td>
@@ -471,7 +523,15 @@ function App() {
                                 : producto.unidad_nombre ?? '—'}
                             </td>
                             <td>
-                              <span className="state-tag state-active">Activo</span>
+                              <span
+                                className={`state-tag ${
+                                  producto.activo
+                                    ? 'state-active'
+                                    : 'state-inactive'
+                                }`}
+                              >
+                                {producto.activo ? 'Activo' : 'Inactivo'}
+                              </span>
                             </td>
                             <td>
                               <div className="row-actions">
@@ -482,13 +542,15 @@ function App() {
                                 >
                                   Editar
                                 </button>
-                                <button
-                                  type="button"
-                                  className="btn-table-delete"
-                                  onClick={() => darDeBaja(producto)}
-                                >
-                                  Dar de baja
-                                </button>
+                                {producto.activo && (
+                                  <button
+                                    type="button"
+                                    className="btn-table-delete"
+                                    onClick={() => darDeBaja(producto)}
+                                  >
+                                    Dar de baja
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -501,8 +563,8 @@ function App() {
                   <span>
                     {productosFiltrados.length === 0
                       ? '0 productos'
-                      : `${(pagina - 1) * filasPorPagina + 1}–${Math.min(
-                          pagina * filasPorPagina,
+                      : `${(paginaActual - 1) * filasPorPagina + 1}–${Math.min(
+                          paginaActual * filasPorPagina,
                           productosFiltrados.length,
                         )} de ${productosFiltrados.length} productos`}
                   </span>
@@ -510,17 +572,17 @@ function App() {
                   <div className="pagination-buttons">
                     <button
                       type="button"
-                      disabled={pagina <= 1}
+                      disabled={paginaActual <= 1}
                       onClick={() => setPagina((actual) => actual - 1)}
                     >
                       Anterior
                     </button>
                     <span>
-                      Página {pagina} de {totalPaginas}
+                      Página {paginaActual} de {totalPaginas}
                     </span>
                     <button
                       type="button"
-                      disabled={pagina >= totalPaginas}
+                      disabled={paginaActual >= totalPaginas}
                       onClick={() => setPagina((actual) => actual + 1)}
                     >
                       Siguiente
@@ -531,22 +593,29 @@ function App() {
             </section>
           )}
 
-          {moduloActivo !== 'dashboard' && moduloActivo !== 'productos' && (
-            <div className="coming-soon">
-              <div className="coming-soon-icon">
-                {modulos.find((modulo) => modulo.codigo === moduloActivo)?.icono}
+          {moduloActivo === 'estructura' && <EstructuraProductos />}
+
+          {moduloActivo === 'costos' && <Costos />}
+
+          {moduloActivo !== 'dashboard' &&
+            moduloActivo !== 'productos' &&
+            moduloActivo !== 'estructura' &&
+            moduloActivo !== 'costos' && (
+              <div className="coming-soon">
+                <div className="coming-soon-icon">
+                  {modulos.find((modulo) => modulo.codigo === moduloActivo)?.icono}
+                </div>
+                <h2>{nombreModulo}</h2>
+                <p>Este módulo se incorporará progresivamente a React.</p>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => seleccionarModulo('dashboard')}
+                >
+                  Volver al inicio
+                </button>
               </div>
-              <h2>{nombreModulo}</h2>
-              <p>Este módulo se incorporará progresivamente a React.</p>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => seleccionarModulo('dashboard')}
-              >
-                Volver al inicio
-              </button>
-            </div>
-          )}
+            )}
         </section>
       </main>
 
@@ -590,7 +659,9 @@ function App() {
 
               <div className="form-grid">
                 <label className="form-field">
-                  <span>Código <b>*</b></span>
+                  <span>
+                    Código <b>*</b>
+                  </span>
                   <input
                     name="codigo"
                     value={formulario.codigo}
@@ -602,7 +673,9 @@ function App() {
                 </label>
 
                 <label className="form-field">
-                  <span>Tipo de producto <b>*</b></span>
+                  <span>
+                    Tipo de producto <b>*</b>
+                  </span>
                   <select
                     name="tipo"
                     value={formulario.tipo}
@@ -615,7 +688,9 @@ function App() {
                 </label>
 
                 <label className="form-field form-field-wide">
-                  <span>Nombre <b>*</b></span>
+                  <span>
+                    Nombre <b>*</b>
+                  </span>
                   <input
                     name="nombre"
                     value={formulario.nombre}
@@ -626,7 +701,9 @@ function App() {
                 </label>
 
                 <label className="form-field form-field-wide">
-                  <span>Unidad de medida <b>*</b></span>
+                  <span>
+                    Unidad de medida <b>*</b>
+                  </span>
                   <select
                     name="id_unidad"
                     value={formulario.id_unidad}

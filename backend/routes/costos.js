@@ -127,19 +127,20 @@ router.get("/insumo/:id/historial", async function (req, res) {
 // REGISTRAR NUEVO COSTO DE INSUMO
 // ==========================================================
 
+
 router.post("/insumo", async function (req, res) {
     try {
         const {
             id_producto,
+            id_presentacion,
             costo,
             factor_ajuste
         } = req.body;
 
         const idProducto = Number(id_producto);
-        const costoNumerico = Number(costo);
+        const idPresentacion = Number(id_presentacion);
+        const precioNumerico = Number(costo);
 
-        // Mantener compatibilidad con solicitudes anteriores:
-        // si no se envía el factor, se utiliza 1.
         const factorNumerico =
             factor_ajuste === undefined ||
             factor_ajuste === null ||
@@ -147,57 +148,52 @@ router.post("/insumo", async function (req, res) {
                 ? 1
                 : Number(factor_ajuste);
 
-
-        // Validar producto.
-
-        if (
-            !Number.isInteger(idProducto) ||
-            idProducto <= 0
-        ) {
+        if (!Number.isInteger(idProducto) || idProducto <= 0) {
             return res.status(400).json({
                 ok: false,
                 mensaje: "El producto no es válido."
             });
         }
 
-
-        // Validar costo base.
+        if (
+            id_presentacion === undefined ||
+            id_presentacion === null ||
+            id_presentacion === "" ||
+            !Number.isInteger(idPresentacion) ||
+            idPresentacion <= 0
+        ) {
+            return res.status(400).json({
+                ok: false,
+                mensaje: "Debe seleccionar una presentación válida."
+            });
+        }
 
         if (
             costo === undefined ||
             costo === null ||
             costo === "" ||
-            !Number.isFinite(costoNumerico) ||
-            costoNumerico < 0
+            !Number.isFinite(precioNumerico) ||
+            precioNumerico < 0
         ) {
             return res.status(400).json({
                 ok: false,
-                mensaje: "El costo base no es válido."
+                mensaje: "El precio de compra no es válido."
             });
         }
 
-
-        // Validar factor de ajuste.
-
-        if (
-            !Number.isFinite(factorNumerico) ||
-            factorNumerico <= 0
-        ) {
+        if (!Number.isFinite(factorNumerico) || factorNumerico <= 0) {
             return res.status(400).json({
                 ok: false,
-                mensaje: "El factor de ajuste debe ser un número mayor que cero."
+                mensaje: "El factor de ajuste debe ser mayor que cero."
             });
         }
-
-
-        // Registrar costo base y factor de ajuste.
 
         const resultado = await registrarCostoInsumo(
             idProducto,
-            costoNumerico,
+            idPresentacion,
+            precioNumerico,
             factorNumerico
         );
-
 
         res.status(201).json({
             ok: true,
