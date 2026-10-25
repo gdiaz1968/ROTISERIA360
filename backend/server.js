@@ -51,7 +51,7 @@ app.use(function (req, res, next) {
 
 app.use(
     express.static(
-        path.join(__dirname, "../frontend")
+        path.join(__dirname, "../frontend-react/dist")
     )
 );
 
@@ -153,23 +153,56 @@ app.get(
     }
 );
 
-app.use(
-    function (req, res) {
+app.use(function (req, res) {
 
+    // Las rutas de la API que no existen deben devolver JSON.
+    if (req.originalUrl.startsWith("/api/")) {
         console.log(
-            "!!! RUTA NO ENCONTRADA:",
+            "!!! API NO ENCONTRADA:",
             req.method,
             req.originalUrl
         );
 
-        res.status(404).json({
+        return res.status(404).json({
             ok: false,
-            mensaje: "Ruta no encontrada",
+            mensaje: "Ruta API no encontrada",
             metodo: req.method,
             ruta: req.originalUrl
         });
     }
-);
+
+    // React debe recibir index.html para manejar sus rutas.
+    if (req.method === "GET") {
+        return res.sendFile(
+            path.join(
+                __dirname,
+                "../frontend-react/dist/index.html"
+            ),
+            function (error) {
+                if (error) {
+                    console.error(
+                        "ERROR AL SERVIR REACT:",
+                        error
+                    );
+
+                    if (!res.headersSent) {
+                        res.status(500).json({
+                            ok: false,
+                            mensaje: "No se pudo cargar el frontend React"
+                        });
+                    }
+                }
+            }
+        );
+    }
+
+    return res.status(404).json({
+        ok: false,
+        mensaje: "Ruta no encontrada",
+        metodo: req.method,
+        ruta: req.originalUrl
+    });
+});
 
 app.listen(
     PORT,

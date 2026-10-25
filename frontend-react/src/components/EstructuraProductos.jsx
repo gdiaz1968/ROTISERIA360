@@ -481,7 +481,7 @@ export default function EstructuraProductos() {
               <option value="">Seleccione un producto...</option>
               {productos.map((producto) => (
                 <option key={producto.id} value={producto.id}>
-                  {producto.codigo} â€” {producto.nombre}
+                  {producto.codigo} - {producto.nombre}
                 </option>
               ))}
             </select>
@@ -549,7 +549,7 @@ export default function EstructuraProductos() {
                 <th>Cantidad</th>
                 <th>Unidad</th>
                 <th>Merma (%)</th>
-                {!soloConsulta && <th>AcciÃ³n</th>}
+                {!soloConsulta && <th>Accion</th>}
               </tr>
             </thead>
 
@@ -566,7 +566,7 @@ export default function EstructuraProductos() {
                       {soloConsulta ? (
                         <span>
                           {componente
-                            ? `${componente.codigo} â€” ${componente.nombre}`
+                            ? `${componente.codigo} - ${componente.nombre}`
                             : `Componente ID ${item.componente_id}`}
                         </span>
                       ) : (
@@ -584,7 +584,7 @@ export default function EstructuraProductos() {
                           <option value="">Seleccione...</option>
                           {componentesFiltrados.map((c) => (
                             <option key={c.id} value={c.id}>
-                              {c.codigo} â€” {c.nombre}
+                              {c.codigo} - {c.nombre}
                             </option>
                           ))}
                         </select>
@@ -603,7 +603,7 @@ export default function EstructuraProductos() {
                           {componente.tipo}
                         </span>
                       ) : (
-                        'â€”'
+                        '-'
                       )}
                     </td>
 
@@ -629,7 +629,7 @@ export default function EstructuraProductos() {
                       )}
                     </td>
 
-                    <td>{componente?.unidad || 'â€”'}</td>
+                    <td>{componente?.unidad || '-'}</td>
 
                     <td>
                       {soloConsulta ? (
@@ -753,7 +753,7 @@ export default function EstructuraProductos() {
                   {guardando
                     ? 'Guardando...'
                     : modo === 'modificacion'
-                      ? 'Guardar nueva versiÃ³n'
+                      ? 'Guardar nueva version'
                       : 'Crear estructura'}
                 </button>
               </>
