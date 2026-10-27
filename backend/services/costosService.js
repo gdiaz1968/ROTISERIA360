@@ -246,7 +246,7 @@ async function registrarCostoInsumo(
                 um.codigo AS unidad_presentacion
             FROM presentaciones_producto pp
             INNER JOIN unidades_medida um
-                ON um.id = pp.id_unidad
+                ON um.id = pp.id_unidad_contenido
             WHERE pp.id = $1
               AND pp.id_producto = $2
               AND pp.activo = TRUE

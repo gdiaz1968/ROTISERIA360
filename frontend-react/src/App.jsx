@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import './App.css'
 import EstructuraProductos from './components/EstructuraProductos'
 import Costos from './components/Costos'
+import Presentaciones from './components/Presentaciones'
 
 const API_BASE =
   import.meta.env.VITE_API_URL ||
@@ -11,10 +12,12 @@ const API_BASE =
 const modulos = [
   { codigo: 'dashboard', nombre: 'Inicio', icono: '⌂' },
   { codigo: 'productos', nombre: 'Productos', icono: '▦' },
+  { codigo: 'presentaciones', nombre: 'Presentaciones', icono: '▤' },
   { codigo: 'proveedores', nombre: 'Proveedores', icono: '♧' },
   { codigo: 'estructura', nombre: 'Estructura de productos', icono: '⚙' },
   { codigo: 'costos', nombre: 'Costos', icono: '$' },
   { codigo: 'ventas', nombre: 'Ventas de mostrador', icono: '▤' },
+ 
 ]
 
 const productoVacio = {
@@ -593,12 +596,15 @@ function App() {
             </section>
           )}
 
+          {moduloActivo === 'presentaciones' && <Presentaciones />}
+
           {moduloActivo === 'estructura' && <EstructuraProductos />}
 
           {moduloActivo === 'costos' && <Costos />}
 
           {moduloActivo !== 'dashboard' &&
             moduloActivo !== 'productos' &&
+            moduloActivo !== 'presentaciones' &&
             moduloActivo !== 'estructura' &&
             moduloActivo !== 'costos' && (
               <div className="coming-soon">

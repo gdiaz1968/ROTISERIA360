@@ -1,0 +1,80 @@
+.presentaciones-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.presentaciones-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.presentaciones-toolbar h2 {
+  margin: 0 0 6px;
+}
+
+.presentaciones-toolbar p {
+  margin: 0;
+  color: var(--text-muted, #64748b);
+}
+
+.presentaciones-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  background: var(--panel-bg, #fff);
+}
+
+.presentaciones-producto {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.2fr) minmax(220px, 1fr);
+  align-items: end;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.presentaciones-producto-info {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  padding-bottom: 10px;
+}
+
+.presentaciones-producto-info > span {
+  color: var(--text-muted, #64748b);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.presentaciones-producto-info strong {
+  overflow-wrap: anywhere;
+}
+
+.presentaciones-empty {
+  padding: 18px;
+  text-align: center;
+  color: var(--text-muted, #64748b);
+}
+
+@media (max-width: 720px) {
+  .presentaciones-producto {
+    grid-template-columns: 1fr;
+  }
+
+  .presentaciones-panel {
+    padding: 12px;
+  }
+
+  .presentaciones-toolbar {
+    align-items: stretch;
+  }
+}
