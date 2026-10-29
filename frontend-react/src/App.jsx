@@ -4,6 +4,7 @@ import './App.css'
 import EstructuraProductos from './components/EstructuraProductos'
 import Costos from './components/Costos'
 import Presentaciones from './components/Presentaciones'
+import ReporteProductos from './components/ReporteProductos'
 
 const API_BASE =
   import.meta.env.VITE_API_URL ||
@@ -12,6 +13,7 @@ const API_BASE =
 const modulos = [
   { codigo: 'dashboard', nombre: 'Inicio', icono: '⌂' },
   { codigo: 'productos', nombre: 'Productos', icono: '▦' },
+  { codigo: 'reporte-productos', nombre: 'Reporte de productos', icono: '▤' },
   { codigo: 'presentaciones', nombre: 'Presentaciones', icono: '▤' },
   { codigo: 'proveedores', nombre: 'Proveedores', icono: '♧' },
   { codigo: 'estructura', nombre: 'Estructura de productos', icono: '⚙' },
@@ -602,11 +604,14 @@ function App() {
 
           {moduloActivo === 'costos' && <Costos />}
 
+          {moduloActivo === 'reporte-productos' && <ReporteProductos />}
+
           {moduloActivo !== 'dashboard' &&
-            moduloActivo !== 'productos' &&
-            moduloActivo !== 'presentaciones' &&
-            moduloActivo !== 'estructura' &&
-            moduloActivo !== 'costos' && (
+              moduloActivo !== 'productos' &&
+              moduloActivo !== 'presentaciones' &&
+              moduloActivo !== 'estructura' &&
+              moduloActivo !== 'costos' &&
+              moduloActivo !== 'reporte-productos' && (
               <div className="coming-soon">
                 <div className="coming-soon-icon">
                   {modulos.find((modulo) => modulo.codigo === moduloActivo)?.icono}
