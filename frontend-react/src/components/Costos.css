@@ -375,6 +375,180 @@
   overflow-wrap: anywhere;
 }
 
+.costos-report {
+  min-width: 0;
+}
+
+.costos-report-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.costos-report-heading h3 {
+  margin: 8px 0;
+  font-size: 22px;
+}
+
+.costos-report-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.costos-report-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding-left: 24px;
+}
+
+.costos-report-item {
+  padding-left: 4px;
+}
+
+.costos-report-item article {
+  min-width: 0;
+}
+
+.costos-report-item-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.costos-report-item-heading h5 {
+  display: inline;
+  margin: 0 0 0 7px;
+  font-size: 14px;
+}
+
+.costos-report-code,
+.costos-report-type {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.costos-report-type {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 20px;
+  background: #eff6ff;
+  color: #2458a6;
+}
+
+.costos-report-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.costos-report-values > div {
+  min-width: 0;
+}
+
+.costos-report-values dt {
+  margin-bottom: 4px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.costos-report-values dd {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.costos-report-values small {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 10px;
+}
+
+.costos-report-values .costos-report-subtotal {
+  padding-top: 8px;
+  border-top: 1px solid #dbe4ef;
+}
+
+.costos-report-subtotal dd {
+  color: #1d4788;
+  font-size: 15px;
+}
+
+.costos-report-nested {
+  margin: 12px 0 0 12px;
+  padding: 12px 0 0 12px;
+  border-left: 2px solid #cbd9ec;
+}
+
+.costos-report-nested-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-bottom: 12px;
+  color: #475569;
+  font-size: 11px;
+}
+
+.costos-report-nested-summary strong {
+  flex-basis: 100%;
+  color: #1e293b;
+  font-size: 12px;
+}
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .costos-report,
+  .costos-report * {
+    visibility: visible !important;
+  }
+
+  .costos-report {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .costos-report-actions {
+    display: none !important;
+  }
+
+  .costos-report-item,
+  .costos-report-nested-summary {
+    break-inside: avoid;
+  }
+
+  .costos-report-values,
+  .costos-elaborado-result > div {
+    background: #fff;
+  }
+}
+
 @media (max-width: 1050px) {
   .costos-layout {
     grid-template-columns: 1fr;
@@ -396,5 +570,13 @@
 
   .costos-card {
     padding: 16px;
+  }
+
+  .costos-report-heading {
+    flex-direction: column;
+  }
+
+  .costos-report-values {
+    grid-template-columns: 1fr;
   }
 }

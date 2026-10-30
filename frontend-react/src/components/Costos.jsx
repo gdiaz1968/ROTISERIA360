@@ -55,8 +55,102 @@ function fecha(valor) {
   return fechaObj.toLocaleString('es-AR')
 }
 
+function numero(valor) {
+  const numero = Number(valor)
+  if (!Number.isFinite(numero)) return '—'
+
+  return numero.toLocaleString('es-AR', { maximumFractionDigits: 4 })
+}
+
 function mensajeError(error) {
   return error instanceof Error ? error.message : 'Ocurrió un error inesperado.'
+}
+
+function DetalleEstructuraCostos({ detalle, ruta = 'principal' }) {
+  if (!Array.isArray(detalle) || detalle.length === 0) {
+    return <p className="costos-empty">La estructura no tiene componentes.</p>
+  }
+
+  return (
+    <ol className="costos-report-list">
+      {detalle.map((item, indice) => {
+        const calculo = item.calculo
+        const esInsumo = calculo?.tipo_calculo === 'INSUMO'
+        const unidad = item.unidad || 'unidad'
+        let formacionCostoUnitario = `${moneda(item.costo_unitario)} / ${unidad}`
+
+        if (esInsumo) {
+          formacionCostoUnitario =
+            `${moneda(calculo.costo_base)} × ${numero(calculo.factor_ajuste)} ` +
+            `= ${moneda(calculo.costo_ajustado)} / ${unidad}`
+        } else if (calculo?.tipo_calculo === 'ELABORADO') {
+          formacionCostoUnitario =
+            `${moneda(calculo.costo_total)} ÷ ${numero(calculo.rendimiento)} ` +
+            `${calculo.unidad_rendimiento || ''} = ${moneda(item.costo_unitario)} / ${unidad}`
+        }
+
+        return (
+          <li key={`${ruta}-${item.id ?? indice}`} className="costos-report-item">
+            <article>
+              <header className="costos-report-item-heading">
+                <div>
+                  <span className="costos-report-code">{item.codigo}</span>
+                  <h5>{item.nombre}</h5>
+                </div>
+                <span className="costos-report-type">{item.tipo}</span>
+              </header>
+
+              <dl className="costos-report-values">
+                <div>
+                  <dt>Cantidad en estructura</dt>
+                  <dd>{numero(item.cantidad)} {unidad}</dd>
+                </div>
+                <div>
+                  <dt>Merma</dt>
+                  <dd>{numero(item.merma)}%</dd>
+                </div>
+                <div>
+                  <dt>Cantidad con merma</dt>
+                  <dd>{numero(item.cantidad_efectiva)} {unidad}</dd>
+                </div>
+                <div>
+                  <dt>Formación del costo unitario</dt>
+                  <dd>{formacionCostoUnitario}</dd>
+                  {esInsumo && (
+                    <small>Costo vigente desde: {fecha(calculo.fecha_costo)}</small>
+                  )}
+                </div>
+                <div className="costos-report-subtotal">
+                  <dt>Subtotal en esta estructura</dt>
+                  <dd>{moneda(item.subtotal)}</dd>
+                </div>
+              </dl>
+
+              {calculo?.tipo_calculo === 'ELABORADO' && (
+                <section className="costos-report-nested">
+                  <div className="costos-report-nested-summary">
+                    <strong>
+                      Estructura de {calculo.producto?.codigo} — {calculo.producto?.nombre}
+                    </strong>
+                    <span>Versión {calculo.estructura?.version ?? '—'}</span>
+                    <span>
+                      Costo del lote: {moneda(calculo.costo_total)} · Rendimiento:{' '}
+                      {numero(calculo.rendimiento)} {calculo.unidad_rendimiento || ''}
+                    </span>
+                    <span>Costo unitario: {moneda(calculo.costo_unitario)}</span>
+                  </div>
+                  <DetalleEstructuraCostos
+                    detalle={calculo.detalle}
+                    ruta={`${ruta}-${item.id ?? indice}`}
+                  />
+                </section>
+              )}
+            </article>
+          </li>
+        )
+      })}
+    </ol>
+  )
 }
 
 export default function Costos() {
@@ -72,6 +166,7 @@ export default function Costos() {
   const [historial, setHistorial] = useState([])
   const [idElaborado, setIdElaborado] = useState('')
   const [calculoElaborado, setCalculoElaborado] = useState(null)
+  const [fechaReporte, setFechaReporte] = useState(null)
   const [cargando, setCargando] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
@@ -257,6 +352,7 @@ export default function Costos() {
     setError('')
     setMensaje('')
     setCalculoElaborado(null)
+    setFechaReporte(null)
     setCargando(true)
 
     try {
@@ -264,6 +360,7 @@ export default function Costos() {
         `/api/costos/estructura/${idElaborado}/costos`,
       )
       setCalculoElaborado(datos.resultado ?? null)
+      setFechaReporte(new Date())
     } catch (err) {
       setError(mensajeError(err))
     } finally {
@@ -543,45 +640,67 @@ export default function Costos() {
       )}
 
       {vista === 'elaborados' && (
-        <div className="costos-card">
-          <h3>Calcular costo de un producto elaborado</h3>
-          <p className="costos-help">
-            El sistema calcula el costo de cada componente, incorpora la merma
-            en la cantidad utilizada y divide el costo total por el rendimiento
-            de la estructura activa.
-          </p>
+        <>
+          <div className="costos-card costos-report-controls">
+            <h3>Reporte de costo de un producto elaborado</h3>
+            <p className="costos-help">
+              Calculá e imprimí el detalle completo de la estructura activa,
+              incluyendo componentes anidados, cantidades, mermas y costos.
+            </p>
 
-          <div className="costos-elaborado-selector">
-            <div>
-              <label htmlFor="costo-elaborado">Producto elaborado</label>
-              <select
-                id="costo-elaborado"
-                value={idElaborado}
-                onChange={(e) => {
-                  setIdElaborado(e.target.value)
-                  setCalculoElaborado(null)
-                }}
+            <div className="costos-elaborado-selector">
+              <div>
+                <label htmlFor="costo-elaborado">Producto elaborado</label>
+                <select
+                  id="costo-elaborado"
+                  value={idElaborado}
+                  onChange={(e) => {
+                    setIdElaborado(e.target.value)
+                    setCalculoElaborado(null)
+                    setFechaReporte(null)
+                  }}
+                >
+                  <option value="">Seleccionar producto...</option>
+                  {elaborados.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.codigo} — {item.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                className="costos-button primary"
+                type="button"
+                onClick={consultarCostoElaborado}
+                disabled={cargando || !idElaborado}
               >
-                <option value="">Seleccionar producto...</option>
-                {elaborados.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.codigo} — {item.nombre}
-                  </option>
-                ))}
-              </select>
+                Calcular costo
+              </button>
             </div>
-            <button
-              className="costos-button primary"
-              type="button"
-              onClick={consultarCostoElaborado}
-              disabled={cargando || !idElaborado}
-            >
-              Calcular costo
-            </button>
           </div>
 
           {calculoElaborado && (
-            <>
+            <article className="costos-card costos-report">
+              <header className="costos-report-heading">
+                <div>
+                  <span className="costos-eyebrow">ROTISERIA360 · REPORTE DE COSTOS</span>
+                  <h3>
+                    {calculoElaborado.producto?.codigo} — {calculoElaborado.producto?.nombre}
+                  </h3>
+                  <p>
+                    Estructura versión {calculoElaborado.estructura?.version ?? '—'} ·
+                    {' '}Generado: {fechaReporte?.toLocaleString('es-AR') ?? '—'}
+                  </p>
+                </div>
+                <button
+                  className="costos-button secondary costos-report-actions"
+                  type="button"
+                  onClick={() => window.print()}
+                >
+                  Imprimir / Guardar PDF
+                </button>
+              </header>
+
               <div className="costos-elaborado-result">
                 <div>
                   <span>Costo total de la estructura</span>
@@ -590,7 +709,10 @@ export default function Costos() {
                 <div>
                   <span>Rendimiento</span>
                   <strong>
-                    {calculoElaborado.rendimiento ?? calculoElaborado.estructura?.rendimiento ?? '—'}{' '}
+                    {numero(
+                      calculoElaborado.rendimiento ??
+                      calculoElaborado.estructura?.rendimiento,
+                    )}{' '}
                     {calculoElaborado.unidad_rendimiento ?? ''}
                   </strong>
                 </div>
@@ -600,40 +722,11 @@ export default function Costos() {
                 </div>
               </div>
 
-              <h4>Detalle del cálculo</h4>
-              {!calculoElaborado.detalle?.length ? (
-                <p className="costos-empty">El cálculo no devolvió componentes para mostrar.</p>
-              ) : (
-                <div className="costos-table-wrap">
-                  <table className="costos-table">
-                    <thead>
-                      <tr>
-                        <th>Componente</th>
-                        <th>Cantidad</th>
-                        <th>Merma</th>
-                        <th>Cantidad efectiva</th>
-                        <th>Costo unitario</th>
-                        <th>Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {calculoElaborado.detalle.map((item) => (
-                        <tr key={item.id}>
-                          <td>{item.codigo} — {item.nombre}</td>
-                          <td>{Number(item.cantidad).toLocaleString('es-AR')} {item.unidad ?? ''}</td>
-                          <td>{Number(item.merma).toLocaleString('es-AR')}%</td>
-                          <td>{Number(item.cantidad_efectiva).toLocaleString('es-AR', { maximumFractionDigits: 4 })} {item.unidad ?? ''}</td>
-                          <td>{moneda(item.costo_unitario)}</td>
-                          <td>{moneda(item.subtotal)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </>
+              <h4>Desglose completo de la estructura</h4>
+              <DetalleEstructuraCostos detalle={calculoElaborado.detalle} />
+            </article>
           )}
-        </div>
+        </>
       )}
     </section>
   )
