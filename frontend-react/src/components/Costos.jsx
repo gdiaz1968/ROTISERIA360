@@ -401,12 +401,29 @@ export default function Costos() {
               <input
                 id="costo-factor"
                 type="number"
+                min="0.01"
+                step="0.01"
+                value={factor}
+                onChange={(e) => {
+                  const valor = e.target.value;
+
+                  if (/^\d*\.?\d{0,2}$/.test(valor)) {
+                    setFactor(valor);
+                  }
+                }}
+                required
+              />
+
+              {/* <label htmlFor="costo-factor">Factor de ajuste</label>
+              <input
+                id="costo-factor"
+                type="number"
                 min="0.0001"
                 step="0.01"
                 value={factor}
                 onChange={(e) => setFactor(e.target.value)}
                 required
-              />
+              /> */}
 
               <div className="costos-formula">
                 <h4>Vista previa del cálculo</h4>
