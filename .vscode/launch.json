@@ -1,0 +1,36 @@
+
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "pwa-node",
+            "request": "launch",
+            "name": "ROTISERIA360 - Backend",
+            "program": "${workspaceFolder}/backend/server.js",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "internalConsoleOptions": "neverOpen"
+        },
+        {
+            "type": "pwa-chrome",
+            "request": "launch",
+            "name": "ROTISERIA360 - Frontend",
+            "url": "http://localhost:5173",
+            "webRoot": "${workspaceFolder}/frontend-react",
+            "sourceMaps": true
+        }
+    ],
+    "compounds": [
+        {
+            "name": "ROTISERIA360 - FULL STACK",
+            "configurations": [
+                "ROTISERIA360 - Backend",
+                "ROTISERIA360 - Frontend"
+            ],
+            "stopAll": true
+        }
+    ]
+}
