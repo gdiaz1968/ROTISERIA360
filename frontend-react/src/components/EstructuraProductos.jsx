@@ -37,7 +37,7 @@ async function consultarApi(ruta, opciones = {}) {
       resultado = JSON.parse(texto)
     } catch {
       throw new Error(
-        `La API devolviÃ³ una respuesta no vÃ¡lida (${respuesta.status}).`,
+        `La API devolvió una respuesta no válida (${respuesta.status}).`,
       )
     }
   }
@@ -88,7 +88,7 @@ export default function EstructuraProductos() {
       setError('')
     } catch (err) {
       if (!cancelado) {
-        setError(`No se pudieron cargar los catÃ¡logos. ${err.message}`)
+        setError(`No se pudieron cargar los catálogos. ${err.message}`)
       }
     }
   }
@@ -127,7 +127,7 @@ export default function EstructuraProductos() {
       })
 
       setModo('consulta')
-      setMensaje(`Estructura activa: versiÃ³n ${cabecera.version}.`)
+      setMensaje(`Estructura activa: versión ${cabecera.version}.`)
     } catch (err) {
       if (err.message.includes('no tiene una estructura activa')) {
         setEstructura({
@@ -135,7 +135,7 @@ export default function EstructuraProductos() {
           detalle: [],
         })
         setModo('nuevo')
-        setMensaje('Este producto todavÃ­a no tiene una estructura activa.')
+        setMensaje('Este producto todavía no tiene una estructura activa.')
       } else {
         setError(`No se pudo consultar la estructura. ${err.message}`)
       }
@@ -165,7 +165,7 @@ export default function EstructuraProductos() {
 
     if (estructura.id) {
       setError(
-        'Este producto ya tiene una estructura activa. Use Modificar para generar una nueva versiÃ³n.',
+        'Este producto ya tiene una estructura activa. Use Modificar para generar una nueva versión.',
       )
       return
     }
@@ -185,7 +185,7 @@ export default function EstructuraProductos() {
     setModo('modificacion')
     setError('')
     setMensaje(
-      'Al guardar, se generarÃ¡ una nueva versiÃ³n de la estructura.',
+      'Al guardar, se generará una nueva versión de la estructura.',
     )
   }
 
@@ -271,7 +271,7 @@ export default function EstructuraProductos() {
       const componenteId = Number(item.componente_id)
 
       if (!componenteId) {
-        setError('Seleccione un componente en todas las lÃ­neas.')
+        setError('Seleccione un componente en todas las líneas.')
         return
       }
 
@@ -303,7 +303,7 @@ export default function EstructuraProductos() {
       detalle.length
     ) {
       setError(
-        'No repita un mismo componente. Corrija las lÃ­neas duplicadas.',
+        'No repita un mismo componente. Corrija las líneas duplicadas.',
       )
       return
     }
@@ -344,12 +344,12 @@ export default function EstructuraProductos() {
 
       const mensajeGuardado =
         modo === 'modificacion'
-          ? `Estructura modificada. VersiÃ³n anterior: ${resultado.version_anterior}. Nueva versiÃ³n: ${resultado.version}.`
-          : `Estructura creada correctamente. VersiÃ³n: ${resultado.version}.`
+          ? `Estructura modificada. Versión anterior: ${resultado.version_anterior}. Nueva versión: ${resultado.version}.`
+          : `Estructura creada correctamente. Versión: ${resultado.version}.`
 
       await consultarEstructura(productoId)
 
-      // Se establece despuÃ©s de consultar para que no se borre el mensaje.
+      // Se establece después de consultar para que no se borre el mensaje.
       setMensaje(mensajeGuardado)
     } catch (err) {
       setError(`No se pudo guardar la estructura. ${err.message}`)
@@ -365,7 +365,7 @@ export default function EstructuraProductos() {
     }
 
     const confirmar = window.confirm(
-      `Â¿Dar de baja la estructura del producto ${productoSeleccionado?.nombre ?? ''}, versiÃ³n ${estructura.version}?\n\nLa baja es lÃ³gica; los registros no se borrarÃ¡n fÃ­sicamente.`,
+      `¿Dar de baja la estructura del producto ${productoSeleccionado?.nombre ?? ''}, versión ${estructura.version}?\n\nLa baja es lógica; los registros no se borrarán físicamente.`,
     )
 
     if (!confirmar) return
@@ -462,7 +462,7 @@ export default function EstructuraProductos() {
 
           {estructura.version != null && (
             <span className="structure-version">
-              VersiÃ³n {estructura.version}
+              Versión {estructura.version}
             </span>
           )}
         </div>
@@ -692,13 +692,13 @@ export default function EstructuraProductos() {
               <span>Buscar componente en los selectores</span>
               <input
                 type="search"
-                placeholder="Buscar por cÃ³digo o nombre..."
+                placeholder="Buscar por código o nombre..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
               />
             </label>
             <p>
-              La bÃºsqueda filtra las opciones disponibles. Los componentes
+              La búsqueda filtra las opciones disponibles. Los componentes
               existentes no se modifican hasta guardar.
             </p>
           </div>
@@ -707,7 +707,7 @@ export default function EstructuraProductos() {
         <div className="structure-footer">
           <span>
             {productoSeleccionado
-              ? `${productoSeleccionado.codigo} Â· ${productoSeleccionado.nombre}`
+              ? `${productoSeleccionado.codigo} · ${productoSeleccionado.nombre}`
               : 'Sin producto seleccionado'}
           </span>
 
@@ -764,7 +764,7 @@ export default function EstructuraProductos() {
 
       {cargando && (
         <p className="structure-loading">
-          Consultando informaciÃ³n...
+          Consultando información...
         </p>
       )}
     </section>

@@ -191,6 +191,11 @@
     background: #fff !important;
   }
 
+  .reporte-productos,
+  .reporte-productos * {
+    visibility: visible !important;
+  }
+
   .reporte-productos-cabecera h2 {
     font-size: 20px;
   }

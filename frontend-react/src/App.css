@@ -92,6 +92,12 @@ button {
   gap: 6px;
 }
 
+.menu-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .menu-item {
   display: flex;
   align-items: center;
@@ -116,6 +122,26 @@ button {
   background: #2674df;
   color: #fff;
   font-weight: 600;
+}
+
+.menu-group-toggle {
+  position: relative;
+}
+
+.menu-chevron {
+  margin-left: auto;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.menu-subitems {
+  padding-left: 12px;
+}
+
+.menu-subitem {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-size: 12px;
 }
 
 .menu-icon {
@@ -384,9 +410,13 @@ button {
 
   .brand > div:last-child,
   .menu-caption,
-  .menu-item > span:last-child,
+  .menu-item > span:not(.menu-icon),
   .sidebar-footer {
     display: none;
+  }
+
+  .menu-subitems {
+    padding-left: 0;
   }
 
   .menu-item {

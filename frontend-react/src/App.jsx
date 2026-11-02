@@ -5,6 +5,7 @@ import EstructuraProductos from './components/EstructuraProductos'
 import Costos from './components/Costos'
 import Presentaciones from './components/Presentaciones'
 import ReporteProductos from './components/ReporteProductos'
+import ReporteEstructuras from './components/ReporteEstructuras'
 
 const API_BASE =
   import.meta.env.VITE_API_URL ||
@@ -14,6 +15,7 @@ const modulos = [
   { codigo: 'dashboard', nombre: 'Inicio', icono: '⌂' },
   { codigo: 'productos', nombre: 'Productos', icono: '▦' },
   { codigo: 'reporte-productos', nombre: 'Reporte de productos', icono: '▤' },
+  { codigo: 'reporte-estructuras', nombre: 'Reporte de estructuras', icono: '⚙' },
   { codigo: 'presentaciones', nombre: 'Presentaciones', icono: '▤' },
   { codigo: 'proveedores', nombre: 'Proveedores', icono: '♧' },
   { codigo: 'estructura', nombre: 'Estructura de productos', icono: '⚙' },
@@ -75,6 +77,7 @@ function App() {
   const [productoEditando, setProductoEditando] = useState(null)
   const [formulario, setFormulario] = useState(productoVacio)
   const [guardando, setGuardando] = useState(false)
+  const [reportesAbiertos, setReportesAbiertos] = useState(false)
 
   const cargarProductos = useCallback(async () => {
     setCargando(true)
@@ -284,6 +287,9 @@ function App() {
 
   function seleccionarModulo(codigo) {
     setModuloActivo(codigo)
+    if (codigo.startsWith('reporte-')) {
+      setReportesAbiertos(true)
+    }
     setError('')
     setMensaje('')
   }
@@ -306,17 +312,57 @@ function App() {
 
         <nav className="menu">
           {modulos.map((modulo) => (
-            <button
-              key={modulo.codigo}
-              className={`menu-item ${
-                moduloActivo === modulo.codigo ? 'selected' : ''
-              }`}
-              type="button"
-              onClick={() => seleccionarModulo(modulo.codigo)}
-            >
-              <span className="menu-icon">{modulo.icono}</span>
-              <span>{modulo.nombre}</span>
-            </button>
+            modulo.codigo === 'reporte-productos' ? (
+              <div className="menu-group" key="reportes">
+                <button
+                  className={`menu-item menu-group-toggle ${
+                    moduloActivo.startsWith('reporte-') ? 'selected' : ''
+                  }`}
+                  type="button"
+                  aria-expanded={reportesAbiertos}
+                  onClick={() => setReportesAbiertos((abierto) => !abierto)}
+                >
+                  <span className="menu-icon">{modulo.icono}</span>
+                  <span>Reportes</span>
+                  <span className="menu-chevron" aria-hidden="true">
+                    {reportesAbiertos ? '⌄' : '›'}
+                  </span>
+                </button>
+                {reportesAbiertos && (
+                  <div className="menu-subitems">
+                    {modulos
+                      .filter((item) => item.codigo.startsWith('reporte-'))
+                      .map((reporte) => (
+                        <button
+                          key={reporte.codigo}
+                          className={`menu-item menu-subitem ${
+                            moduloActivo === reporte.codigo ? 'selected' : ''
+                          }`}
+                          type="button"
+                          onClick={() => seleccionarModulo(reporte.codigo)}
+                        >
+                          <span className="menu-icon">{reporte.icono}</span>
+                          <span>{reporte.nombre}</span>
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              modulo.codigo.startsWith('reporte-') ? null : (
+                <button
+                  key={modulo.codigo}
+                  className={`menu-item ${
+                    moduloActivo === modulo.codigo ? 'selected' : ''
+                  }`}
+                  type="button"
+                  onClick={() => seleccionarModulo(modulo.codigo)}
+                >
+                  <span className="menu-icon">{modulo.icono}</span>
+                  <span>{modulo.nombre}</span>
+                </button>
+              )
+            )
           ))}
         </nav>
 
@@ -606,12 +652,15 @@ function App() {
 
           {moduloActivo === 'reporte-productos' && <ReporteProductos />}
 
+          {moduloActivo === 'reporte-estructuras' && <ReporteEstructuras />}
+
           {moduloActivo !== 'dashboard' &&
               moduloActivo !== 'productos' &&
               moduloActivo !== 'presentaciones' &&
               moduloActivo !== 'estructura' &&
               moduloActivo !== 'costos' &&
-              moduloActivo !== 'reporte-productos' && (
+              moduloActivo !== 'reporte-productos' &&
+              moduloActivo !== 'reporte-estructuras' && (
               <div className="coming-soon">
                 <div className="coming-soon-icon">
                   {modulos.find((modulo) => modulo.codigo === moduloActivo)?.icono}

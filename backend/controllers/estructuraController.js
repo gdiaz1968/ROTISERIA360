@@ -81,6 +81,119 @@ const listarComponentes = async (req, res) => {
 
 
 // ======================================================
+// LISTAR TODAS LAS ESTRUCTURAS PARA REPORTES
+// ======================================================
+
+const listarReporteEstructuras = async (req, res) => {
+
+    try {
+
+        const resultado = await pool.query(`
+            SELECT
+                pe.id AS estructura_id,
+                pe.producto_id,
+                pe.version,
+                pe.rendimiento,
+                pe.unidad_rendimiento,
+                pe.activo AS estructura_activa,
+                pe.fecha_alta,
+
+                producto.codigo AS producto_codigo,
+                producto.nombre AS producto_nombre,
+
+                ped.id AS detalle_id,
+                ped.componente_id,
+                ped.cantidad,
+                ped.merma,
+
+                componente.codigo AS componente_codigo,
+                componente.nombre AS componente_nombre,
+                componente.tipo AS componente_tipo,
+                unidad.codigo AS componente_unidad,
+                unidad.nombre AS componente_unidad_nombre
+
+            FROM producto_estructura pe
+
+            INNER JOIN productos producto
+                ON producto.id = pe.producto_id
+
+            LEFT JOIN producto_estructura_detalle ped
+                ON ped.estructura_id = pe.id
+
+            LEFT JOIN productos componente
+                ON componente.id = ped.componente_id
+
+            LEFT JOIN unidades_medida unidad
+                ON unidad.id = componente.id_unidad
+
+            ORDER BY
+                producto.codigo,
+                pe.version DESC,
+                pe.id,
+                ped.id
+        `, []);
+
+        const estructurasPorId = new Map();
+
+        for (const fila of resultado.rows) {
+            let estructura = estructurasPorId.get(fila.estructura_id);
+
+            if (!estructura) {
+                estructura = {
+                    id: fila.estructura_id,
+                    producto_id: fila.producto_id,
+                    producto_codigo: fila.producto_codigo,
+                    producto_nombre: fila.producto_nombre,
+                    version: fila.version,
+                    rendimiento: fila.rendimiento,
+                    unidad_rendimiento: fila.unidad_rendimiento,
+                    activo: fila.estructura_activa,
+                    fecha_alta: fila.fecha_alta,
+                    detalle: [],
+                };
+                estructurasPorId.set(fila.estructura_id, estructura);
+            }
+
+            if (fila.detalle_id !== null) {
+                estructura.detalle.push({
+                    id: fila.detalle_id,
+                    componente_id: fila.componente_id,
+                    componente_codigo: fila.componente_codigo,
+                    componente_nombre: fila.componente_nombre,
+                    componente_tipo: fila.componente_tipo,
+                    componente_unidad: fila.componente_unidad,
+                    componente_unidad_nombre:
+                        fila.componente_unidad_nombre,
+                    cantidad: fila.cantidad,
+                    merma: fila.merma,
+                });
+            }
+        }
+
+        const estructuras = Array.from(estructurasPorId.values());
+
+        res.json({
+            total: estructuras.length,
+            estructuras,
+        });
+
+    } catch (error) {
+
+        console.error(
+            "ERROR LISTAR ESTRUCTURAS PARA REPORTE:",
+            error
+        );
+
+        res.status(500).json({
+            error: "Error al consultar las estructuras para el reporte"
+        });
+
+    }
+
+};
+
+
+// ======================================================
 // CONSULTAR ESTRUCTURA ACTIVA POR PRODUCTO
 // ======================================================
 
@@ -1319,6 +1432,8 @@ module.exports = {
     listarProductosElaborados,
 
     listarComponentes,
+
+    listarReporteEstructuras,
 
     consultarEstructura,
 

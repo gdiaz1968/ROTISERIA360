@@ -5,6 +5,7 @@ const router = express.Router();
 const {
     listarProductosElaborados,
     listarComponentes,
+    listarReporteEstructuras,
     consultarEstructura,
     consultarEstructuraPorId,
     crearEstructura,
@@ -79,6 +80,23 @@ router.get(
 router.get(
     "/componentes",
     listarComponentes
+);
+
+
+// ======================================================
+// REPORTE DE TODAS LAS ESTRUCTURAS Y SUS VERSIONES
+// ======================================================
+//
+// GET /api/estructura/reporte
+//
+// Incluye estructuras activas e inactivas y todos sus
+// componentes, sin filtrar por el estado del detalle.
+//
+// ======================================================
+
+router.get(
+    "/reporte",
+    listarReporteEstructuras
 );
 
 

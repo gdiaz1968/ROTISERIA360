@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './Costos.css'
 
 const API_BASE =
@@ -171,6 +171,7 @@ export default function Costos() {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
   const [mensaje, setMensaje] = useState('')
+  const solicitudInsumoRef = useRef(0)
 
   const insumoSeleccionado = useMemo(
     () => insumos.find((item) => String(item.id) === String(idInsumo)),
@@ -216,7 +217,40 @@ export default function Costos() {
     )
   }, [])
 
+  const consultarDatosInsumo = useCallback(async (id) => {
+    const [datosPresentaciones, datosCosto, datosHistorial] =
+      await Promise.all([
+        consultarApi(`/api/presentaciones/producto/${id}`),
+        consultarApi(`/api/costos/insumo/${id}`),
+        consultarApi(`/api/costos/insumo/${id}/historial`),
+      ])
+
+    return {
+      presentaciones: obtenerLista(
+        datosPresentaciones,
+        ['presentaciones', 'resultado', 'datos'],
+      ),
+      costoActual: datosCosto.resultado ?? null,
+      historial: obtenerLista(datosHistorial, ['historial', 'resultado']),
+    }
+  }, [])
+
+  const aplicarDatosInsumo = useCallback((datos) => {
+    setPresentaciones(datos.presentaciones)
+    setCostoActual(datos.costoActual)
+    setHistorial(datos.historial)
+    setIdPresentacion((actual) =>
+      datos.presentaciones.some((presentacion) =>
+        String(presentacion.id) === String(actual),
+      )
+        ? actual
+        : '',
+    )
+  }, [])
+
   const cargarDatosInsumo = useCallback(async (id) => {
+    const solicitud = ++solicitudInsumoRef.current
+
     if (!id) {
       setPresentaciones([])
       setIdPresentacion('')
@@ -230,36 +264,61 @@ export default function Costos() {
     setMensaje('')
 
     try {
-      const [datosPresentaciones, datosCosto, datosHistorial] =
-        await Promise.all([
-          consultarApi(`/api/presentaciones/producto/${id}`),
-          consultarApi(`/api/costos/insumo/${id}`),
-          consultarApi(`/api/costos/insumo/${id}/historial`),
-        ])
+      const datos = await consultarDatosInsumo(id)
+      if (solicitud !== solicitudInsumoRef.current) return
 
-      const listaPresentaciones = obtenerLista(
-        datosPresentaciones,
-        ['presentaciones', 'resultado', 'datos'],
-      )
-
-      setPresentaciones(listaPresentaciones)
-      setCostoActual(datosCosto.resultado ?? null)
-      setHistorial(obtenerLista(datosHistorial, ['historial', 'resultado']))
-
-      setIdPresentacion((actual) =>
-        listaPresentaciones.some((p) => String(p.id) === String(actual))
-          ? actual
-          : '',
-      )
+      aplicarDatosInsumo(datos)
     } catch (err) {
+      if (solicitud !== solicitudInsumoRef.current) return
+
       setError(mensajeError(err))
       setPresentaciones([])
       setCostoActual(null)
       setHistorial([])
     } finally {
-      setCargando(false)
+      if (solicitud === solicitudInsumoRef.current) {
+        setCargando(false)
+      }
     }
-  }, [])
+  }, [aplicarDatosInsumo, consultarDatosInsumo])
+
+  useEffect(() => {
+    if (!idInsumo) return undefined
+
+    let cancelado = false
+    const solicitud = ++solicitudInsumoRef.current
+
+    async function cargar() {
+      try {
+        const datos = await consultarDatosInsumo(idInsumo)
+        if (cancelado || solicitud !== solicitudInsumoRef.current) return
+
+        aplicarDatosInsumo(datos)
+        setError('')
+        setMensaje('')
+      } catch (err) {
+        if (cancelado || solicitud !== solicitudInsumoRef.current) return
+
+        setError(mensajeError(err))
+        setPresentaciones([])
+        setCostoActual(null)
+        setHistorial([])
+      } finally {
+        if (!cancelado && solicitud === solicitudInsumoRef.current) {
+          setCargando(false)
+        }
+      }
+    }
+
+    void cargar()
+
+    return () => {
+      cancelado = true
+      if (solicitud === solicitudInsumoRef.current) {
+        solicitudInsumoRef.current += 1
+      }
+    }
+  }, [idInsumo, consultarDatosInsumo, aplicarDatosInsumo])
 
   useEffect(() => {
     async function iniciar() {
@@ -277,10 +336,6 @@ export default function Costos() {
 
     iniciar()
   }, [cargarInsumos, cargarElaborados])
-
-  useEffect(() => {
-    cargarDatosInsumo(idInsumo)
-  }, [idInsumo, cargarDatosInsumo])
 
   async function registrarCosto(evento) {
     evento.preventDefault()
@@ -446,9 +501,19 @@ export default function Costos() {
                 id="costo-insumo"
                 value={idInsumo}
                 onChange={(e) => {
-                  setIdInsumo(e.target.value)
+                  const nuevoId = e.target.value
+                  setIdInsumo(nuevoId)
                   setIdPresentacion('')
                   setPrecio('')
+                  setCargando(Boolean(nuevoId))
+                  setError('')
+                  setMensaje('')
+
+                  if (!nuevoId) {
+                    setPresentaciones([])
+                    setCostoActual(null)
+                    setHistorial([])
+                  }
                 }}
                 required
               >
