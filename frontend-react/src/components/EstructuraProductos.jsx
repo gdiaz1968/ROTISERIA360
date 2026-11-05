@@ -127,17 +127,17 @@ export default function EstructuraProductos() {
       })
 
       setModo('consulta')
-      setMensaje(`Estructura activa: versión ${cabecera.version}.`)
+      setMensaje(`Receta activa: versión ${cabecera.version}.`)
     } catch (err) {
-      if (err.message.includes('no tiene una estructura activa')) {
+      if (err.message.includes('no tiene una receta activa')) {
         setEstructura({
           ...estructuraVacia,
           detalle: [],
         })
         setModo('nuevo')
-        setMensaje('Este producto todavía no tiene una estructura activa.')
+        setMensaje('Este producto todavía no tiene una receta activa.')
       } else {
-        setError(`No se pudo consultar la estructura. ${err.message}`)
+        setError(`No se pudo consultar la receta. ${err.message}`)
       }
     } finally {
       setCargando(false)
@@ -165,7 +165,7 @@ export default function EstructuraProductos() {
 
     if (estructura.id) {
       setError(
-        'Este producto ya tiene una estructura activa. Use Modificar para generar una nueva versión.',
+        'Este producto ya tiene una receta activa. Use Modificar para generar una nueva versión.',
       )
       return
     }
@@ -185,7 +185,7 @@ export default function EstructuraProductos() {
     setModo('modificacion')
     setError('')
     setMensaje(
-      'Al guardar, se generará una nueva versión de la estructura.',
+      'Al guardar, se generará una nueva versión de la receta.',
     )
   }
 
@@ -344,8 +344,8 @@ export default function EstructuraProductos() {
 
       const mensajeGuardado =
         modo === 'modificacion'
-          ? `Estructura modificada. Versión anterior: ${resultado.version_anterior}. Nueva versión: ${resultado.version}.`
-          : `Estructura creada correctamente. Versión: ${resultado.version}.`
+          ? `Receta modificada. Versión anterior: ${resultado.version_anterior}. Nueva versión: ${resultado.version}.`
+          : `Receta creada correctamente. Versión: ${resultado.version}.`
 
       await consultarEstructura(productoId)
 
@@ -365,7 +365,7 @@ export default function EstructuraProductos() {
     }
 
     const confirmar = window.confirm(
-      `¿Dar de baja la estructura del producto ${productoSeleccionado?.nombre ?? ''}, versión ${estructura.version}?\n\nLa baja es lógica; los registros no se borrarán físicamente.`,
+      `¿Dar de baja la Receta del producto ${productoSeleccionado?.nombre ?? ''}, versión ${estructura.version}?\n\nLa baja es lógica; los registros no se borrarán físicamente.`,
     )
 
     if (!confirmar) return
@@ -381,9 +381,9 @@ export default function EstructuraProductos() {
 
       setEstructura({ ...estructuraVacia, detalle: [] })
       setModo('nuevo')
-      setMensaje('Estructura dada de baja correctamente.')
+      setMensaje('Receta dada de baja correctamente.')
     } catch (err) {
-      setError(`No se pudo dar de baja la estructura. ${err.message}`)
+      setError(`No se pudo dar de baja la Receta. ${err.message}`)
     } finally {
       setGuardando(false)
     }
@@ -395,7 +395,7 @@ export default function EstructuraProductos() {
     <section className="structure-page">
       <div className="structure-toolbar">
         <div>
-          <h2>Estructura de productos</h2>
+          <h2>Recetas de productos</h2>
           <p>
             Defina los componentes, cantidades, merma y rendimiento de cada
             producto elaborado.
@@ -420,7 +420,7 @@ export default function EstructuraProductos() {
               !productoId || Boolean(estructura.id) || guardando
             }
           >
-            Nueva estructura
+            Nueva receta
           </button>
         </div>
       </div>
@@ -677,7 +677,7 @@ export default function EstructuraProductos() {
                     className="table-message"
                   >
                     {productoId
-                      ? 'No hay componentes cargados en esta estructura.'
+                      ? 'No hay componentes cargados en esta receta.'
                       : 'Seleccione un producto elaborado para comenzar.'}
                   </td>
                 </tr>
@@ -754,7 +754,7 @@ export default function EstructuraProductos() {
                     ? 'Guardando...'
                     : modo === 'modificacion'
                       ? 'Guardar nueva version'
-                      : 'Crear estructura'}
+                      : 'Crear receta'}
                 </button>
               </>
             )}

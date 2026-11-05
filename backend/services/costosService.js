@@ -65,7 +65,6 @@ async function listarInsumos() {
     return resultado.rows;
 }
 
-
 // ==========================================================
 // OBTENER COSTO ACTUAL DE UN INSUMO
 // ==========================================================
@@ -130,7 +129,6 @@ async function obtenerCostoInsumo(idProducto) {
     };
 }
 
-
 // ==========================================================
 // LISTAR HISTORIAL DE COSTOS
 // ==========================================================
@@ -158,13 +156,11 @@ async function listarHistorialCosto(idProducto) {
     return resultado.rows;
 }
 
-
 // ==========================================================
 // REGISTRAR NUEVO COSTO DE INSUMO
 // costo = costo base
 // factorAjuste = factor de ajuste
 // ==========================================================
-
 
 async function registrarCostoInsumo(
     idProducto,
@@ -367,7 +363,6 @@ async function registrarCostoInsumo(
     }
 }
 
-
 // ==========================================================
 // OBTENER ESTRUCTURA ACTIVA DE UN PRODUCTO
 // ==========================================================
@@ -485,7 +480,6 @@ async function obtenerEstructuraProducto(idProducto) {
         }))
     };
 }
-
 
 // ==========================================================
 // CALCULAR COSTO DE PRODUCTO
@@ -773,7 +767,6 @@ async function calcularCostoProducto(
     };
 }
 
-
 // ==========================================================
 // OBTENER ESTRUCTURA + COSTO ACTUAL DE COMPONENTES
 // Devuelve el costo base y el ajustado de cada componente.
@@ -923,7 +916,6 @@ const obtenerEstructuraConCostos = async (idProducto) => {
         }))
     };
 };
-
 
 // ==========================================================
 // EXPORTACIONES

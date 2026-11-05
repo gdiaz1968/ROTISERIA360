@@ -18,7 +18,7 @@ const modulos = [
   { codigo: 'reporte-estructuras', nombre: 'Reporte de estructuras', icono: '⚙' },
   { codigo: 'presentaciones', nombre: 'Presentaciones', icono: '▤' },
   { codigo: 'proveedores', nombre: 'Proveedores', icono: '♧' },
-  { codigo: 'estructura', nombre: 'Estructura de productos', icono: '⚙' },
+  { codigo: 'estructura', nombre: 'Recetas', icono: '⚙' },
   { codigo: 'costos', nombre: 'Costos', icono: '$' },
   { codigo: 'ventas', nombre: 'Ventas de mostrador', icono: '▤' },
  
