@@ -6,6 +6,8 @@ import Costos from './components/Costos'
 import Presentaciones from './components/Presentaciones'
 import ReporteProductos from './components/ReporteProductos'
 import ReporteEstructuras from './components/ReporteEstructuras'
+import Compras from './components/Compras'
+import Proveedores from './components/Proveedores'
 
 const API_BASE =
   import.meta.env.VITE_API_URL ||
@@ -18,10 +20,10 @@ const modulos = [
   { codigo: 'reporte-estructuras', nombre: 'Reporte de estructuras', icono: '⚙' },
   { codigo: 'presentaciones', nombre: 'Presentaciones', icono: '▤' },
   { codigo: 'proveedores', nombre: 'Proveedores', icono: '♧' },
+  { codigo: 'compras', nombre: 'Compras y Stock', icono: '▣' },
   { codigo: 'estructura', nombre: 'Recetas', icono: '⚙' },
   { codigo: 'costos', nombre: 'Costos', icono: '$' },
   { codigo: 'ventas', nombre: 'Ventas de mostrador', icono: '▤' },
- 
 ]
 
 const productoVacio = {
@@ -102,9 +104,6 @@ function App() {
     }
   }, [])
 
-  // Cargar los datos al entrar en Productos.
-  // La tarea se difiere a una microtarea para evitar ejecutar
-  // las actualizaciones de estado durante la ejecución síncrona del efecto.
   useEffect(() => {
     if (moduloActivo !== 'productos') return undefined
 
@@ -112,7 +111,6 @@ function App() {
 
     const cargarDatos = async () => {
       if (cancelado) return
-
       await Promise.all([cargarProductos(), cargarUnidades()])
     }
 
@@ -164,7 +162,6 @@ function App() {
     Math.ceil(productosFiltrados.length / filasPorPagina),
   )
 
-  // Mantener la página dentro de los límites sin otro useEffect.
   const paginaActual = Math.min(pagina, totalPaginas)
 
   const productosPagina = productosFiltrados.slice(
@@ -417,20 +414,23 @@ function App() {
               </div>
 
               <div className="module-grid">
-                {modulos.slice(1).map((modulo) => (
-                  <button
-                    type="button"
-                    className="module-card"
-                    key={modulo.codigo}
-                    onClick={() => seleccionarModulo(modulo.codigo)}
-                  >
-                    <div className="module-icon">{modulo.icono}</div>
-                    <strong>{modulo.nombre}</strong>
-                    <span>
-                      Ingresar al módulo <span aria-hidden="true">→</span>
-                    </span>
-                  </button>
-                ))}
+                {modulos
+                  .slice(1)
+                  .filter((modulo) => !modulo.codigo.startsWith('reporte-'))
+                  .map((modulo) => (
+                    <button
+                      type="button"
+                      className="module-card"
+                      key={modulo.codigo}
+                      onClick={() => seleccionarModulo(modulo.codigo)}
+                    >
+                      <div className="module-icon">{modulo.icono}</div>
+                      <strong>{modulo.nombre}</strong>
+                      <span>
+                        Ingresar al módulo <span aria-hidden="true">→</span>
+                      </span>
+                    </button>
+                  ))}
               </div>
 
               <div className="status-panel">
@@ -450,7 +450,7 @@ function App() {
               <div className="products-toolbar">
                 <div>
                   <h2>Productos</h2>
-                  <p>Administración de insumos y productos elaborados.</p>
+                  <p>Administración de insumos, elaborados y productos de reventa.</p>
                 </div>
 
                 <button
@@ -562,7 +562,9 @@ function App() {
                                 className={`type-tag ${
                                   producto.tipo === 'ELABORADO'
                                     ? 'type-elaborado'
-                                    : 'type-insumo'
+                                    : producto.tipo === 'REVENTA'
+                                      ? 'type-reventa'
+                                      : 'type-insumo'
                                 }`}
                               >
                                 {producto.tipo}
@@ -646,7 +648,11 @@ function App() {
 
           {moduloActivo === 'presentaciones' && <Presentaciones />}
 
+          {moduloActivo === 'proveedores' && <Proveedores />}
+
           {moduloActivo === 'estructura' && <EstructuraProductos />}
+
+          {moduloActivo === 'compras' && <Compras />}
 
           {moduloActivo === 'costos' && <Costos />}
 
@@ -655,12 +661,14 @@ function App() {
           {moduloActivo === 'reporte-estructuras' && <ReporteEstructuras />}
 
           {moduloActivo !== 'dashboard' &&
-              moduloActivo !== 'productos' &&
-              moduloActivo !== 'presentaciones' &&
-              moduloActivo !== 'estructura' &&
-              moduloActivo !== 'costos' &&
-              moduloActivo !== 'reporte-productos' &&
-              moduloActivo !== 'reporte-estructuras' && (
+            moduloActivo !== 'productos' &&
+            moduloActivo !== 'presentaciones' &&
+            moduloActivo !== 'proveedores' &&
+            moduloActivo !== 'estructura' &&
+            moduloActivo !== 'costos' &&
+            moduloActivo !== 'reporte-productos' &&
+            moduloActivo !== 'reporte-estructuras' &&
+            moduloActivo !== 'compras' && (
               <div className="coming-soon">
                 <div className="coming-soon-icon">
                   {modulos.find((modulo) => modulo.codigo === moduloActivo)?.icono}
@@ -744,6 +752,7 @@ function App() {
                   >
                     <option value="INSUMO">INSUMO</option>
                     <option value="ELABORADO">ELABORADO</option>
+                    <option value="REVENTA">REVENTA</option>
                   </select>
                 </label>
 

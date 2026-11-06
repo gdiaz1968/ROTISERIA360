@@ -1007,3 +1007,8 @@ button {
     gap: 8px;
   }
 }
+
+.type-reventa {
+  background-color: #fff3cd;
+  color: #856404;
+}

@@ -5,38 +5,51 @@ const pool = require("../db");
 // ======================================================
 
 const listarProveedores = async (req, res) => {
-
     try {
+        const incluirInactivos = req.query.todos === "true";
 
-        const resultado = await pool.query(`
-            SELECT
-                id,
-                codigo,
-                nombre,
-                cuit,
-                telefono,
-                email,
-                direccion,
-                activo,
-                fecha_alta
-            FROM proveedores
-            WHERE activo = TRUE
-            ORDER BY codigo, nombre
-        `);
+        const consulta = incluirInactivos
+            ? `
+                SELECT
+                    id,
+                    codigo,
+                    nombre,
+                    cuit,
+                    telefono,
+                    email,
+                    direccion,
+                    activo,
+                    fecha_alta
+                FROM proveedores
+                ORDER BY codigo, nombre
+            `
+            : `
+                SELECT
+                    id,
+                    codigo,
+                    nombre,
+                    cuit,
+                    telefono,
+                    email,
+                    direccion,
+                    activo,
+                    fecha_alta
+                FROM proveedores
+                WHERE activo = TRUE
+                ORDER BY codigo, nombre
+            `;
+
+        const resultado = await pool.query(consulta);
 
         res.json(resultado.rows);
 
-    }
-    catch (error) {
-
-        console.error("Error al consultar proveedores:", error);
+    } catch (error) {
+        console.error("Error al listar proveedores:", error);
 
         res.status(500).json({
-            error: "Error al consultar proveedores"
+            error: "No se pudieron listar los proveedores."
         });
-
     }
-
 };
 
 
