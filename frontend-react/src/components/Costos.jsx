@@ -1,9 +1,4 @@
-<<<<<<< Updated upstream
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-=======
-import { useCallback, useEffect, useMemo, useState } from 'react'
->>>>>>> Stashed changes
 import './Costos.css'
 
 const API_BASE =
@@ -419,26 +414,9 @@ export default function Costos() {
       const datos = await consultarDatosInsumo(id)
       if (solicitud !== solicitudInsumoRef.current) return
 
-<<<<<<< Updated upstream
+
       aplicarDatosInsumo(datos)
-=======
-      const listaPresentaciones = obtenerLista(
-        datosPresentaciones,
-        ['presentaciones', 'resultado', 'datos'],
-      )
 
-      setPresentaciones(listaPresentaciones)
-      setCostoActual(datosCosto.resultado ?? null)
-      setHistorial(
-        obtenerLista(datosHistorial, ['historial', 'resultado']),
-      )
-
-      setIdPresentacion((actual) =>
-        listaPresentaciones.some((p) => String(p.id) === String(actual))
-          ? actual
-          : '',
-      )
->>>>>>> Stashed changes
     } catch (err) {
       if (solicitud !== solicitudInsumoRef.current) return
 
