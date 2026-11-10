@@ -1,4 +1,3 @@
-
 .costos-page {
   display: flex;
   flex-direction: column;
@@ -208,6 +207,7 @@
   overflow-wrap: anywhere;
 }
 
+/* Selector correcto: dos clases en el mismo elemento */
 .costos-formula-row.result {
   padding-top: 12px;
   border-top: 1px solid #dbe4ef;
@@ -362,18 +362,119 @@
 .costos-elaborado-result > div {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 10px;
+  min-height: 145px;
   padding: 16px;
   border: 1px solid #dce5f0;
   border-radius: 9px;
   background: #f8fafc;
 }
 
-.costos-elaborado-result strong {
+.costos-elaborado-result > div > span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.costos-elaborado-result > div > strong {
   color: #1d4788;
-  font-size: 20px;
+  font-size: 25px;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
+
+.costos-elaborado-result > div > small {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.costos-result-total {
+  border-top: 3px solid #4778bd !important;
+}
+
+.costos-result-rendimiento {
+  border-top: 3px solid #64748b !important;
+}
+
+.costos-result-unitario {
+  border-top: 3px solid #16834a !important;
+}
+
+.costos-result-unitario strong {
+  color: #16834a !important;
+}
+
+/* Explicación de la fórmula del reporte */
+
+.costos-report-calculation {
+  margin: 22px 0;
+  padding: 18px;
+  border: 1px solid #dce5f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.costos-report-calculation h4 {
+  margin: 0 0 8px;
+  color: #1e293b;
+  font-size: 16px;
+}
+
+.costos-report-calculation > p {
+  margin: 0 0 18px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.costos-calculation-operation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.costos-calculation-operation > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #dce5f0;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.costos-calculation-operation span:not(.costos-calculation-symbol) {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.costos-calculation-operation strong {
+  color: #1d4788;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+
+.costos-calculation-symbol {
+  color: #64748b;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.costos-calculation-result {
+  border-color: #b7dfc5 !important;
+}
+
+.costos-calculation-result strong {
+  color: #16834a !important;
+}
+
+/* Reporte detallado */
 
 .costos-report {
   min-width: 0;
@@ -510,6 +611,16 @@
   font-size: 12px;
 }
 
+.costos-report-calculation > small {
+  display: block;
+  margin-top: 14px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* Impresión y guardado como PDF */
+
 @media print {
   @page {
     margin: 14mm;
@@ -539,19 +650,39 @@
   }
 
   .costos-report-item,
-  .costos-report-nested-summary {
+  .costos-report-nested-summary,
+  .costos-report-calculation,
+  .costos-elaborado-result > div {
     break-inside: avoid;
   }
 
   .costos-report-values,
-  .costos-elaborado-result > div {
-    background: #fff;
+  .costos-elaborado-result > div,
+  .costos-report-calculation {
+    background: #fff !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }
+
+/* Adaptación a pantallas medianas */
 
 @media (max-width: 1050px) {
   .costos-layout {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Adaptación a celulares */
+
+@media (max-width: 700px) {
+  .costos-calculation-operation {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .costos-calculation-symbol {
+    text-align: center;
   }
 }
 
@@ -578,5 +709,173 @@
 
   .costos-report-values {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================
+   DESGLOSE DE FORMACIÓN DEL COSTO DE CADA COMPONENTE
+   ========================================================== */
+
+.costos-report-breakdown {
+  margin-top: 12px;
+  padding: 15px;
+  border: 1px solid #dce5f0;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.costos-report-breakdown h6 {
+  margin: 0 0 14px;
+  color: #1e293b;
+  font-size: 13px;
+}
+
+.costos-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.costos-breakdown-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  background: #f8fafc;
+}
+
+.costos-breakdown-grid span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.costos-breakdown-grid strong {
+  color: #1e293b;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.costos-breakdown-grid .costos-breakdown-highlight {
+  border-color: #b7cce8;
+  background: #eff6ff;
+}
+
+.costos-breakdown-highlight strong {
+  color: #2458a6;
+}
+
+.costos-breakdown-equation {
+  margin-top: 12px;
+  padding: 11px;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 13px;
+  text-align: center;
+}
+
+.costos-breakdown-equation strong {
+  color: #2458a6;
+}
+
+.costos-report-breakdown > small {
+  display: block;
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.costos-breakdown-note {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* ==========================================================
+   EXPLICACIÓN DEL SUBTOTAL
+   ========================================================== */
+
+.costos-subtotal-explanation {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid #cbd9ec;
+  border-radius: 9px;
+  background: #f8fafc;
+}
+
+.costos-subtotal-explanation > span {
+  display: block;
+  margin-bottom: 12px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.costos-subtotal-equation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.costos-subtotal-equation > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.costos-subtotal-equation small {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.costos-subtotal-equation strong {
+  color: #1e293b;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.costos-subtotal-equation > span {
+  color: #64748b;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.costos-subtotal-equation .costos-subtotal-final {
+  padding: 10px;
+  border-radius: 7px;
+  background: #e8f5ed;
+}
+
+.costos-subtotal-final strong {
+  color: #166534;
+  font-size: 17px;
+}
+
+@media (max-width: 650px) {
+  .costos-breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .costos-subtotal-equation {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .costos-subtotal-equation > span {
+    text-align: center;
+  }
+}
+
+@media print {
+  .costos-report-breakdown,
+  .costos-subtotal-explanation {
+    break-inside: avoid;
   }
 }
