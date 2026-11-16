@@ -6,7 +6,7 @@ const pool = require("./db");
 
 
 const productosRoutes = require("./routes/productos");
-const estructuraRoutes = require("./routes/estructura");
+const recetasRoutes = require("./routes/recetas");
 const costosRoutes = require("./routes/costos");
 const unidadesRoutes = require("./routes/unidades");
 const proveedoresRoutes = require("./routes/proveedores");
@@ -64,7 +64,7 @@ app.use("/api/unidades", unidadesRoutes);
 
 app.use(
     "/api/estructura",
-    estructuraRoutes
+    recetasRoutes
 );
 
 
@@ -93,7 +93,7 @@ app.use("/api/presentaciones", presentacionesRoutes);
 app.use("/api/precios-compra", preciosCompraRoutes);
 
 console.log("ROUTER PRODUCTOS MONTADO");
-console.log("ROUTER ESTRUCTURA MONTADO");
+console.log("ROUTER RECETAS MONTADO");
 console.log("ROUTER COSTOS MONTADO");
 console.log("ROUTER PROVEEDORES MONTADO");
 
@@ -112,11 +112,11 @@ app.get(
 app.get(
     "/api/prueba-estructura",
     function (req, res) {
-        console.log(">>> ENTRO A PRUEBA ESTRUCTURA");
+        console.log(">>> ENTRO A PRUEBA RECETAS");
 
         res.json({
             ok: true,
-            mensaje: "Ruta estructura funcionando"
+            mensaje: "Ruta de recetas funcionando"
         });
     }
 );
