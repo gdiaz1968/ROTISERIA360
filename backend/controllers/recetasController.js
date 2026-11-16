@@ -1,0 +1,1448 @@
+const pool = require("../db");
+
+
+// ======================================================
+// LISTAR PRODUCTOS ELABORADOS
+// ======================================================
+
+const listarProductosElaborados = async (req, res) => {
+
+    try {
+
+        const resultado = await pool.query(`
+            SELECT
+                p.id,
+                p.codigo,
+                p.nombre,
+                p.id_unidad,
+                um.codigo AS unidad,
+                um.nombre AS unidad_nombre
+            FROM productos p
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
+            WHERE p.tipo = 'ELABORADO'
+              AND p.activo = TRUE
+            ORDER BY p.nombre
+        `);
+
+        res.json(resultado.rows);
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            error: "Error al consultar productos elaborados"
+        });
+
+    }
+
+};
+
+
+// ======================================================
+// LISTAR COMPONENTES
+// ======================================================
+
+const listarComponentes = async (req, res) => {
+
+    try {
+
+        const resultado = await pool.query(`
+            SELECT
+                p.id,
+                p.codigo,
+                p.nombre,
+                p.tipo,
+                p.id_unidad,
+                um.codigo AS unidad,
+                um.nombre AS unidad_nombre
+            FROM productos p
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
+            WHERE p.activo = TRUE
+              AND p.tipo IN ('INSUMO', 'ELABORADO')
+            ORDER BY p.codigo, p.nombre
+        `);
+
+        res.json(resultado.rows);
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            error: "Error al consultar componentes"
+        });
+
+    }
+
+};
+
+
+// ======================================================
+// LISTAR TODAS LAS ESTRUCTURAS PARA REPORTES
+// ======================================================
+
+const listarReporteRecetas = async (req, res) => {
+
+    try {
+
+        const resultado = await pool.query(`
+            SELECT
+                pe.id AS estructura_id,
+                pe.producto_id,
+                pe.version,
+                pe.rendimiento,
+                pe.unidad_rendimiento,
+                pe.activo AS estructura_activa,
+                pe.fecha_alta,
+
+                producto.codigo AS producto_codigo,
+                producto.nombre AS producto_nombre,
+
+                ped.id AS detalle_id,
+                ped.componente_id,
+                ped.cantidad,
+                ped.merma,
+
+                componente.codigo AS componente_codigo,
+                componente.nombre AS componente_nombre,
+                componente.tipo AS componente_tipo,
+                unidad.codigo AS componente_unidad,
+                unidad.nombre AS componente_unidad_nombre
+
+            FROM producto_estructura pe
+
+            INNER JOIN productos producto
+                ON producto.id = pe.producto_id
+
+            LEFT JOIN producto_estructura_detalle ped
+                ON ped.estructura_id = pe.id
+
+            LEFT JOIN productos componente
+                ON componente.id = ped.componente_id
+
+            LEFT JOIN unidades_medida unidad
+                ON unidad.id = componente.id_unidad
+
+            ORDER BY
+                producto.codigo,
+                pe.version DESC,
+                pe.id,
+                ped.id
+        `, []);
+
+        const estructurasPorId = new Map();
+
+        for (const fila of resultado.rows) {
+            let estructura = estructurasPorId.get(fila.estructura_id);
+
+            if (!estructura) {
+                estructura = {
+                    id: fila.estructura_id,
+                    producto_id: fila.producto_id,
+                    producto_codigo: fila.producto_codigo,
+                    producto_nombre: fila.producto_nombre,
+                    version: fila.version,
+                    rendimiento: fila.rendimiento,
+                    unidad_rendimiento: fila.unidad_rendimiento,
+                    activo: fila.estructura_activa,
+                    fecha_alta: fila.fecha_alta,
+                    detalle: [],
+                };
+                estructurasPorId.set(fila.estructura_id, estructura);
+            }
+
+            if (fila.detalle_id !== null) {
+                estructura.detalle.push({
+                    id: fila.detalle_id,
+                    componente_id: fila.componente_id,
+                    componente_codigo: fila.componente_codigo,
+                    componente_nombre: fila.componente_nombre,
+                    componente_tipo: fila.componente_tipo,
+                    componente_unidad: fila.componente_unidad,
+                    componente_unidad_nombre:
+                        fila.componente_unidad_nombre,
+                    cantidad: fila.cantidad,
+                    merma: fila.merma,
+                });
+            }
+        }
+
+        const estructuras = Array.from(estructurasPorId.values());
+
+        res.json({
+            total: estructuras.length,
+            estructuras,
+        });
+
+    } catch (error) {
+
+        console.error(
+            "ERROR LISTAR RECETAS PARA REPORTE:",
+            error
+        );
+
+        res.status(500).json({
+            error: "Error al consultar las recetas para el reporte"
+        });
+
+    }
+
+};
+
+
+// ======================================================
+// CONSULTAR ESTRUCTURA ACTIVA POR PRODUCTO
+// ======================================================
+
+const consultarReceta = async (req, res) => {
+
+    try {
+
+        const productoId =
+            parseInt(req.params.producto_id);
+
+
+        // --------------------------------------------------
+        // VALIDAR ID
+        // --------------------------------------------------
+
+        if (!productoId) {
+
+            return res.status(400).json({
+                error: "Debe indicar un producto válido"
+            });
+
+        }
+
+
+        // --------------------------------------------------
+        // CONSULTAR CABECERA + PRODUCTO
+        // --------------------------------------------------
+
+        const cabecera = await pool.query(`
+            SELECT
+                pe.id,
+                pe.producto_id,
+                pe.version,
+                pe.rendimiento,
+                pe.unidad_rendimiento,
+                pe.activo,
+                pe.fecha_alta,
+
+                p.codigo AS producto_codigo,
+                p.nombre AS producto_nombre,
+                p.id_unidad AS producto_id_unidad,
+
+                um.codigo AS producto_unidad,
+                um.nombre AS producto_unidad_nombre
+
+            FROM producto_estructura pe
+
+            INNER JOIN productos p
+                ON p.id = pe.producto_id
+
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
+
+            WHERE pe.producto_id = $1
+              AND pe.activo = TRUE
+
+            ORDER BY pe.version DESC
+
+            LIMIT 1
+        `, [
+            productoId
+        ]);
+
+
+        // --------------------------------------------------
+        // NO EXISTE ESTRUCTURA
+        // --------------------------------------------------
+
+        if (cabecera.rows.length === 0) {
+
+            return res.status(404).json({
+                error: "El producto no tiene una receta activa"
+            });
+
+        }
+
+
+        const estructura =
+            cabecera.rows[0];
+
+
+        // --------------------------------------------------
+        // CONSULTAR DETALLE
+        // --------------------------------------------------
+
+        const detalle = await pool.query(`
+            SELECT
+
+                ped.id,
+
+                ped.estructura_id,
+
+                ped.componente_id,
+
+                ped.cantidad,
+
+                ped.merma,
+
+                ped.activo,
+
+                p.codigo AS componente_codigo,
+
+                p.nombre AS componente_nombre,
+
+                p.tipo AS componente_tipo,
+
+                p.id_unidad AS componente_id_unidad,
+
+                um.codigo AS componente_unidad,
+
+                um.nombre AS componente_unidad_nombre
+
+            FROM producto_estructura_detalle ped
+
+            INNER JOIN productos p
+                ON p.id = ped.componente_id
+
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
+
+            WHERE ped.estructura_id = $1
+              AND ped.activo = TRUE
+
+            ORDER BY ped.id
+        `, [
+            estructura.id
+        ]);
+
+
+        // --------------------------------------------------
+        // RESPUESTA
+        // --------------------------------------------------
+
+        res.json({
+
+            estructura: estructura,
+
+            detalle: detalle.rows
+
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "ERROR CONSULTAR ESTRUCTURA:",
+            error
+        );
+
+        res.status(500).json({
+            error: "Error al consultar la receta"
+        });
+
+    }
+
+};
+
+
+// ======================================================
+// CONSULTAR ESTRUCTURA POR ID
+// ======================================================
+
+const consultarRecetaPorId = async (req, res) => {
+
+    try {
+
+        const estructuraId =
+            parseInt(req.params.id);
+
+
+        // --------------------------------------------------
+        // VALIDAR ID
+        // --------------------------------------------------
+
+        if (!estructuraId) {
+
+            return res.status(400).json({
+                error: "Debe indicar una estructura válida"
+            });
+
+        }
+
+
+        // --------------------------------------------------
+        // CABECERA
+        // --------------------------------------------------
+
+        const cabecera = await pool.query(`
+            SELECT
+
+                pe.id,
+                pe.producto_id,
+                pe.version,
+                pe.rendimiento,
+                pe.unidad_rendimiento,
+                pe.activo,
+                pe.fecha_alta,
+
+                p.codigo AS producto_codigo,
+                p.nombre AS producto_nombre,
+                p.id_unidad AS producto_id_unidad,
+
+                um.codigo AS producto_unidad,
+                um.nombre AS producto_unidad_nombre
+
+            FROM producto_estructura pe
+
+            INNER JOIN productos p
+                ON p.id = pe.producto_id
+
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
+
+            WHERE pe.id = $1
+        `, [
+            estructuraId
+        ]);
+
+
+        if (cabecera.rows.length === 0) {
+
+            return res.status(404).json({
+                error: "La receta no existe"
+            });
+
+        }
+
+
+        const estructura =
+            cabecera.rows[0];
+
+
+        // --------------------------------------------------
+        // DETALLE
+        // --------------------------------------------------
+
+        const detalle = await pool.query(`
+            SELECT
+
+                ped.id,
+
+                ped.estructura_id,
+
+                ped.componente_id,
+
+                ped.cantidad,
+
+                ped.merma,
+
+                ped.activo,
+
+                p.codigo AS componente_codigo,
+
+                p.nombre AS componente_nombre,
+
+                p.tipo AS componente_tipo,
+
+                p.id_unidad AS componente_id_unidad,
+
+                um.codigo AS componente_unidad,
+
+                um.nombre AS componente_unidad_nombre
+
+            FROM producto_estructura_detalle ped
+
+            INNER JOIN productos p
+                ON p.id = ped.componente_id
+
+            LEFT JOIN unidades_medida um
+                ON um.id = p.id_unidad
+
+            WHERE ped.estructura_id = $1
+
+            ORDER BY ped.id
+        `, [
+            estructuraId
+        ]);
+
+
+        // --------------------------------------------------
+        // RESPUESTA
+        // --------------------------------------------------
+
+        res.json({
+
+            estructura: estructura,
+
+            detalle: detalle.rows
+
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "ERROR CONSULTAR ESTRUCTURA POR ID:",
+            error
+        );
+
+        res.status(500).json({
+            error: "Error al consultar la receta"
+        });
+
+    }
+
+};
+
+
+// ======================================================
+// CREAR ESTRUCTURA
+// ======================================================
+
+const crearReceta = async (req, res) => {
+
+    const cliente =
+        await pool.connect();
+
+
+    try {
+
+        const {
+            producto_id,
+            rendimiento,
+            unidad_rendimiento,
+            detalle
+        } = req.body;
+
+
+        // --------------------------------------------------
+        // VALIDACIONES BASICAS
+        // --------------------------------------------------
+
+        if (!producto_id) {
+
+            return res.status(400).json({
+                error: "Debe indicar el producto elaborado"
+            });
+
+        }
+
+
+        if (!rendimiento || rendimiento <= 0) {
+
+            return res.status(400).json({
+                error: "El rendimiento debe ser mayor que cero"
+            });
+
+        }
+
+
+        if (!unidad_rendimiento) {
+
+            return res.status(400).json({
+                error: "Debe indicar la unidad de rendimiento"
+            });
+
+        }
+
+
+        if (!Array.isArray(detalle) ||
+            detalle.length === 0) {
+
+            return res.status(400).json({
+                error:
+                    "La estructura debe tener al menos un componente"
+            });
+
+        }
+
+
+        // --------------------------------------------------
+        // COMENZAR TRANSACCION
+        // --------------------------------------------------
+
+        await cliente.query("BEGIN");
+
+
+        // --------------------------------------------------
+        // VERIFICAR PRODUCTO
+        // --------------------------------------------------
+
+        const producto =
+            await cliente.query(`
+                SELECT
+                    id,
+                    tipo,
+                    id_unidad,
+                    activo
+                FROM productos
+                WHERE id = $1
+                FOR UPDATE
+            `, [
+                producto_id
+            ]);
+
+
+        if (producto.rows.length === 0) {
+
+            throw new Error(
+                "El producto no existe"
+            );
+
+        }
+
+
+        if (producto.rows[0].tipo !== "ELABORADO") {
+
+            throw new Error(
+                "El producto debe ser de tipo ELABORADO"
+            );
+
+        }
+
+
+        if (!producto.rows[0].activo) {
+
+            throw new Error(
+                "El producto está inactivo"
+            );
+
+        }
+
+
+        // --------------------------------------------------
+        // VERIFICAR QUE NO EXISTA ESTRUCTURA ACTIVA
+        // --------------------------------------------------
+
+        const estructuraActiva =
+            await cliente.query(`
+                SELECT
+                    id,
+                    version
+                FROM producto_estructura
+                WHERE producto_id = $1
+                  AND activo = TRUE
+                FOR UPDATE
+            `, [
+                producto_id
+            ]);
+
+
+        if (estructuraActiva.rows.length > 0) {
+
+            throw new Error(
+                "El producto ya posee una estructura activa. " +
+                "Utilice modificar para generar una nueva versión."
+            );
+
+        }
+
+
+        // --------------------------------------------------
+        // OBTENER SIGUIENTE VERSION
+        // --------------------------------------------------
+
+        const versionResultado =
+            await cliente.query(`
+                SELECT
+                    COALESCE(MAX(version), 0) + 1 AS version
+                FROM producto_estructura
+                WHERE producto_id = $1
+            `, [
+                producto_id
+            ]);
+
+
+        const version =
+            parseInt(
+                versionResultado.rows[0].version
+            );
+
+
+        // --------------------------------------------------
+        // CREAR CABECERA
+        // --------------------------------------------------
+
+        const estructuraResultado =
+            await cliente.query(`
+                INSERT INTO producto_estructura
+                (
+                    producto_id,
+                    version,
+                    rendimiento,
+                    unidad_rendimiento,
+                    activo
+                )
+                VALUES
+                (
+                    $1,
+                    $2,
+                    $3,
+                    $4,
+                    TRUE
+                )
+                RETURNING *
+            `, [
+                producto_id,
+                version,
+                rendimiento,
+                unidad_rendimiento
+            ]);
+
+
+        const estructura =
+            estructuraResultado.rows[0];
+
+
+        // --------------------------------------------------
+        // CREAR DETALLE
+        // --------------------------------------------------
+
+        for (const item of detalle) {
+
+            if (!item.componente_id) {
+
+                throw new Error(
+                    "Existe un componente sin ID"
+                );
+
+            }
+
+
+            if (!item.cantidad ||
+                item.cantidad <= 0) {
+
+                throw new Error(
+                    "Existe un componente con cantidad inválida"
+                );
+
+            }
+
+
+            const componente =
+                await cliente.query(`
+                    SELECT
+                        id,
+                        tipo,
+                        id_unidad,
+                        activo
+                    FROM productos
+                    WHERE id = $1
+                `, [
+                    item.componente_id
+                ]);
+
+
+            if (componente.rows.length === 0) {
+
+                throw new Error(
+                    "El componente " +
+                    item.componente_id +
+                    " no existe"
+                );
+
+            }
+
+
+            if (!componente.rows[0].activo) {
+
+                throw new Error(
+                    "El componente " +
+                    item.componente_id +
+                    " está inactivo"
+                );
+
+            }
+
+
+            await cliente.query(`
+                INSERT INTO producto_estructura_detalle
+                (
+                    estructura_id,
+                    componente_id,
+                    cantidad,
+                    merma,
+                    activo
+                )
+                VALUES
+                (
+                    $1,
+                    $2,
+                    $3,
+                    $4,
+                    TRUE
+                )
+            `, [
+                estructura.id,
+                item.componente_id,
+                item.cantidad,
+                item.merma || 0
+            ]);
+
+        }
+
+
+        // --------------------------------------------------
+        // CONFIRMAR
+        // --------------------------------------------------
+
+        await cliente.query("COMMIT");
+
+
+        res.status(201).json({
+
+            mensaje:
+                "Receta creada correctamente",
+
+            estructura_id:
+                estructura.id,
+
+            producto_id:
+                producto_id,
+
+            version:
+                version
+
+        });
+
+
+    } catch (error) {
+
+        try {
+
+            await cliente.query("ROLLBACK");
+
+        } catch (rollbackError) {
+
+            console.error(
+                "ERROR ROLLBACK:",
+                rollbackError
+            );
+
+        }
+
+
+        console.error(
+            "ERROR CREAR RECETA:",
+            error
+        );
+
+
+        res.status(500).json({
+            error: error.message
+        });
+
+
+    } finally {
+
+        cliente.release();
+
+    }
+
+};
+
+
+// ======================================================
+// MODIFICAR ESTRUCTURA
+// ======================================================
+//
+// IMPORTANTE:
+//
+// La modificación NO modifica la versión existente.
+//
+// La versión actual se desactiva y se crea una nueva
+// versión con el detalle recibido.
+//
+// Ejemplo:
+//
+// versión 1 ACTIVA
+//       ↓
+// modificación
+//       ↓
+// versión 1 INACTIVA
+// versión 2 ACTIVA
+//
+// ======================================================
+
+const modificarReceta = async (req, res) => {
+
+    const cliente =
+        await pool.connect();
+
+
+    try {
+
+        const estructuraId =
+            parseInt(req.params.id);
+
+
+        const {
+            rendimiento,
+            unidad_rendimiento,
+            detalle
+        } = req.body;
+
+
+        // --------------------------------------------------
+        // VALIDAR ID
+        // --------------------------------------------------
+
+        if (!estructuraId) {
+
+            return res.status(400).json({
+                error: "Debe indicar una estructura válida"
+            });
+
+        }
+
+
+        // --------------------------------------------------
+        // VALIDACIONES
+        // --------------------------------------------------
+
+        if (!rendimiento ||
+            rendimiento <= 0) {
+
+            return res.status(400).json({
+                error:
+                    "El rendimiento debe ser mayor que cero"
+            });
+
+        }
+
+
+        if (!unidad_rendimiento) {
+
+            return res.status(400).json({
+                error:
+                    "Debe indicar la unidad de rendimiento"
+            });
+
+        }
+
+
+        if (!Array.isArray(detalle) ||
+            detalle.length === 0) {
+
+            return res.status(400).json({
+                error:
+                    "La estructura debe tener al menos un componente"
+            });
+
+        }
+
+
+        // --------------------------------------------------
+        // COMENZAR TRANSACCION
+        // --------------------------------------------------
+
+        await cliente.query("BEGIN");
+
+
+        // --------------------------------------------------
+        // OBTENER ESTRUCTURA ACTUAL
+        // --------------------------------------------------
+
+        const estructuraActual =
+            await cliente.query(`
+                SELECT
+                    pe.id,
+                    pe.producto_id,
+                    pe.version,
+                    pe.activo,
+
+                    p.tipo,
+                    p.id_unidad,
+                    p.activo AS producto_activo
+
+                FROM producto_estructura pe
+
+                INNER JOIN productos p
+                    ON p.id = pe.producto_id
+
+                WHERE pe.id = $1
+
+                FOR UPDATE
+            `, [
+                estructuraId
+            ]);
+
+
+        if (estructuraActual.rows.length === 0) {
+
+            throw new Error(
+                "La receta no existe"
+            );
+
+        }
+
+
+        const actual =
+            estructuraActual.rows[0];
+
+
+        // --------------------------------------------------
+        // VALIDAR ESTADO
+        // --------------------------------------------------
+
+        if (!actual.activo) {
+
+            throw new Error(
+                "La receta está inactiva"
+            );
+
+        }
+
+
+        if (actual.tipo !== "ELABORADO") {
+
+            throw new Error(
+                "El producto de la estructura no es ELABORADO"
+            );
+
+        }
+
+
+        if (!actual.producto_activo) {
+
+            throw new Error(
+                "El producto está inactivo"
+            );
+
+        }
+
+
+        // --------------------------------------------------
+        // OBTENER SIGUIENTE VERSION
+        // --------------------------------------------------
+
+        const versionResultado =
+            await cliente.query(`
+                SELECT
+                    COALESCE(MAX(version), 0) + 1 AS version
+                FROM producto_estructura
+                WHERE producto_id = $1
+            `, [
+                actual.producto_id
+            ]);
+
+
+        const nuevaVersion =
+            parseInt(
+                versionResultado.rows[0].version
+            );
+
+
+        // --------------------------------------------------
+        // DESACTIVAR ESTRUCTURA ACTUAL
+        // --------------------------------------------------
+
+        await cliente.query(`
+            UPDATE producto_estructura
+            SET activo = FALSE
+            WHERE id = $1
+        `, [
+            estructuraId
+        ]);
+
+
+        // --------------------------------------------------
+        // DESACTIVAR DETALLE ACTUAL
+        // --------------------------------------------------
+
+        await cliente.query(`
+            UPDATE producto_estructura_detalle
+            SET activo = FALSE
+            WHERE estructura_id = $1
+        `, [
+            estructuraId
+        ]);
+
+
+        // --------------------------------------------------
+        // CREAR NUEVA CABECERA
+        // --------------------------------------------------
+
+        const nuevaEstructura =
+            await cliente.query(`
+                INSERT INTO producto_estructura
+                (
+                    producto_id,
+                    version,
+                    rendimiento,
+                    unidad_rendimiento,
+                    activo
+                )
+                VALUES
+                (
+                    $1,
+                    $2,
+                    $3,
+                    $4,
+                    TRUE
+                )
+                RETURNING *
+            `, [
+                actual.producto_id,
+                nuevaVersion,
+                rendimiento,
+                unidad_rendimiento
+            ]);
+
+
+        const estructura =
+            nuevaEstructura.rows[0];
+
+
+        // --------------------------------------------------
+        // CREAR NUEVO DETALLE
+        // --------------------------------------------------
+
+        for (const item of detalle) {
+
+            if (!item.componente_id) {
+
+                throw new Error(
+                    "Existe un componente sin ID"
+                );
+
+            }
+
+
+            if (!item.cantidad ||
+                item.cantidad <= 0) {
+
+                throw new Error(
+                    "Existe un componente con cantidad inválida"
+                );
+
+            }
+
+
+            const componente =
+                await cliente.query(`
+                    SELECT
+                        id,
+                        tipo,
+                        id_unidad,
+                        activo
+                    FROM productos
+                    WHERE id = $1
+                `, [
+                    item.componente_id
+                ]);
+
+
+            if (componente.rows.length === 0) {
+
+                throw new Error(
+                    "El componente " +
+                    item.componente_id +
+                    " no existe"
+                );
+
+            }
+
+
+            if (!componente.rows[0].activo) {
+
+                throw new Error(
+                    "El componente " +
+                    item.componente_id +
+                    " está inactivo"
+                );
+
+            }
+
+
+            await cliente.query(`
+                INSERT INTO producto_estructura_detalle
+                (
+                    estructura_id,
+                    componente_id,
+                    cantidad,
+                    merma,
+                    activo
+                )
+                VALUES
+                (
+                    $1,
+                    $2,
+                    $3,
+                    $4,
+                    TRUE
+                )
+            `, [
+                estructura.id,
+                item.componente_id,
+                item.cantidad,
+                item.merma || 0
+            ]);
+
+        }
+
+
+        // --------------------------------------------------
+        // CONFIRMAR
+        // --------------------------------------------------
+
+        await cliente.query("COMMIT");
+
+
+        res.json({
+
+            mensaje:
+                "Receta modificada correctamente",
+
+            estructura_anterior_id:
+                estructuraId,
+
+            estructura_id:
+                estructura.id,
+
+            producto_id:
+                actual.producto_id,
+
+            version_anterior:
+                actual.version,
+
+            version:
+                nuevaVersion
+
+        });
+
+
+    } catch (error) {
+
+        try {
+
+            await cliente.query("ROLLBACK");
+
+        } catch (rollbackError) {
+
+            console.error(
+                "ERROR ROLLBACK:",
+                rollbackError
+            );
+
+        }
+
+
+        console.error(
+            "ERROR MODIFICAR RECETA:",
+            error
+        );
+
+
+        res.status(500).json({
+            error: error.message
+        });
+
+
+    } finally {
+
+        cliente.release();
+
+    }
+
+};
+
+
+// ======================================================
+// BAJA LOGICA DE ESTRUCTURA
+// ======================================================
+
+const eliminarReceta = async (req, res) => {
+
+    const cliente =
+        await pool.connect();
+
+
+    try {
+
+        const estructuraId =
+            parseInt(req.params.id);
+
+
+        // --------------------------------------------------
+        // VALIDAR ID
+        // --------------------------------------------------
+
+        if (!estructuraId) {
+
+            return res.status(400).json({
+                error:
+                    "Debe indicar una estructura válida"
+            });
+
+        }
+
+
+        // --------------------------------------------------
+        // COMENZAR TRANSACCION
+        // --------------------------------------------------
+
+        await cliente.query("BEGIN");
+
+
+        // --------------------------------------------------
+        // BUSCAR ESTRUCTURA
+        // --------------------------------------------------
+
+        const estructura =
+            await cliente.query(`
+                SELECT
+                    id,
+                    producto_id,
+                    version,
+                    activo
+                FROM producto_estructura
+                WHERE id = $1
+                FOR UPDATE
+            `, [
+                estructuraId
+            ]);
+
+
+        if (estructura.rows.length === 0) {
+
+            throw new Error(
+                "La receta no existe"
+            );
+
+        }
+
+
+        const actual =
+            estructura.rows[0];
+
+
+        // --------------------------------------------------
+        // VALIDAR ESTADO
+        // --------------------------------------------------
+
+        if (!actual.activo) {
+
+            throw new Error(
+                "La receta ya está inactiva"
+            );
+
+        }
+
+
+        // --------------------------------------------------
+        // BAJA LOGICA CABECERA
+        // --------------------------------------------------
+
+        await cliente.query(`
+            UPDATE producto_estructura
+            SET activo = FALSE
+            WHERE id = $1
+        `, [
+            estructuraId
+        ]);
+
+
+        // --------------------------------------------------
+        // BAJA LOGICA DETALLE
+        // --------------------------------------------------
+
+        await cliente.query(`
+            UPDATE producto_estructura_detalle
+            SET activo = FALSE
+            WHERE estructura_id = $1
+        `, [
+            estructuraId
+        ]);
+
+
+        // --------------------------------------------------
+        // CONFIRMAR
+        // --------------------------------------------------
+
+        await cliente.query("COMMIT");
+
+
+        res.json({
+
+            mensaje:
+                "Receta dada de baja correctamente",
+
+            estructura_id:
+                actual.id,
+
+            producto_id:
+                actual.producto_id,
+
+            version:
+                actual.version
+
+        });
+
+
+    } catch (error) {
+
+        try {
+
+            await cliente.query("ROLLBACK");
+
+        } catch (rollbackError) {
+
+            console.error(
+                "ERROR ROLLBACK:",
+                rollbackError
+            );
+
+        }
+
+
+        console.error(
+            "ERROR BAJA RECETA:",
+            error
+        );
+
+
+        res.status(500).json({
+            error: error.message
+        });
+
+
+    } finally {
+
+        cliente.release();
+
+    }
+
+};
+
+
+// ======================================================
+// EXPORTAR
+// ======================================================
+
+module.exports = {
+
+    listarProductosElaborados,
+
+    listarComponentes,
+
+    listarReporteRecetas,
+
+    consultarReceta,
+
+    consultarRecetaPorId,
+
+    crearReceta,
+
+    modificarReceta,
+
+    eliminarReceta
+
+};
