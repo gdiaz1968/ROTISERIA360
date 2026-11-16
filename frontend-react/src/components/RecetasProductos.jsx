@@ -112,7 +112,7 @@ export default function RecetasProductos() {
         `/api/estructura/producto/${encodeURIComponent(id)}`,
       )
 
-      const cabecera = datos.receta || {}
+      const cabecera = datos.estructura || {}
 
       setReceta({
         id: cabecera.id,
@@ -127,11 +127,11 @@ export default function RecetasProductos() {
       })
 
       setModo('consulta')
-      setMensaje(`Estructura activa: versión ${cabecera.version}.`)
+      setMensaje(`Receta activa: versión ${cabecera.version}.`)
     } catch (err) {
       if (err.message.includes('no tiene una receta activa')) {
         setReceta({
-          ...estructuraVacia,
+          ...recetaVacia,
           detalle: [],
         })
         setModo('nuevo')
@@ -146,7 +146,7 @@ export default function RecetasProductos() {
 
   function seleccionarProducto(valor) {
     setProductoId(valor)
-    setReceta({ ...estructuraVacia, detalle: [] })
+    setReceta({ ...recetaVacia, detalle: [] })
     setModo('consulta')
     setError('')
     setMensaje('')
@@ -170,7 +170,7 @@ export default function RecetasProductos() {
       return
     }
 
-    setReceta({ ...estructuraVacia, detalle: [] })
+    setReceta({ ...recetaVacia, detalle: [] })
     setModo('nuevo')
     setError('')
     setMensaje('')
@@ -344,8 +344,8 @@ export default function RecetasProductos() {
 
       const mensajeGuardado =
         modo === 'modificacion'
-          ? `Estructura modificada. Versión anterior: ${resultado.version_anterior}. Nueva versión: ${resultado.version}.`
-          : `Estructura creada correctamente. Versión: ${resultado.version}.`
+          ? `Receta modificada. Versión anterior: ${resultado.version_anterior}. Nueva versión: ${resultado.version}.`
+          : `Receta creada correctamente. Versión: ${resultado.version}.`
 
       await consultarReceta(productoId)
 
@@ -379,9 +379,9 @@ export default function RecetasProductos() {
         method: 'DELETE',
       })
 
-      setReceta({ ...estructuraVacia, detalle: [] })
+      setReceta({ ...recetaVacia, detalle: [] })
       setModo('nuevo')
-      setMensaje('Estructura dada de baja correctamente.')
+      setMensaje('Receta dada de baja correctamente.')
     } catch (err) {
       setError(`No se pudo dar de baja la receta. ${err.message}`)
     } finally {
