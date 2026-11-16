@@ -1,11 +1,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import './App.css'
-import EstructuraProductos from './components/EstructuraProductos'
+import RecetasProductos from './components/RecetasProductos'
 import Costos from './components/Costos'
 import Presentaciones from './components/Presentaciones'
 import ReporteProductos from './components/ReporteProductos'
-import ReporteEstructuras from './components/ReporteEstructuras'
+import ReporteRecetas from './components/ReporteRecetas'
 import ReportePresentaciones from './components/ReportePresentaciones'
 
 const API_BASE =
@@ -16,11 +16,11 @@ const modulos = [
   { codigo: 'dashboard', nombre: 'Inicio', icono: '⌂' },
   { codigo: 'productos', nombre: 'Productos', icono: '▦' },
   { codigo: 'reporte-productos', nombre: 'Reporte de productos', icono: '▤' },
-  { codigo: 'reporte-estructuras', nombre: 'Reporte de estructuras', icono: '⚙' },
+  { codigo: 'reporte-recetas', nombre: 'Reporte de estructuras', icono: '⚙' },
   { codigo: 'reporte-presentaciones', nombre: 'Reporte de presentaciones', icono: '▤' },
   { codigo: 'presentaciones', nombre: 'Presentaciones', icono: '▤' },
   { codigo: 'proveedores', nombre: 'Proveedores', icono: '♧' },
-  { codigo: 'estructura', nombre: 'Estructura de productos', icono: '⚙' },
+  { codigo: 'recetas', nombre: 'Recetas', icono: '⚙' },
   { codigo: 'costos', nombre: 'Costos', icono: '$' },
   { codigo: 'ventas', nombre: 'Ventas de mostrador', icono: '▤' },
  
@@ -648,23 +648,23 @@ function App() {
 
           {moduloActivo === 'presentaciones' && <Presentaciones />}
 
-          {moduloActivo === 'estructura' && <EstructuraProductos />}
+          {moduloActivo === 'recetas' && <RecetasProductos />}
 
           {moduloActivo === 'costos' && <Costos />}
 
           {moduloActivo === 'reporte-productos' && <ReporteProductos />}
 
-          {moduloActivo === 'reporte-estructuras' && <ReporteEstructuras />}
+          {moduloActivo === 'reporte-recetas' && <ReporteRecetas />}
 
           {moduloActivo === 'reporte-presentaciones' && <ReportePresentaciones />}
 
           {moduloActivo !== 'dashboard' &&
               moduloActivo !== 'productos' &&
               moduloActivo !== 'presentaciones' &&
-              moduloActivo !== 'estructura' &&
+              moduloActivo !== 'recetas' &&
               moduloActivo !== 'costos' &&
               moduloActivo !== 'reporte-productos' &&
-              moduloActivo !== 'reporte-estructuras' &&
+              moduloActivo !== 'reporte-recetas' &&
               moduloActivo !== 'reporte-presentaciones' && (
               <div className="coming-soon">
                 <div className="coming-soon-icon">
