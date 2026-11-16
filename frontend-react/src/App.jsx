@@ -16,7 +16,7 @@ const modulos = [
   { codigo: 'dashboard', nombre: 'Inicio', icono: '⌂' },
   { codigo: 'productos', nombre: 'Productos', icono: '▦' },
   { codigo: 'reporte-productos', nombre: 'Reporte de productos', icono: '▤' },
-  { codigo: 'reporte-recetas', nombre: 'Reporte de estructuras', icono: '⚙' },
+  { codigo: 'reporte-recetas', nombre: 'Reporte de recetas', icono: '⚙' },
   { codigo: 'reporte-presentaciones', nombre: 'Reporte de presentaciones', icono: '▤' },
   { codigo: 'presentaciones', nombre: 'Presentaciones', icono: '▤' },
   { codigo: 'proveedores', nombre: 'Proveedores', icono: '♧' },
