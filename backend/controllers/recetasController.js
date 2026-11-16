@@ -194,7 +194,7 @@ const listarReporteRecetas = async (req, res) => {
 
 
 // ======================================================
-// CONSULTAR ESTRUCTURA ACTIVA POR PRODUCTO
+// CONSULTAR RECETA ACTIVA POR PRODUCTO
 // ======================================================
 
 const consultarReceta = async (req, res) => {
@@ -618,7 +618,7 @@ const crearReceta = async (req, res) => {
 
 
         // --------------------------------------------------
-        // VERIFICAR QUE NO EXISTA ESTRUCTURA ACTIVA
+        // VERIFICAR QUE NO EXISTA RECETA ACTIVA
         // --------------------------------------------------
 
         const estructuraActiva =
@@ -638,7 +638,7 @@ const crearReceta = async (req, res) => {
         if (estructuraActiva.rows.length > 0) {
 
             throw new Error(
-                "El producto ya posee una estructura activa. " +
+                "El producto ya posee una receta activa. " +
                 "Utilice modificar para generar una nueva versión."
             );
 
