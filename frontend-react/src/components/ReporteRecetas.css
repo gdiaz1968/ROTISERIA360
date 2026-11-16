@@ -1,0 +1,377 @@
+.reporte-recetas {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  color: #1f2937;
+}
+
+.reporte-recetas-cabecera,
+.reporte-receta-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.reporte-recetas-cabecera {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.reporte-recetas-eyebrow {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+
+.reporte-recetas-cabecera h2 {
+  margin: 6px 0;
+  color: #1e293b;
+  font-size: 24px;
+}
+
+.reporte-recetas-cabecera p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.reporte-recetas-acciones {
+  display: flex;
+  gap: 10px;
+}
+
+.reporte-recetas-boton,
+.reporte-recetas-error button {
+  min-height: 38px;
+  padding: 9px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reporte-recetas-boton:hover,
+.reporte-recetas-error button:hover {
+  background: #f1f5f9;
+}
+
+.reporte-recetas-boton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.reporte-recetas-filtros {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 17px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.reporte-recetas-filtros label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.reporte-recetas-filtros input,
+.reporte-recetas-filtros select {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #1f2937;
+  font: inherit;
+}
+
+.reporte-recetas-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 13px;
+}
+
+.reporte-recetas-resumen {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.reporte-recetas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reporte-receta {
+  overflow: hidden;
+  border: 1px solid #dbe3ed;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 5px rgb(28 43 64 / 3%);
+}
+
+.reporte-receta-cabecera {
+  align-items: center;
+  padding: 15px 17px 12px;
+  border-bottom: 1px solid #e5eaf1;
+  background: #f8fafc;
+}
+
+.reporte-receta-codigo {
+  color: #2563a6;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.reporte-receta-cabecera h3 {
+  margin: 4px 0 0;
+  color: #1e293b;
+  font-size: 16px;
+}
+
+.reporte-receta-estado {
+  flex-shrink: 0;
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.reporte-receta-estado.activa {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.reporte-receta-estado.inactiva {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.reporte-receta-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 34px;
+  margin: 0;
+  padding: 12px 17px;
+  border-bottom: 1px solid #e5eaf1;
+}
+
+.reporte-receta-datos div {
+  display: flex;
+  gap: 7px;
+  font-size: 12px;
+}
+
+.reporte-receta-datos dt {
+  color: #64748b;
+}
+
+.reporte-receta-datos dd {
+  margin: 0;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.reporte-receta-tabla-contenedor {
+  overflow-x: auto;
+}
+
+.reporte-receta-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.reporte-receta-tabla th,
+.reporte-receta-tabla td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #e5eaf1;
+  text-align: left;
+  vertical-align: top;
+}
+
+.reporte-receta-tabla th {
+  background: #fff;
+  color: #475569;
+  font-size: 10px;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+}
+
+.reporte-receta-tabla tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.reporte-receta-sin-componentes,
+.reporte-recetas-vacio {
+  padding: 20px !important;
+  color: #64748b;
+  text-align: center;
+  font-size: 13px;
+}
+
+.reporte-recetas-pie {
+  color: #64748b;
+  font-size: 11px;
+}
+
+@media (max-width: 750px) {
+  .reporte-recetas-filtros {
+    grid-template-columns: 1fr;
+  }
+
+  .reporte-receta-tabla {
+    min-width: 680px;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .sidebar,
+  .topbar,
+  .reporte-recetas-no-print {
+    display: none !important;
+  }
+
+  .app-layout,
+  .main-area,
+  .content,
+  .reporte-recetas {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  body .reporte-recetas,
+  body .reporte-recetas * {
+    visibility: visible !important;
+  }
+
+  .reporte-recetas {
+    color: #000 !important;
+    font-size: 10px;
+  }
+
+  .reporte-recetas-cabecera {
+    margin-bottom: 10px;
+  }
+
+  .reporte-recetas-cabecera h2 {
+    margin: 4px 0;
+    font-size: 18px;
+  }
+
+  .reporte-recetas-cabecera p,
+  .reporte-recetas-eyebrow,
+  .reporte-recetas-resumen,
+  .reporte-recetas-pie {
+    color: #444 !important;
+    font-size: 9px;
+  }
+
+  .reporte-recetas-lista {
+    gap: 10px;
+  }
+
+  .reporte-receta {
+    overflow: visible !important;
+    margin-bottom: 10px;
+    border: 1px solid #9ca3af;
+    border-radius: 0;
+    box-shadow: none;
+    break-inside: auto;
+  }
+
+  .reporte-receta-cabecera {
+    padding: 8px 10px;
+    background: #f1f5f9 !important;
+    break-after: avoid;
+  }
+
+  .reporte-receta-cabecera h3 {
+    font-size: 12px;
+  }
+
+  .reporte-receta-datos {
+    padding: 7px 10px;
+    break-after: avoid;
+  }
+
+  .reporte-receta-tabla-contenedor {
+    overflow: visible !important;
+  }
+
+  .reporte-receta-tabla {
+    width: 100%;
+    min-width: 0;
+    font-size: 9px;
+  }
+
+  .reporte-receta-tabla th,
+  .reporte-receta-tabla td {
+    padding: 5px 7px;
+    border: 1px solid #b8c0cc;
+    color: #000 !important;
+  }
+
+  .reporte-receta-tabla th {
+    background: #e9edf2 !important;
+    font-size: 8px;
+  }
+
+  .reporte-receta-tabla thead {
+    display: table-header-group;
+  }
+
+  .reporte-receta-tabla tr {
+    break-inside: avoid;
+  }
+
+  .reporte-receta-estado {
+    border: 1px solid #777;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .reporte-recetas-pie {
+    margin-top: 12px;
+  }
+}
