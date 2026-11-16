@@ -6,6 +6,7 @@ import Costos from './components/Costos'
 import Presentaciones from './components/Presentaciones'
 import ReporteProductos from './components/ReporteProductos'
 import ReporteEstructuras from './components/ReporteEstructuras'
+import ReportePresentaciones from './components/ReportePresentaciones'
 
 const API_BASE =
   import.meta.env.VITE_API_URL ||
@@ -16,6 +17,7 @@ const modulos = [
   { codigo: 'productos', nombre: 'Productos', icono: '▦' },
   { codigo: 'reporte-productos', nombre: 'Reporte de productos', icono: '▤' },
   { codigo: 'reporte-estructuras', nombre: 'Reporte de estructuras', icono: '⚙' },
+  { codigo: 'reporte-presentaciones', nombre: 'Reporte de presentaciones', icono: '▤' },
   { codigo: 'presentaciones', nombre: 'Presentaciones', icono: '▤' },
   { codigo: 'proveedores', nombre: 'Proveedores', icono: '♧' },
   { codigo: 'estructura', nombre: 'Estructura de productos', icono: '⚙' },
@@ -654,13 +656,16 @@ function App() {
 
           {moduloActivo === 'reporte-estructuras' && <ReporteEstructuras />}
 
+          {moduloActivo === 'reporte-presentaciones' && <ReportePresentaciones />}
+
           {moduloActivo !== 'dashboard' &&
               moduloActivo !== 'productos' &&
               moduloActivo !== 'presentaciones' &&
               moduloActivo !== 'estructura' &&
               moduloActivo !== 'costos' &&
               moduloActivo !== 'reporte-productos' &&
-              moduloActivo !== 'reporte-estructuras' && (
+              moduloActivo !== 'reporte-estructuras' &&
+              moduloActivo !== 'reporte-presentaciones' && (
               <div className="coming-soon">
                 <div className="coming-soon-icon">
                   {modulos.find((modulo) => modulo.codigo === moduloActivo)?.icono}
