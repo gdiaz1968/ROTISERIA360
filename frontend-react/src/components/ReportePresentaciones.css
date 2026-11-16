@@ -1,0 +1,57 @@
+.reporte-presentaciones{display:flex;flex-direction:column;gap:18px;color:#1f2937}
+.reporte-presentaciones-cabecera,.reporte-presentaciones-producto-cabecera{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.reporte-presentaciones-cabecera{align-items:center;flex-wrap:wrap}
+.reporte-presentaciones-eyebrow,.reporte-presentaciones-codigo{color:#64748b;font-size:11px;font-weight:700;letter-spacing:1.2px}
+.reporte-presentaciones-cabecera h2{margin:6px 0;color:#1e293b;font-size:24px}
+.reporte-presentaciones-cabecera p{margin:0;color:#64748b;font-size:13px}
+.reporte-presentaciones-boton,.reporte-presentaciones-error button{min-height:38px;padding:9px 14px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;color:#334155;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.reporte-presentaciones-boton:disabled{cursor:not-allowed;opacity:.55}
+.reporte-presentaciones-filtros{display:grid;grid-template-columns:2fr 1fr;gap:14px;padding:17px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}
+.reporte-presentaciones-filtros label{display:flex;flex-direction:column;gap:7px;color:#475569;font-size:12px;font-weight:600}
+.reporte-presentaciones-filtros input,.reporte-presentaciones-filtros select{width:100%;min-width:0;min-height:38px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;color:#1f2937;font:inherit}
+.reporte-presentaciones-error{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid #fecaca;border-radius:8px;background:#fef2f2;color:#991b1b;font-size:13px}
+.reporte-presentaciones-resumen{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:#64748b;font-size:12px}
+.reporte-presentaciones-lista{display:flex;flex-direction:column;gap:16px}
+.reporte-presentaciones-producto{overflow:hidden;border:1px solid #dbe3ed;border-radius:10px;background:#fff;box-shadow:0 2px 5px rgb(28 43 64 / 3%)}
+.reporte-presentaciones-producto-cabecera{align-items:center;padding:15px 17px 12px;border-bottom:1px solid #e5eaf1;background:#f8fafc}
+.reporte-presentaciones-codigo{color:#2563a6;letter-spacing:.3px}
+.reporte-presentaciones-producto-cabecera h3{margin:4px 0 0;color:#1e293b;font-size:16px}
+.reporte-presentaciones-estado-producto,.reporte-presentaciones-estado{display:inline-block;flex-shrink:0;padding:5px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.reporte-presentaciones-estado-producto.activo,.reporte-presentaciones-estado.activa{background:#dcfce7;color:#166534}
+.reporte-presentaciones-estado-producto.inactivo,.reporte-presentaciones-estado.inactiva{background:#f1f5f9;color:#475569}
+.reporte-presentaciones-datos{display:flex;flex-wrap:wrap;gap:12px 34px;margin:0;padding:12px 17px;border-bottom:1px solid #e5eaf1}
+.reporte-presentaciones-datos div{display:flex;gap:7px;font-size:12px}
+.reporte-presentaciones-datos dt{color:#64748b}
+.reporte-presentaciones-datos dd{margin:0;color:#1e293b;font-weight:600}
+.reporte-presentaciones-tabla-contenedor{overflow-x:auto}
+.reporte-presentaciones-tabla{width:100%;border-collapse:collapse;font-size:12px}
+.reporte-presentaciones-tabla th,.reporte-presentaciones-tabla td{padding:9px 12px;border-bottom:1px solid #e5eaf1;text-align:left;vertical-align:top}
+.reporte-presentaciones-tabla th{background:#fff;color:#475569;font-size:10px;letter-spacing:.35px;text-transform:uppercase}
+.reporte-presentaciones-tabla tbody tr:last-child td{border-bottom:0}
+.reporte-presentaciones-vacio{padding:20px!important;color:#64748b;text-align:center;font-size:13px}
+.reporte-presentaciones-pie{color:#64748b;font-size:11px}
+@media(max-width:750px){.reporte-presentaciones-filtros{grid-template-columns:1fr}.reporte-presentaciones-tabla{min-width:520px}}
+@media print{
+@page{size:A4 landscape;margin:12mm}
+body{background:#fff!important;color:#000!important}
+.sidebar,.topbar,.reporte-presentaciones-no-print{display:none!important}
+.app-layout,.main-area,.content,.reporte-presentaciones{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:#fff!important}
+body .reporte-presentaciones,body .reporte-presentaciones *{visibility:visible!important}
+.reporte-presentaciones{color:#000!important;font-size:10px}
+.reporte-presentaciones-cabecera{margin-bottom:10px}
+.reporte-presentaciones-cabecera h2{margin:4px 0;font-size:18px}
+.reporte-presentaciones-cabecera p,.reporte-presentaciones-eyebrow,.reporte-presentaciones-resumen,.reporte-presentaciones-pie{color:#444!important;font-size:9px}
+.reporte-presentaciones-lista{gap:10px}
+.reporte-presentaciones-producto{overflow:visible!important;margin-bottom:10px;border:1px solid #9ca3af;border-radius:0;box-shadow:none;break-inside:auto}
+.reporte-presentaciones-producto-cabecera{padding:8px 10px;background:#f1f5f9!important;break-after:avoid}
+.reporte-presentaciones-producto-cabecera h3{font-size:12px}
+.reporte-presentaciones-datos{padding:7px 10px;break-after:avoid}
+.reporte-presentaciones-tabla-contenedor{overflow:visible!important}
+.reporte-presentaciones-tabla{width:100%;min-width:0;font-size:9px}
+.reporte-presentaciones-tabla th,.reporte-presentaciones-tabla td{padding:5px 7px;border:1px solid #b8c0cc;color:#000!important}
+.reporte-presentaciones-tabla th{background:#e9edf2!important;font-size:8px}
+.reporte-presentaciones-tabla thead{display:table-header-group}
+.reporte-presentaciones-tabla tr{break-inside:avoid}
+.reporte-presentaciones-estado,.reporte-presentaciones-estado-producto{border:1px solid #777;background:#fff!important;color:#000!important}
+.reporte-presentaciones-pie{margin-top:12px}
+}
