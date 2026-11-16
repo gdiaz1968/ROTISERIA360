@@ -467,8 +467,78 @@ async function eliminarPresentacion(req, res) {
 
 
 
+// ============================================================
+// LISTAR TODAS LAS PRESENTACIONES PARA EL REPORTE
+// ============================================================
+
+async function listarReportePresentaciones(req, res) {
+    try {
+        const resultado = await pool.query(`
+            SELECT
+                p.id AS producto_id,
+                p.codigo AS producto_codigo,
+                p.nombre AS producto_nombre,
+                p.activo AS producto_activo,
+                pp.id AS presentacion_id,
+                pp.nombre AS presentacion_nombre,
+                pp.cantidad_contenida,
+                pp.activo AS presentacion_activa,
+                pp.fecha_alta,
+                um.codigo AS unidad,
+                um.nombre AS unidad_nombre
+            FROM presentaciones_producto pp
+            INNER JOIN productos p
+                ON p.id = pp.id_producto
+            INNER JOIN unidades_medida um
+                ON um.id = pp.id_unidad_contenido
+            ORDER BY p.codigo, p.nombre, pp.nombre
+        `);
+
+        const productosPorId = new Map();
+
+        for (const fila of resultado.rows) {
+            let producto = productosPorId.get(fila.producto_id);
+            if (!producto) {
+                producto = {
+                    id: fila.producto_id,
+                    codigo: fila.producto_codigo,
+                    nombre: fila.producto_nombre,
+                    activo: fila.producto_activo,
+                    presentaciones: [],
+                };
+                productosPorId.set(fila.producto_id, producto);
+            }
+
+            producto.presentaciones.push({
+                id: fila.presentacion_id,
+                nombre: fila.presentacion_nombre,
+                cantidad_contenida: fila.cantidad_contenida,
+                unidad: fila.unidad,
+                unidad_nombre: fila.unidad_nombre,
+                activo: fila.presentacion_activa,
+                fecha_alta: fila.fecha_alta,
+            });
+        }
+
+        const productos = Array.from(productosPorId.values());
+        res.json({
+            total_productos: productos.length,
+            total_presentaciones: resultado.rows.length,
+            productos,
+        });
+    } catch (error) {
+        console.error("ERROR LISTAR PRESENTACIONES PARA REPORTE:", error);
+        res.status(500).json({
+            ok: false,
+            mensaje: "Error al consultar las presentaciones para el reporte."
+        });
+    }
+}
+
+
 module.exports = {
     listarPresentaciones,
+    listarReportePresentaciones,
     obtenerPresentacion,
     crearPresentacion,
     modificarPresentacion,
