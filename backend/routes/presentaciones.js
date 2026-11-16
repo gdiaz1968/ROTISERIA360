@@ -4,11 +4,19 @@ const router = express.Router();
 
 const {
     listarPresentaciones,
+    listarReportePresentaciones,
     obtenerPresentacion,
     crearPresentacion,
     modificarPresentacion,
     eliminarPresentacion
 } = require("../controllers/presentacionesController");
+
+
+// El reporte general debe declararse antes de la ruta dinámica /:id.
+router.get(
+    "/reporte",
+    listarReportePresentaciones
+);
 
 
 // IMPORTANTE:
