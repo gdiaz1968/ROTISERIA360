@@ -14,6 +14,8 @@ const presentacionesRoutes = require("./routes/presentaciones");
 const preciosCompraRoutes = require("./routes/preciosCompra");
 const productosVentaRoutes = require("./routes/productosVenta");
 const ventasRoutes = require("./routes/ventas");
+const sectoresCocinaRoutes = require("./routes/sectoresCocina");
+const comandasRoutes = require("./routes/comandas");
 
 const app = express();
 
@@ -95,6 +97,8 @@ app.use("/api/presentaciones", presentacionesRoutes);
 app.use("/api/precios-compra", preciosCompraRoutes);
 app.use("/api/productos-venta", productosVentaRoutes);
 app.use("/api/ventas", ventasRoutes);
+app.use("/api/sectores-cocina", sectoresCocinaRoutes);
+app.use("/api/comandas", comandasRoutes);
 
 console.log("ROUTER PRODUCTOS MONTADO");
 console.log("ROUTER RECETAS MONTADO");
