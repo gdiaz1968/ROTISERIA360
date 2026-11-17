@@ -57,6 +57,8 @@ export default function Ventas() {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState('')
   const [mensaje, setMensaje] = useState('')
+  const [comandasGeneradas, setComandasGeneradas] = useState([])
+  const [modalComandasAbierto, setModalComandasAbierto] = useState(false)
 
   const cargarDatos = useCallback(async () => {
     setCargando(true)
@@ -196,6 +198,8 @@ export default function Ventas() {
         }),
       })
       const venta = resultado.venta
+      setComandasGeneradas(Array.isArray(resultado.comandas) ? resultado.comandas : [])
+      setModalComandasAbierto(false)
       setMensaje(`Pedido #${venta.numero} registrado. Total: ${moneda(venta.total)}. Cobrado: ${moneda(venta.pagado)}. Pendiente: ${moneda(venta.pendiente)}.`)
       limpiarPedido()
       await cargarDatos()
@@ -220,7 +224,16 @@ export default function Ventas() {
       </div>
 
       {error && <div className="ventas-alert ventas-error" role="alert">{error}</div>}
-      {mensaje && <div className="ventas-alert ventas-success" role="status">{mensaje}</div>}
+      {mensaje && (
+        <div className="ventas-alert ventas-success ventas-success-row" role="status">
+          <span>{mensaje}</span>
+          {comandasGeneradas.length > 0 && (
+            <button type="button" className="ventas-view-comandas" onClick={() => setModalComandasAbierto(true)}>
+              Ver {comandasGeneradas.length} comandas
+            </button>
+          )}
+        </div>
+      )}
 
       <form className="ventas-layout" onSubmit={registrarPedido}>
         <div className="ventas-main-column">
@@ -455,6 +468,45 @@ export default function Ventas() {
           </table>
         </div>
       </section>
+
+      {modalComandasAbierto && (
+        <div className="ventas-comandas-overlay" role="presentation" onMouseDown={(e) => {
+          if (e.target === e.currentTarget) setModalComandasAbierto(false)
+        }}>
+          <section className="ventas-comandas-modal" role="dialog" aria-modal="true" aria-labelledby="ventas-comandas-title">
+            <div className="ventas-comandas-modal-head">
+              <div>
+                <span className="ventas-eyebrow">PEDIDO CONFIRMADO</span>
+                <h3 id="ventas-comandas-title">Comandas generadas</h3>
+                <p>Los tickets están disponibles para el operador de comandas. No se imprimieron.</p>
+              </div>
+              <button type="button" className="ventas-comandas-close" onClick={() => setModalComandasAbierto(false)} aria-label="Cerrar">×</button>
+            </div>
+            <div className="ventas-comandas-list">
+              {comandasGeneradas.map((comanda) => (
+                <article className="ventas-comanda-ticket" key={comanda.id}>
+                  <div className="ventas-comanda-ticket-head">
+                    <strong>COMANDA #{comanda.numero_comanda}</strong>
+                    <span>{comanda.sector}</span>
+                  </div>
+                  <div className="ventas-comanda-pedido">Pedido #{comandasGeneradas[0]?.numero_pedido || ''}</div>
+                  {comanda.detalles.map((detalle, index) => (
+                    <div className="ventas-comanda-line" key={index}>
+                      <strong>{Number(detalle.cantidad)} ×</strong>
+                      <span>{detalle.producto}</span>
+                      {detalle.observaciones && <small>{detalle.observaciones}</small>}
+                    </div>
+                  ))}
+                  <div className="ventas-comanda-status">Pendiente de revisión e impresión autorizada</div>
+                </article>
+              ))}
+            </div>
+            <div className="ventas-comandas-modal-actions">
+              <button type="button" className="ventas-secondary" onClick={() => setModalComandasAbierto(false)}>Cerrar</button>
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   )
 }
