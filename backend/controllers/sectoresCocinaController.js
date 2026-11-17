@@ -13,7 +13,7 @@ async function listarSectores(req, res) {
 }
 
 async function crearSector(req, res) {
-  const nombre = String(req.body?.nombre || "").trim().replace(/\\s+/g, " ").slice(0, 100);
+  const nombre = String(req.body?.nombre || "").trim().replace(/\s+/g, " ").slice(0, 100);
   const descripcion = String(req.body?.descripcion || "").trim().slice(0, 500);
 
   if (!nombre) {
