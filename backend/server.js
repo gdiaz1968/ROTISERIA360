@@ -12,6 +12,7 @@ const unidadesRoutes = require("./routes/unidades");
 const proveedoresRoutes = require("./routes/proveedores");
 const presentacionesRoutes = require("./routes/presentaciones");
 const preciosCompraRoutes = require("./routes/preciosCompra");
+const productosVentaRoutes = require("./routes/productosVenta");
 
 const app = express();
 
@@ -91,6 +92,7 @@ app.use("/api/proveedores", proveedoresRoutes);
 app.use("/api/presentaciones", presentacionesRoutes);
 
 app.use("/api/precios-compra", preciosCompraRoutes);
+app.use("/api/productos-venta", productosVentaRoutes);
 
 console.log("ROUTER PRODUCTOS MONTADO");
 console.log("ROUTER RECETAS MONTADO");
