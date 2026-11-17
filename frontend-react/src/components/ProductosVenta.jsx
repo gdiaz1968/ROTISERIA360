@@ -45,7 +45,6 @@ const moneda = (valor) => {
 
 export default function ProductosVenta() {
   const [productos, setProductos] = useState([])
-  const [configuracion, setConfiguracion] = useState({ recargo_predeterminado_elaborados: 100 })
   const [recargoPredeterminado, setRecargoPredeterminado] = useState('100')
   const [busqueda, setBusqueda] = useState('')
   const [cargando, setCargando] = useState(true)
@@ -65,7 +64,6 @@ export default function ProductosVenta() {
       ])
 
       setProductos(Array.isArray(lista) ? lista : [])
-      setConfiguracion(parametros)
       setRecargoPredeterminado(String(parametros.recargo_predeterminado_elaborados ?? 100))
     } catch (e) {
       setError(e.message)
@@ -146,7 +144,6 @@ export default function ProductosVenta() {
       })
 
       const nuevoValor = resultado.configuracion.recargo_predeterminado_elaborados
-      setConfiguracion(resultado.configuracion)
       setRecargoPredeterminado(String(nuevoValor))
       setMensaje('Se actualizó el recargo predeterminado. Los recargos individuales existentes no se modificaron.')
       await cargar()
