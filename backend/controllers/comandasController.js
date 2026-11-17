@@ -108,13 +108,13 @@ async function actualizarEstadoComanda(req, res) {
     }
 
     await client.query(`
-      UPDATE ventas_comandas
-      SET estado = $1,
-          fecha_inicio = CASE WHEN $1 = 'EN_PREPARACION' THEN COALESCE(fecha_inicio, NOW()) ELSE fecha_inicio END,
-          fecha_lista = CASE WHEN $1 = 'LISTA' THEN NOW() ELSE fecha_lista END,
-          fecha_actualizacion = NOW()
-      WHERE id = $2
-    `, [estado, id]);
+  UPDATE ventas_comandas
+  SET estado = $1::varchar,
+      fecha_inicio = CASE WHEN $1::varchar = 'EN_PREPARACION' THEN COALESCE(fecha_inicio, NOW()) ELSE fecha_inicio END,
+      fecha_lista = CASE WHEN $1::varchar = 'LISTA' THEN NOW() ELSE fecha_lista END,
+      fecha_actualizacion = NOW()
+  WHERE id = $2
+`, [estado, id]);
 
     if (estado === "LISTA") {
       await client.query(`
