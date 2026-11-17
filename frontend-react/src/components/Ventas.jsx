@@ -40,6 +40,7 @@ const pagoVacio = { medio_pago: 'EFECTIVO', importe: '' }
 
 export default function Ventas() {
   const [productos, setProductos] = useState([])
+  const [productosSinSector, setProductosSinSector] = useState(0)
   const [ventas, setVentas] = useState([])
   const [carrito, setCarrito] = useState([])
   const [busqueda, setBusqueda] = useState('')
@@ -68,9 +69,11 @@ export default function Ventas() {
         api('/api/productos-venta?pagina=1&limite=100'),
         api('/api/ventas'),
       ])
-      setProductos((catalogo.productos || []).filter((p) =>
+      const habilitados = (catalogo.productos || []).filter((p) =>
         p.habilitado_venta && p.configuracion_activa !== false && Number(p.precio_venta) >= 0
-      ))
+      )
+      setProductos(habilitados)
+      setProductosSinSector(habilitados.filter((p) => !p.id_sector).length)
       setVentas(Array.isArray(recientes.ventas) ? recientes.ventas : [])
     } catch (e) {
       setError(e.message)
@@ -224,6 +227,11 @@ export default function Ventas() {
       </div>
 
       {error && <div className="ventas-alert ventas-error" role="alert">{error}</div>}
+      {productosSinSector > 0 && (
+        <div className="ventas-alert ventas-warning" role="status">
+          Hay {productosSinSector} producto(s) habilitado(s) sin sector asignado. Configuralos en Productos para la venta para poder generar sus comandas.
+        </div>
+      )}
       {mensaje && (
         <div className="ventas-alert ventas-success ventas-success-row" role="status">
           <span>{mensaje}</span>
@@ -266,13 +274,14 @@ export default function Ventas() {
                   type="button"
                   className="ventas-product-card"
                   key={producto.id_producto}
+                  disabled={!producto.id_sector}
                   onClick={() => agregarProducto(producto)}
                 >
                   <span className="ventas-product-type">{producto.tipo}</span>
                   <strong>{producto.nombre}</strong>
                   <small>{producto.codigo}</small>
                   <b>{moneda(producto.precio_venta)}</b>
-                  <span className="ventas-add">+ Agregar</span>
+                  <span className="ventas-add">{producto.id_sector ? '+ Agregar' : 'Asignar sector en Productos para la venta'}</span>
                 </button>
               ))}
             </div>
