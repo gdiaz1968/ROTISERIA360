@@ -45,6 +45,9 @@ const moneda = (valor) => {
 
 export default function ProductosVenta() {
   const [productos, setProductos] = useState([])
+  const [sectores, setSectores] = useState([])
+  const [nuevoSector, setNuevoSector] = useState('')
+  const [guardandoSector, setGuardandoSector] = useState(false)
   const [recargoPredeterminado, setRecargoPredeterminado] = useState('100')
   const [busqueda, setBusqueda] = useState('')
   const [tipo, setTipo] = useState('')
@@ -68,12 +71,14 @@ export default function ProductosVenta() {
         busqueda,
         tipo,
       })
-      const [catalogo, parametros] = await Promise.all([
+      const [catalogo, parametros, listaSectores] = await Promise.all([
         api(`/api/productos-venta?${consulta.toString()}`),
         api('/api/productos-venta/configuracion'),
+        api('/api/sectores-cocina'),
       ])
 
       setProductos(Array.isArray(catalogo.productos) ? catalogo.productos : [])
+      setSectores(Array.isArray(listaSectores.sectores) ? listaSectores.sectores : [])
       setPaginacion(catalogo.paginacion || {
         pagina,
         limite,
@@ -114,6 +119,7 @@ export default function ProductosVenta() {
       precio_venta: precio,
       habilitado_venta: Boolean(producto.habilitado_venta),
       controla_stock: Boolean(producto.controla_stock),
+      id_sector: producto.id_sector ? Number(producto.id_sector) : null,
       confirmar_costo_actual: opciones.confirmarCostoActual === true,
     }
 
@@ -133,6 +139,28 @@ export default function ProductosVenta() {
       setError(e.message)
     } finally {
       setGuardando(null)
+    }
+  }
+
+  async function crearSector(evento) {
+    evento.preventDefault()
+    const nombre = nuevoSector.trim()
+    if (!nombre) return
+    setError('')
+    setMensaje('')
+    setGuardandoSector(true)
+    try {
+      await api('/api/sectores-cocina', {
+        method: 'POST',
+        body: JSON.stringify({ nombre }),
+      })
+      setNuevoSector('')
+      setMensaje(`Sector "${nombre}" creado correctamente.`)
+      await cargar()
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setGuardandoSector(false)
     }
   }
 
@@ -201,6 +229,21 @@ export default function ProductosVenta() {
         </button>
       </form>
 
+      <form className="pv-sector-panel" onSubmit={crearSector}>
+        <div>
+          <strong>Sectores de preparación y despacho</strong>
+          <p>Creá los sectores y asigná uno a cada producto habilitado para la venta. Ejemplos: Pizzas, Empanadas, Bebidas.</p>
+        </div>
+        <label>
+          <span>Nuevo sector</span>
+          <input value={nuevoSector} onChange={(e) => setNuevoSector(e.target.value)} maxLength={100} placeholder="Nombre del sector" required />
+        </label>
+        <button type="submit" className="pv-save" disabled={guardandoSector}>
+          {guardandoSector ? 'Creando...' : 'Crear sector'}
+        </button>
+        <span className="pv-sector-count">{sectores.filter((s) => s.activo).length} sectores activos</span>
+      </form>
+
       <label className="pv-search">
         Buscar producto
         <input
@@ -251,6 +294,7 @@ export default function ProductosVenta() {
             <tr>
               <th>Producto</th>
               <th>Tipo</th>
+              <th>Sector</th>
               <th>Costo actual</th>
               <th>Recargo</th>
               <th>Precio sugerido</th>
@@ -263,7 +307,7 @@ export default function ProductosVenta() {
           </thead>
           <tbody>
             {cargando && (
-              <tr><td colSpan="10" className="pv-empty">Cargando catálogo...</td></tr>
+              <tr><td colSpan="11" className="pv-empty">Cargando catálogo...</td></tr>
             )}
 
             {!cargando && productos.length === 0 && (
@@ -281,7 +325,21 @@ export default function ProductosVenta() {
                     {p.tipo}
                   </span>
                 </td>
-                <td>{p.tipo === 'ELABORADO' ? moneda(p.costo_actual) : 'Manual'}</td>
+                <td>
+                  <select
+                    className="pv-sector-select"
+                    aria-label={`Sector de ${p.nombre}`}
+                    value={p.id_sector ?? ''}
+                    onChange={(e) => cambiar(p.id_producto, 'id_sector', e.target.value)}
+                  >
+                    <option value="">Seleccionar sector...</option>
+                    {sectores.filter((sector) => sector.activo).map((sector) => (
+                      <option key={sector.id} value={sector.id}>{sector.nombre}</option>
+                    ))}
+                  </select>
+                  {p.habilitado_venta && !p.id_sector && <small className="pv-sector-warning">Obligatorio para vender</small>}
+                </td>
+                                <td>{p.tipo === 'ELABORADO' ? moneda(p.costo_actual) : 'Manual'}</td>
                 <td>
                   {p.tipo === 'ELABORADO' ? (
                     <div className="pv-percent">
@@ -409,7 +467,7 @@ export default function ProductosVenta() {
       </div>
 
       <p className="pv-note">
-        En los elaborados, el costo y el precio sugerido se obtienen del cálculo de Costos y del recargo configurado. Si cambia el costo, el precio vigente no se modifica: queda una advertencia hasta que se aplique el sugerido o se confirme que se mantiene el precio actual. En REVENTA, el precio se carga manualmente. Los cambios de precio quedan registrados en el historial.
+        Cada producto habilitado para la venta debe tener un sector asignado para que el sistema pueda generar su comanda. En los elaborados, el costo y el precio sugerido se obtienen del cálculo de Costos y del recargo configurado. Si cambia el costo, el precio vigente no se modifica: queda una advertencia hasta que se aplique el sugerido o se confirme que se mantiene el precio actual. En REVENTA, el precio se carga manualmente. Los cambios de precio quedan registrados en el historial.
       </p>
     </section>
   )
