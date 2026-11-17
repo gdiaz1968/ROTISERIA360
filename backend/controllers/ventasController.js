@@ -127,9 +127,11 @@ async function crearVenta(req, res) {
       }
 
       const productoResult = await client.query(`
-        SELECT p.id, p.nombre, p.tipo, pv.precio_venta
+        SELECT p.id, p.nombre, p.tipo, pv.precio_venta,
+               pv.id_sector, sc.nombre AS sector_nombre
         FROM productos p
         INNER JOIN productos_venta pv ON pv.id_producto = p.id
+        INNER JOIN sectores_cocina sc ON sc.id = pv.id_sector AND sc.activo = TRUE
         WHERE p.id = $1
           AND p.activo = TRUE
           AND pv.activo = TRUE
@@ -138,7 +140,7 @@ async function crearVenta(req, res) {
       `, [idProducto]);
 
       if (!productoResult.rowCount) {
-        throw new Error("Uno de los productos ya no está habilitado para la venta. Actualizá el catálogo.");
+        throw new Error("Uno de los productos no está habilitado para la venta o no tiene un sector activo asignado. Revisá Productos para la venta.");
       }
 
       const producto = productoResult.rows[0];
@@ -147,6 +149,8 @@ async function crearVenta(req, res) {
       total += subtotal;
       lineas.push({
         id_producto: idProducto,
+        id_sector: producto.id_sector,
+        sector: producto.sector_nombre,
         nombre: producto.nombre,
         cantidad,
         precio,
@@ -175,14 +179,55 @@ async function crearVenta(req, res) {
 
     const venta = ventaResult.rows[0];
     for (const linea of lineas) {
-      await client.query(`
+      const detalleResult = await client.query(`
         INSERT INTO ventas_detalle
           (id_venta, id_producto, nombre_producto, cantidad, precio_unitario, descuento, subtotal, observaciones)
         VALUES ($1, $2, $3, $4, $5, 0, $6, $7)
+        RETURNING id
       `, [
         venta.id, linea.id_producto, linea.nombre, linea.cantidad,
         linea.precio, linea.subtotal, linea.observaciones || null
       ]);
+      linea.id_venta_detalle = detalleResult.rows[0].id;
+    }
+
+    // Una comanda por sector. Todo se guarda dentro de la misma transacción de la venta.
+    const lineasPorSector = new Map();
+    for (const linea of lineas) {
+      const clave = String(linea.id_sector);
+      if (!lineasPorSector.has(clave)) lineasPorSector.set(clave, []);
+      lineasPorSector.get(clave).push(linea);
+    }
+
+    const comandasGeneradas = [];
+    for (const [idSector, lineasSector] of lineasPorSector.entries()) {
+      const comandaResult = await client.query(`
+        INSERT INTO ventas_comandas (id_venta, id_sector, observaciones)
+        VALUES ($1, $2, $3)
+        RETURNING id, numero_comanda, id_sector, fecha_alta
+      `, [venta.id, Number(idSector), observaciones || null]);
+
+      const comanda = comandaResult.rows[0];
+      for (const linea of lineasSector) {
+        await client.query(`
+          INSERT INTO ventas_comandas_detalle
+            (id_comanda, id_venta, id_venta_detalle, cantidad)
+          VALUES ($1, $2, $3, $4)
+        `, [comanda.id, venta.id, linea.id_venta_detalle, linea.cantidad]);
+      }
+
+      comandasGeneradas.push({
+        id: comanda.id,
+        numero_comanda: comanda.numero_comanda,
+        sector: lineasSector[0].sector,
+        estado: "PENDIENTE",
+        fecha_alta: comanda.fecha_alta,
+        detalles: lineasSector.map((linea) => ({
+          producto: linea.nombre,
+          cantidad: linea.cantidad,
+          observaciones: linea.observaciones
+        }))
+      });
     }
 
     for (const pago of pagosValidados) {
@@ -194,7 +239,8 @@ async function crearVenta(req, res) {
 
     await client.query("COMMIT");
     res.status(201).json({
-      mensaje: "Pedido registrado correctamente.",
+      mensaje: "Pedido registrado y comandas generadas correctamente.",
+      comandas: comandasGeneradas,
       venta: {
         ...venta,
         total: Number(venta.total),
