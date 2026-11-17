@@ -60,6 +60,15 @@ export default function SeguimientoComandas() {
   const [mensaje, setMensaje] = useState('')
   const [procesando, setProcesando] = useState(null)
   const [imprimiendo, setImprimiendo] = useState(null)
+  const [vista, setVista] = useState('PREPARACION')
+  const [subVista, setSubVista] = useState('MOSTRADOR')
+  const [pedidosEntrega, setPedidosEntrega] = useState([])
+  const [repartidores, setRepartidores] = useState([])
+  const [repartidorSeleccionado, setRepartidorSeleccionado] = useState('')
+  const [pedidosSeleccionados, setPedidosSeleccionados] = useState([])
+  const [nuevoRepartidor, setNuevoRepartidor] = useState({ nombre: '', telefono: '' })
+  const [pagosEntrega, setPagosEntrega] = useState({})
+  const [cargandoEntregas, setCargandoEntregas] = useState(false)
 
   const cargar = useCallback(async (silencioso = false) => {
     if (!silencioso) setCargando(true)
@@ -76,11 +85,31 @@ export default function SeguimientoComandas() {
     }
   }, [])
 
+  const cargarEntregas = useCallback(async (silencioso = false) => {
+    if (!silencioso) setCargandoEntregas(true)
+    try {
+      const [resultado, listaRepartidores] = await Promise.all([
+        api('/api/entregas/pedidos'),
+        api('/api/entregas/repartidores'),
+      ])
+      setPedidosEntrega(Array.isArray(resultado.pedidos) ? resultado.pedidos : [])
+      setRepartidores(Array.isArray(listaRepartidores.repartidores) ? listaRepartidores.repartidores : [])
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setCargandoEntregas(false)
+    }
+  }, [])
+
   useEffect(() => {
     cargar()
-    const intervalo = window.setInterval(() => cargar(true), 5000)
+    cargarEntregas()
+    const intervalo = window.setInterval(() => {
+      cargar(true)
+      cargarEntregas(true)
+    }, 5000)
     return () => window.clearInterval(intervalo)
-  }, [cargar])
+  }, [cargar, cargarEntregas])
 
   useEffect(() => {
     const finalizarImpresion = () => {
@@ -142,6 +171,87 @@ export default function SeguimientoComandas() {
     }
   }
 
+  async function agregarRepartidor(evento) {
+    evento.preventDefault()
+    setError('')
+    try {
+      await api('/api/entregas/repartidores', {
+        method: 'POST',
+        body: JSON.stringify(nuevoRepartidor),
+      })
+      setNuevoRepartidor({ nombre: '', telefono: '' })
+      setMensaje('Repartidor registrado.')
+      await cargarEntregas(true)
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
+  function seleccionarPedido(id, marcado) {
+    setPedidosSeleccionados((actual) => marcado
+      ? [...new Set([...actual, id])]
+      : actual.filter((item) => item !== id))
+  }
+
+  async function registrarSalida() {
+    if (!repartidorSeleccionado || pedidosSeleccionados.length === 0) {
+      setError('Seleccioná un repartidor y al menos un pedido.')
+      return
+    }
+    setError('')
+    try {
+      const resultado = await api('/api/entregas/repartos', {
+        method: 'POST',
+        body: JSON.stringify({
+          id_repartidor: Number(repartidorSeleccionado),
+          ids_ventas: pedidosSeleccionados,
+        }),
+      })
+      setMensaje(resultado.mensaje)
+      setPedidosSeleccionados([])
+      setRepartidorSeleccionado('')
+      await cargarEntregas(true)
+    } catch (e) {
+      setError(e.message)
+      await cargarEntregas(true)
+    }
+  }
+
+  async function confirmarEntrega(pedido) {
+    const pago = pagosEntrega[pedido.id] || { efectivo: '0', transferencia: '0' }
+    setError('')
+    try {
+      const resultado = await api(`/api/entregas/${pedido.id}/confirmar`, {
+        method: 'POST',
+        body: JSON.stringify({
+          efectivo: Number(pago.efectivo || 0),
+          transferencia: Number(pago.transferencia || 0),
+        }),
+      })
+      const r = resultado.rendicion
+      setMensaje(`${resultado.mensaje} Esperado: ${moneda(r.esperado)} · Rendido: ${moneda(r.efectivo + r.transferencia)} · Diferencia: ${moneda(r.diferencia)}.`)
+      await cargarEntregas(true)
+      await cargar(true)
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
+  function cambiarPagoEntrega(id, campo, valor) {
+    setPagosEntrega((actual) => ({
+      ...actual,
+      [id]: { efectivo: '0', transferencia: '0', ...actual[id], [campo]: valor },
+    }))
+  }
+
+  const pedidosMostrador = pedidosEntrega.filter((p) =>
+    p.modalidad !== 'DELIVERY' && p.estado === 'LISTO_PARA_ENTREGAR')
+  const deliveryListos = pedidosEntrega.filter((p) =>
+    p.modalidad === 'DELIVERY' && p.estado === 'LISTO_PARA_ENTREGAR')
+  const deliveryEnReparto = pedidosEntrega.filter((p) =>
+    p.modalidad === 'DELIVERY' && p.estado === 'EN_REPARTO')
+  const entregados = pedidosEntrega.filter((p) => p.estado === 'ENTREGADO')
+
   return (
     <section className="sc-page">
       <header className="sc-heading no-print">
@@ -158,6 +268,13 @@ export default function SeguimientoComandas() {
       {error && <div className="sc-alert sc-error no-print" role="alert">{error}</div>}
       {mensaje && <div className="sc-alert sc-success no-print" role="status">{mensaje}</div>}
 
+      <nav className="sc-main-tabs no-print">
+        <button type="button" className={vista === 'PREPARACION' ? 'active' : ''} onClick={() => setVista('PREPARACION')}>PREPARACIÓN</button>
+        <button type="button" className={vista === 'ENTREGAS' ? 'active' : ''} onClick={() => { setVista('ENTREGAS'); cargarEntregas(true) }}>ENTREGAS <span>{pedidosMostrador.length + deliveryListos.length + deliveryEnReparto.length}</span></button>
+      </nav>
+
+      {vista === 'PREPARACION' ? (
+        <>
       <div className="sc-summary no-print">
         <article><strong>{contadores.pendientes}</strong><span>Pendientes</span></article>
         <article><strong>{contadores.preparando}</strong><span>En preparación</span></article>
@@ -251,6 +368,100 @@ export default function SeguimientoComandas() {
           </article>
         ))}
       </div>
+        </>
+      ) : (
+        <section className="sc-delivery no-print">
+          <div className="sc-delivery-head">
+            <div><span className="sc-eyebrow">DESPACHO Y RETIRO</span><h3>Gestión de entregas</h3><p>Los pedidos aparecen aquí cuando todas sus comandas están listas.</p></div>
+            <button type="button" className="sc-refresh" onClick={() => cargarEntregas()} disabled={cargandoEntregas}>{cargandoEntregas ? 'Actualizando...' : 'Actualizar'}</button>
+          </div>
+          <nav className="sc-sub-tabs">
+            <button type="button" className={subVista === 'MOSTRADOR' ? 'active' : ''} onClick={() => setSubVista('MOSTRADOR')}>MOSTRADOR ({pedidosMostrador.length})</button>
+            <button type="button" className={subVista === 'DELIVERY' ? 'active' : ''} onClick={() => setSubVista('DELIVERY')}>DELIVERY ({deliveryListos.length + deliveryEnReparto.length})</button>
+            <button type="button" className={subVista === 'HISTORIAL' ? 'active' : ''} onClick={() => setSubVista('HISTORIAL')}>ENTREGADOS ({entregados.length})</button>
+          </nav>
+
+          {subVista === 'MOSTRADOR' && (
+            <div className="sc-delivery-grid">
+              {pedidosMostrador.length === 0 && <div className="sc-empty">No hay pedidos de mostrador listos para retirar.</div>}
+              {pedidosMostrador.map((pedido) => {
+                const pago = pagosEntrega[pedido.id] || { efectivo: '0', transferencia: '0' }
+                return <article className="sc-delivery-card" key={pedido.id}>
+                  <header><div><span>PEDIDO</span><h4>#{pedido.numero}</h4></div><strong>{moneda(pedido.total)}</strong></header>
+                  <p>{pedido.cliente || 'Consumidor final'} · {pedido.modalidad}</p>
+                  <div className="sc-delivery-lines">{pedido.detalles.map((d, i) => <div key={i}>{Number(d.cantidad)} × {d.producto}</div>)}</div>
+                  <div className="sc-delivery-balance">Saldo pendiente: <strong>{moneda(pedido.pendiente)}</strong></div>
+                  <div className="sc-delivery-payments">
+                    <label>Efectivo<input type="number" min="0" step="0.01" value={pago.efectivo} onChange={(e) => cambiarPagoEntrega(pedido.id, 'efectivo', e.target.value)} /></label>
+                    <label>Transferencia<input type="number" min="0" step="0.01" value={pago.transferencia} onChange={(e) => cambiarPagoEntrega(pedido.id, 'transferencia', e.target.value)} /></label>
+                  </div>
+                  <button type="button" onClick={() => confirmarEntrega(pedido)}>Confirmar retiro y rendición</button>
+                </article>
+              })}
+            </div>
+          )}
+
+          {subVista === 'DELIVERY' && (
+            <div className="sc-delivery-content">
+              <section className="sc-delivery-panel">
+                <h4>Pedidos listos para salir</h4>
+                {deliveryListos.length === 0 && <p className="sc-muted">No hay pedidos delivery pendientes de salida.</p>}
+                {deliveryListos.map((pedido) => (
+                  <label className="sc-dispatch-row" key={pedido.id}>
+                    <input type="checkbox" checked={pedidosSeleccionados.includes(pedido.id)} onChange={(e) => seleccionarPedido(pedido.id, e.target.checked)} />
+                    <span><strong>Pedido #{pedido.numero} · {pedido.cliente || 'Consumidor final'}</strong><small>{pedido.direccion_entrega || ''}, {pedido.localidad_entrega || ''} · {moneda(pedido.total)}</small></span>
+                  </label>
+                ))}
+                <div className="sc-dispatch-form">
+                  <label>Repartidor<select value={repartidorSeleccionado} onChange={(e) => setRepartidorSeleccionado(e.target.value)}><option value="">Seleccionar...</option>{repartidores.map((r) => <option key={r.id} value={r.id}>{r.nombre}{r.telefono ? ` · ${r.telefono}` : ''}</option>)}</select></label>
+                  <button type="button" onClick={registrarSalida} disabled={!pedidosSeleccionados.length || !repartidorSeleccionado}>Registrar salida ({pedidosSeleccionados.length})</button>
+                </div>
+              </section>
+
+              <section className="sc-delivery-panel">
+                <h4>Pedidos en reparto</h4>
+                {deliveryEnReparto.length === 0 && <p className="sc-muted">No hay pedidos en reparto.</p>}
+                {deliveryEnReparto.map((pedido) => {
+                  const pago = pagosEntrega[pedido.id] || { efectivo: '0', transferencia: '0' }
+                  return <article className="sc-delivery-card" key={pedido.id}>
+                    <header><div><span>PEDIDO #{pedido.numero}</span><h4>{pedido.repartidor || 'Repartidor'}</h4></div><strong>{moneda(pedido.total)}</strong></header>
+                    <p>{pedido.cliente || 'Consumidor final'} · {pedido.direccion_entrega || ''}, {pedido.localidad_entrega || ''}</p>
+                    <small>Salida: {fechaHora(pedido.fecha_salida)}</small>
+                    <div className="sc-delivery-lines">{pedido.detalles.map((d, i) => <div key={i}>{Number(d.cantidad)} × {d.producto}</div>)}</div>
+                    <div className="sc-delivery-balance">Saldo esperado: <strong>{moneda(pedido.pendiente)}</strong></div>
+                    <div className="sc-delivery-payments">
+                      <label>Efectivo<input type="number" min="0" step="0.01" value={pago.efectivo} onChange={(e) => cambiarPagoEntrega(pedido.id, 'efectivo', e.target.value)} /></label>
+                      <label>Transferencia<input type="number" min="0" step="0.01" value={pago.transferencia} onChange={(e) => cambiarPagoEntrega(pedido.id, 'transferencia', e.target.value)} /></label>
+                    </div>
+                    <button type="button" onClick={() => confirmarEntrega(pedido)}>Confirmar entrega y rendición</button>
+                  </article>
+                })}
+              </section>
+
+              <section className="sc-delivery-panel">
+                <h4>Administrar repartidores</h4>
+                <form className="sc-rider-form" onSubmit={agregarRepartidor}>
+                  <label>Nombre<input required value={nuevoRepartidor.nombre} onChange={(e) => setNuevoRepartidor((v) => ({ ...v, nombre: e.target.value }))} placeholder="Nombre del repartidor" /></label>
+                  <label>Teléfono<input value={nuevoRepartidor.telefono} onChange={(e) => setNuevoRepartidor((v) => ({ ...v, telefono: e.target.value }))} placeholder="Teléfono (opcional)" /></label>
+                  <button type="submit">Agregar repartidor</button>
+                </form>
+                <div className="sc-rider-list">{repartidores.map((r) => <span key={r.id}>{r.nombre}{r.telefono ? ` · ${r.telefono}` : ''}</span>)}</div>
+              </section>
+            </div>
+          )}
+
+          {subVista === 'HISTORIAL' && (
+            <div className="sc-delivery-grid">
+              {entregados.length === 0 && <div className="sc-empty">Todavía no hay pedidos entregados en el historial reciente.</div>}
+              {entregados.map((pedido) => <article className="sc-delivery-card" key={pedido.id}>
+                <header><div><span>PEDIDO ENTREGADO</span><h4>#{pedido.numero}</h4></div><strong>{moneda(pedido.total)}</strong></header>
+                <p>{pedido.cliente || 'Consumidor final'} · {pedido.modalidad} · {fechaHora(pedido.fecha_entrega)}</p>
+                {pedido.rendicion_esperada !== null && pedido.rendicion_esperada !== undefined && <div className="sc-delivery-balance">Esperado: {moneda(pedido.rendicion_esperada)} · Efectivo: {moneda(pedido.rendicion_efectivo)} · Transferencia: {moneda(pedido.rendicion_transferencia)} · Diferencia: <strong>{moneda(pedido.rendicion_diferencia)}</strong></div>}
+              </article>)}
+            </div>
+          )}
+        </section>
+      )}
     </section>
   )
 }
