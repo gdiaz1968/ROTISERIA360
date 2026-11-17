@@ -60,8 +60,53 @@ const actualizarConfiguracionComercial = async (req, res) => {
 };
 
 const listarProductosVenta = async (req, res) => {
+  const paginaSolicitada = Number.parseInt(req.query.pagina, 10);
+  const limiteSolicitado = Number.parseInt(req.query.limite, 10);
+  const pagina = Number.isInteger(paginaSolicitada) && paginaSolicitada > 0
+    ? paginaSolicitada
+    : 1;
+  const limite = [10, 20, 50, 100].includes(limiteSolicitado)
+    ? limiteSolicitado
+    : 20;
+  const busqueda = String(req.query.busqueda || "").trim();
+  const tipo = String(req.query.tipo || "").trim().toUpperCase();
+
+  if (tipo && !["ELABORADO", "REVENTA"].includes(tipo)) {
+    return res.status(400).json({ mensaje: "El filtro de tipo no es válido." });
+  }
+
+  const parametros = [];
+  const condiciones = [
+    "p.activo = TRUE",
+    "p.tipo IN ('ELABORADO', 'REVENTA')"
+  ];
+
+  if (busqueda) {
+    parametros.push(`%${busqueda}%`);
+    condiciones.push(`(p.codigo ILIKE $1 OR p.nombre ILIKE $1)`);
+  }
+
+  if (tipo) {
+    parametros.push(tipo);
+    condiciones.push(`p.tipo = $${parametros.length}`);
+  }
+
+  const where = condiciones.join(" AND ");
+  const offset = (pagina - 1) * limite;
+
   try {
-    const [resultado, recargoPredeterminado] = await Promise.all([
+    const [conteo, resultado, recargoPredeterminado] = await Promise.all([
+      pool.query(`
+        SELECT
+          COUNT(*)::INTEGER AS total,
+          COUNT(*) FILTER (
+            WHERE COALESCE(pv.habilitado_venta, FALSE) = TRUE
+              AND COALESCE(pv.activo, TRUE) = TRUE
+          )::INTEGER AS habilitados
+        FROM productos p
+        LEFT JOIN productos_venta pv ON pv.id_producto = p.id
+        WHERE ${where}
+      `, parametros),
       pool.query(`
         SELECT
           p.id AS id_producto,
@@ -80,10 +125,11 @@ const listarProductosVenta = async (req, res) => {
         FROM productos p
         LEFT JOIN unidades_medida um ON um.id = p.id_unidad
         LEFT JOIN productos_venta pv ON pv.id_producto = p.id
-        WHERE p.activo = TRUE
-          AND p.tipo IN ('ELABORADO', 'REVENTA')
+        WHERE ${where}
         ORDER BY p.codigo, p.nombre
-      `),
+        LIMIT $${parametros.length + 1}
+        OFFSET $${parametros.length + 2}
+      `, [...parametros, limite, offset]),
       obtenerRecargoPredeterminado()
     ]);
 
@@ -145,7 +191,19 @@ const listarProductosVenta = async (req, res) => {
       }
     }));
 
-    res.json(productos);
+    const total = Number(conteo.rows[0].total);
+    const totalPaginas = Math.max(1, Math.ceil(total / limite));
+
+    res.json({
+      productos,
+      paginacion: {
+        pagina,
+        limite,
+        total,
+        total_paginas: totalPaginas,
+        habilitados: Number(conteo.rows[0].habilitados)
+      }
+    });
   } catch (error) {
     console.error("Error al listar catálogo de venta:", error);
     res.status(500).json({ mensaje: "No se pudo consultar el catálogo de venta." });
