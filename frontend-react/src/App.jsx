@@ -8,6 +8,7 @@ import ReporteProductos from './components/ReporteProductos'
 import ReporteRecetas from './components/ReporteRecetas'
 import ReportePresentaciones from './components/ReportePresentaciones'
 import ProductosVenta from './components/ProductosVenta'
+import Ventas from './components/Ventas'
 
 const API_BASE =
   import.meta.env.VITE_API_URL ||
@@ -24,7 +25,7 @@ const modulos = [
   { codigo: 'proveedores', nombre: 'Proveedores', icono: '♧' },
   { codigo: 'recetas', nombre: 'Recetas', icono: '⚙' },
   { codigo: 'costos', nombre: 'Costos', icono: '$' },
-  { codigo: 'ventas', nombre: 'Ventas de mostrador', icono: '▤' },
+  { codigo: 'ventas', nombre: 'VENTAS', icono: '▤' },
  
 ]
 
@@ -652,6 +653,8 @@ function App() {
 
           {moduloActivo === 'productos-venta' && <ProductosVenta />}
 
+          {moduloActivo === 'ventas' && <Ventas />}
+
           {moduloActivo === 'presentaciones' && <Presentaciones />}
 
           {moduloActivo === 'recetas' && <RecetasProductos />}
@@ -667,6 +670,7 @@ function App() {
           {moduloActivo !== 'dashboard' &&
               moduloActivo !== 'productos' &&
               moduloActivo !== 'productos-venta' &&
+              moduloActivo !== 'ventas' &&
               moduloActivo !== 'presentaciones' &&
               moduloActivo !== 'recetas' &&
               moduloActivo !== 'costos' &&
