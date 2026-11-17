@@ -121,10 +121,13 @@ const listarProductosVenta = async (req, res) => {
           COALESCE(pv.controla_stock, FALSE) AS controla_stock,
           COALESCE(pv.activo, TRUE) AS configuracion_activa,
           pv.recargo_porcentaje,
-          pv.costo_referencia
+          pv.costo_referencia,
+          pv.id_sector,
+          sc.nombre AS sector_nombre
         FROM productos p
         LEFT JOIN unidades_medida um ON um.id = p.id_unidad
         LEFT JOIN productos_venta pv ON pv.id_producto = p.id
+        LEFT JOIN sectores_cocina sc ON sc.id = pv.id_sector
         WHERE ${where}
         ORDER BY p.codigo, p.nombre
         LIMIT $${parametros.length + 1}
@@ -215,6 +218,9 @@ const configurarProductoVenta = async (req, res) => {
   const precio = Number(req.body.precio_venta);
   const habilitado = req.body.habilitado_venta;
   const controlaStock = req.body.controla_stock === true;
+  const idSector = req.body.id_sector === null || req.body.id_sector === undefined || req.body.id_sector === ""
+    ? null
+    : Number(req.body.id_sector);
   const confirmarCostoActual = req.body.confirmar_costo_actual === true;
 
   if (!Number.isSafeInteger(idProducto) || idProducto <= 0) {
@@ -225,6 +231,12 @@ const configurarProductoVenta = async (req, res) => {
   }
   if (typeof habilitado !== "boolean") {
     return res.status(400).json({ mensaje: "Debe indicar si el producto está habilitado para la venta." });
+  }
+  if (idSector !== null && (!Number.isSafeInteger(idSector) || idSector <= 0)) {
+    return res.status(400).json({ mensaje: "El sector seleccionado no es válido." });
+  }
+  if (habilitado && idSector === null) {
+    return res.status(400).json({ mensaje: "Asigná un sector de preparación antes de habilitar el producto para la venta." });
   }
 
   const client = await pool.connect();
@@ -244,6 +256,14 @@ const configurarProductoVenta = async (req, res) => {
     if (!["ELABORADO", "REVENTA"].includes(producto.tipo)) {
       await client.query("ROLLBACK");
       return res.status(400).json({ mensaje: "Solo se pueden configurar productos ELABORADO o REVENTA para la venta." });
+    }
+
+    if (idSector !== null) {
+      const sector = await client.query("SELECT id FROM sectores_cocina WHERE id = $1 AND activo = TRUE", [idSector]);
+      if (!sector.rowCount) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ mensaje: "El sector seleccionado no existe o está inactivo." });
+      }
     }
 
     const anterior = await client.query(
@@ -298,8 +318,8 @@ const configurarProductoVenta = async (req, res) => {
     const guardado = await client.query(`
       INSERT INTO productos_venta
         (id_producto, habilitado_venta, precio_venta, controla_stock, activo,
-         fecha_actualizacion, recargo_porcentaje, costo_referencia)
-      VALUES ($1, $2, $3, $4, TRUE, NOW(), $5, $6)
+         fecha_actualizacion, recargo_porcentaje, costo_referencia, id_sector)
+      VALUES ($1, $2, $3, $4, TRUE, NOW(), $5, $6, $7)
       ON CONFLICT (id_producto)
       DO UPDATE SET
         habilitado_venta = EXCLUDED.habilitado_venta,
@@ -308,10 +328,11 @@ const configurarProductoVenta = async (req, res) => {
         activo = TRUE,
         fecha_actualizacion = NOW(),
         recargo_porcentaje = EXCLUDED.recargo_porcentaje,
-        costo_referencia = EXCLUDED.costo_referencia
+        costo_referencia = EXCLUDED.costo_referencia,
+        id_sector = EXCLUDED.id_sector
       RETURNING id, id_producto, habilitado_venta, precio_venta,
-                controla_stock, activo, recargo_porcentaje, costo_referencia
-    `, [idProducto, habilitado, precio, controlaStock, recargo, costoReferencia]);
+                controla_stock, activo, recargo_porcentaje, costo_referencia, id_sector
+    `, [idProducto, habilitado, precio, controlaStock, recargo, costoReferencia, idSector]);
 
     if (cambioPrecio) {
       await client.query(`
