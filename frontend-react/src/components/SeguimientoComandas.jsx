@@ -24,6 +24,13 @@ async function api(ruta, opciones = {}) {
   return datos
 }
 
+const moneda = (valor) => new Intl.NumberFormat('es-AR', {
+  style: 'currency',
+  currency: 'ARS',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+}).format(Number(valor || 0))
+
 const fechaHora = (valor) => valor
   ? new Date(valor).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
   : '—'
