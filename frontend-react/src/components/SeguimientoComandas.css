@@ -2,3 +2,41 @@
 @media print{body.imprimiendo-comanda *{visibility:hidden!important}body.imprimiendo-comanda .sc-ticket-printing,body.imprimiendo-comanda .sc-ticket-printing *{visibility:visible!important}body.imprimiendo-comanda .sc-ticket-printing{position:absolute!important;left:0!important;top:0!important;width:75mm!important;max-width:75mm!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:3mm!important;background:#fff!important;color:#000!important}body.imprimiendo-comanda .sc-ticket-printing .no-print{display:none!important}body.imprimiendo-comanda .sc-ticket-printing .sc-ticket-head,body.imprimiendo-comanda .sc-ticket-printing .sc-ticket-meta,body.imprimiendo-comanda .sc-ticket-printing .sc-ticket-line{color:#000!important}body.imprimiendo-comanda .sc-ticket-printing .sc-ticket-head h3{font-size:16pt!important}body.imprimiendo-comanda .sc-ticket-printing .sc-ticket-line{font-size:12pt!important}body.imprimiendo-comanda .sc-ticket-printing .sc-ticket-meta{font-size:9pt!important}}
 
 .sc-order-state{width:max-content;max-width:100%;white-space:normal!important}.sc-state-listo_para_entregar{background:#e6f7ee;color:#18784b}.sc-state-en_reparto{background:#eaf2ff;color:#2457a7}.sc-state-entregado{background:#e6f7ee;color:#18784b}.sc-state-anulado{background:#fef3f2;color:#b42318}
+
+.sc-main-tabs,.sc-sub-tabs{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid #d0d5dd;padding-bottom:9px}
+.sc-main-tabs button,.sc-sub-tabs button{border:1px solid #d0d5dd;border-radius:8px;background:#fff;color:#344054;padding:10px 15px;font-size:12px;font-weight:800;cursor:pointer}
+.sc-main-tabs button.active,.sc-sub-tabs button.active{background:#2457a7;border-color:#2457a7;color:#fff}
+.sc-main-tabs button span{display:inline-flex;margin-left:5px;border-radius:20px;background:#fff;color:#2457a7;padding:2px 6px}
+.sc-delivery{display:flex;flex-direction:column;gap:14px}
+.sc-delivery-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sc-delivery-head h3{margin:4px 0;font-size:21px}
+.sc-delivery-head p,.sc-muted{margin:3px 0 0;color:#667085;font-size:12px}
+.sc-delivery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;align-items:start}
+.sc-delivery-content{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;align-items:start}
+.sc-delivery-panel,.sc-delivery-card{background:#fff;border:1px solid #d0d5dd;border-radius:10px;padding:14px;min-width:0}
+.sc-delivery-panel h4{margin:0 0 12px;font-size:15px}
+.sc-delivery-card header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding-bottom:9px;border-bottom:1px solid #eaecf0}
+.sc-delivery-card header span{font-size:10px;font-weight:800;color:#667085}
+.sc-delivery-card header h4{margin:3px 0 0;font-size:18px}
+.sc-delivery-card header>strong{font-size:16px;color:#172b4d}
+.sc-delivery-card p{font-size:12px;color:#475467;margin:9px 0}
+.sc-delivery-lines{display:grid;gap:5px;padding:8px 0;font-size:12px;color:#344054}
+.sc-delivery-balance{padding:9px 0;border-top:1px solid #eaecf0;font-size:12px;color:#475467}
+.sc-delivery-balance strong{color:#172b4d}
+.sc-delivery-payments,.sc-rider-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:8px 0}
+.sc-delivery-payments label,.sc-rider-form label,.sc-dispatch-form label{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:700;color:#475467}
+.sc-delivery-payments input,.sc-rider-form input,.sc-dispatch-form select{width:100%;min-width:0;border:1px solid #d0d5dd;border-radius:7px;padding:9px;background:#fff;font:inherit}
+.sc-delivery-card>button,.sc-dispatch-form button,.sc-rider-form button{border:0;border-radius:8px;background:#2457a7;color:#fff;padding:10px 12px;font-size:11px;font-weight:800;cursor:pointer}
+.sc-dispatch-row{display:flex;gap:9px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #eaecf0;cursor:pointer}
+.sc-dispatch-row input{margin-top:3px}
+.sc-dispatch-row span{display:grid;gap:3px;min-width:0}
+.sc-dispatch-row strong{font-size:12px;color:#344054}
+.sc-dispatch-row small{font-size:11px;color:#667085}
+.sc-dispatch-form{display:flex;align-items:flex-end;gap:9px;margin-top:12px}
+.sc-dispatch-form label{flex:1}
+.sc-rider-form{grid-template-columns:1fr 1fr}
+.sc-rider-form button{grid-column:1/-1}
+.sc-rider-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.sc-rider-list span{padding:6px 9px;border-radius:20px;background:#f2f4f7;color:#344054;font-size:11px}
+.sc-delivery-card>small{color:#667085;font-size:10px}
+@media(max-width:650px){.sc-delivery-head{align-items:flex-start;flex-direction:column}.sc-delivery-payments,.sc-rider-form{grid-template-columns:1fr}.sc-dispatch-form{align-items:stretch;flex-direction:column}.sc-dispatch-form button{width:100%}}
