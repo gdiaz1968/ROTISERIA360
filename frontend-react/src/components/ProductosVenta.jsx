@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import './ProductosVenta.css'
 
 const API_BASE =
@@ -47,6 +47,10 @@ export default function ProductosVenta() {
   const [productos, setProductos] = useState([])
   const [recargoPredeterminado, setRecargoPredeterminado] = useState('100')
   const [busqueda, setBusqueda] = useState('')
+  const [tipo, setTipo] = useState('')
+  const [pagina, setPagina] = useState(1)
+  const [limite, setLimite] = useState(20)
+  const [paginacion, setPaginacion] = useState({ pagina: 1, limite: 20, total: 0, total_paginas: 1, habilitados: 0 })
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(null)
   const [guardandoConfiguracion, setGuardandoConfiguracion] = useState(false)
@@ -58,33 +62,36 @@ export default function ProductosVenta() {
     setError('')
 
     try {
-      const [lista, parametros] = await Promise.all([
-        api('/api/productos-venta'),
+      const consulta = new URLSearchParams({
+        pagina: String(pagina),
+        limite: String(limite),
+        busqueda,
+        tipo,
+      })
+      const [catalogo, parametros] = await Promise.all([
+        api(`/api/productos-venta?${consulta.toString()}`),
         api('/api/productos-venta/configuracion'),
       ])
 
-      setProductos(Array.isArray(lista) ? lista : [])
+      setProductos(Array.isArray(catalogo.productos) ? catalogo.productos : [])
+      setPaginacion(catalogo.paginacion || {
+        pagina,
+        limite,
+        total: 0,
+        total_paginas: 1,
+        habilitados: 0,
+      })
       setRecargoPredeterminado(String(parametros.recargo_predeterminado_elaborados ?? 100))
     } catch (e) {
       setError(e.message)
     } finally {
       setCargando(false)
     }
-  }, [])
+  }, [pagina, limite, busqueda, tipo])
 
   useEffect(() => {
     cargar()
   }, [cargar])
-
-  const filtrados = useMemo(() => {
-    const q = busqueda.trim().toLocaleLowerCase('es')
-
-    return productos.filter((p) =>
-      !q || `${p.codigo} ${p.nombre} ${p.tipo}`
-        .toLocaleLowerCase('es')
-        .includes(q),
-    )
-  }, [productos, busqueda])
 
   function cambiar(id, campo, valor) {
     setProductos((actuales) =>
@@ -154,9 +161,10 @@ export default function ProductosVenta() {
     }
   }
 
-  const habilitados = productos.filter(
-    (p) => p.habilitado_venta && p.configuracion_activa,
-  ).length
+  const habilitados = paginacion.habilitados || 0
+  const totalPaginas = Math.max(1, paginacion.total_paginas || 1)
+  const desde = paginacion.total === 0 ? 0 : (pagina - 1) * limite + 1
+  const hasta = Math.min(pagina * limite, paginacion.total)
 
   return (
     <section className="pv-page">
@@ -197,10 +205,45 @@ export default function ProductosVenta() {
         Buscar producto
         <input
           value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
+          onChange={(e) => {
+            setBusqueda(e.target.value)
+            setPagina(1)
+          }}
           placeholder="Código o nombre..."
         />
       </label>
+
+      <div className="pv-filters">
+        <label>
+          Tipo de producto
+          <select
+            value={tipo}
+            onChange={(e) => {
+              setTipo(e.target.value)
+              setPagina(1)
+            }}
+          >
+            <option value="">Todos</option>
+            <option value="ELABORADO">Elaborados</option>
+            <option value="REVENTA">Reventa</option>
+          </select>
+        </label>
+        <label>
+          Productos por página
+          <select
+            value={limite}
+            onChange={(e) => {
+              setLimite(Number(e.target.value))
+              setPagina(1)
+            }}
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </label>
+      </div>
 
       <div className="pv-table-wrap">
         <table className="pv-table">
@@ -223,11 +266,11 @@ export default function ProductosVenta() {
               <tr><td colSpan="10" className="pv-empty">Cargando catálogo...</td></tr>
             )}
 
-            {!cargando && filtrados.length === 0 && (
+            {!cargando && productos.length === 0 && (
               <tr><td colSpan="10" className="pv-empty">No hay elaborados ni productos de reventa para mostrar.</td></tr>
             )}
 
-            {!cargando && filtrados.map((p) => (
+            {!cargando && productos.map((p) => (
               <tr key={p.id_producto}>
                 <td>
                   <strong>{p.nombre}</strong>
@@ -342,6 +385,27 @@ export default function ProductosVenta() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="pv-pagination">
+        <span className="pv-pagination-info">
+          Mostrando {desde}–{hasta} de {paginacion.total} productos
+        </span>
+        <div className="pv-pagination-actions">
+          <button type="button" onClick={() => setPagina(1)} disabled={cargando || pagina <= 1}>
+            Primera
+          </button>
+          <button type="button" onClick={() => setPagina((actual) => Math.max(1, actual - 1))} disabled={cargando || pagina <= 1}>
+            Anterior
+          </button>
+          <span>Página {pagina} de {totalPaginas}</span>
+          <button type="button" onClick={() => setPagina((actual) => Math.min(totalPaginas, actual + 1))} disabled={cargando || pagina >= totalPaginas}>
+            Siguiente
+          </button>
+          <button type="button" onClick={() => setPagina(totalPaginas)} disabled={cargando || pagina >= totalPaginas}>
+            Última
+          </button>
+        </div>
       </div>
 
       <p className="pv-note">
