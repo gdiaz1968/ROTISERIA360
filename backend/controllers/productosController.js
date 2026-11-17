@@ -116,12 +116,6 @@ const crearProducto = async (req, res) => {
             });
         }
 
-        if (!["INSUMO", "ELABORADO", "REVENTA"].includes(tipo)) {
-            return res.status(400).json({
-                error: "El tipo debe ser INSUMO, ELABORADO o REVENTA."
-            });
-        }
-
         const resultado = await pool.query(`
             INSERT INTO productos
             (
@@ -187,6 +181,12 @@ const modificarProducto = async (req, res) => {
 
             return res.status(400).json({
                 error: "Todos los campos son obligatorios"
+            });
+        }
+
+        if (!["INSUMO", "ELABORADO", "REVENTA"].includes(tipo)) {
+            return res.status(400).json({
+                error: "El tipo debe ser INSUMO, ELABORADO o REVENTA."
             });
         }
 
