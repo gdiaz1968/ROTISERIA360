@@ -110,6 +110,18 @@ const crearProducto = async (req, res) => {
             });
         }
 
+        if (!["INSUMO", "ELABORADO", "REVENTA"].includes(tipo)) {
+            return res.status(400).json({
+                error: "El tipo debe ser INSUMO, ELABORADO o REVENTA."
+            });
+        }
+
+        if (!["INSUMO", "ELABORADO", "REVENTA"].includes(tipo)) {
+            return res.status(400).json({
+                error: "El tipo debe ser INSUMO, ELABORADO o REVENTA."
+            });
+        }
+
         const resultado = await pool.query(`
             INSERT INTO productos
             (
