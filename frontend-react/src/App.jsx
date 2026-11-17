@@ -454,7 +454,7 @@ function App() {
               <div className="products-toolbar">
                 <div>
                   <h2>Productos</h2>
-                  <p>Administración de insumos y productos elaborados.</p>
+                  <p>Administración de insumos, elaborados y productos de reventa.</p>
                 </div>
 
                 <button
@@ -566,7 +566,9 @@ function App() {
                                 className={`type-tag ${
                                   producto.tipo === 'ELABORADO'
                                     ? 'type-elaborado'
-                                    : 'type-insumo'
+                                    : producto.tipo === 'REVENTA'
+                                      ? 'type-reventa'
+                                      : 'type-insumo'
                                 }`}
                               >
                                 {producto.tipo}
@@ -754,6 +756,7 @@ function App() {
                   >
                     <option value="INSUMO">INSUMO</option>
                     <option value="ELABORADO">ELABORADO</option>
+                    <option value="REVENTA">REVENTA</option>
                   </select>
                 </label>
 
