@@ -652,6 +652,11 @@ button {
   color: #6840a8;
 }
 
+.type-reventa {
+  background: #eaf2ff;
+  color: #225db0;
+}
+
 .state-active {
   background: #e6f7ee;
   color: #18784b;
