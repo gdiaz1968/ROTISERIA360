@@ -42,6 +42,15 @@ const estadoTexto = {
   ANULADA: 'Anulada',
 }
 
+const estadoPedidoTexto = {
+  PENDIENTE: 'Pendiente',
+  EN_PREPARACION: 'En preparación',
+  LISTO_PARA_ENTREGAR: 'Listo para entregar',
+  EN_REPARTO: 'En reparto',
+  ENTREGADO: 'Entregado',
+  ANULADO: 'Anulado',
+}
+
 export default function SeguimientoComandas() {
   const [comandas, setComandas] = useState([])
   const [filtro, setFiltro] = useState('TODAS')
@@ -191,6 +200,9 @@ export default function SeguimientoComandas() {
             <div className="sc-ticket-meta">
               <strong>Pedido #{comanda.numero_pedido}</strong>
               <span>{comanda.modalidad}</span>
+              <span className={`sc-state sc-order-state sc-state-${String(comanda.estado_pedido || 'PENDIENTE').toLowerCase()}`}>
+                Pedido: {estadoPedidoTexto[comanda.estado_pedido] || comanda.estado_pedido || 'Pendiente'}
+              </span>
               <span>Ingresó: {fechaHora(comanda.fecha_pedido)}</span>
               <span>Comanda: {fechaHora(comanda.fecha_alta)}</span>
               <strong className="sc-elapsed">Transcurrido: {tiempoTranscurrido(comanda.fecha_alta)}</strong>

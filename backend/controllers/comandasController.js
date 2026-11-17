@@ -32,6 +32,7 @@ async function consultarComandas(req, res) {
         c.numero_comanda,
         c.id_venta,
         v.numero AS numero_pedido,
+        v.estado AS estado_pedido,
         v.modalidad,
         v.fecha AS fecha_pedido,
         s.nombre AS sector,
@@ -56,7 +57,7 @@ async function consultarComandas(req, res) {
       INNER JOIN ventas_comandas_detalle cd ON cd.id_comanda = c.id AND cd.id_venta = c.id_venta
       INNER JOIN ventas_detalle vd ON vd.id = cd.id_venta_detalle AND vd.id_venta = cd.id_venta
       ${condiciones.length ? `WHERE ${condiciones.join(" AND ")}` : ""}
-      GROUP BY c.id, v.numero, v.modalidad, v.fecha, v.observaciones, s.nombre
+      GROUP BY c.id, v.numero, v.estado, v.modalidad, v.fecha, v.observaciones, s.nombre
       ORDER BY
         CASE c.estado WHEN 'PENDIENTE' THEN 1 WHEN 'EN_PREPARACION' THEN 2 WHEN 'LISTA' THEN 3 ELSE 4 END,
         c.fecha_alta ASC, c.numero_comanda ASC
@@ -116,15 +117,28 @@ async function actualizarEstadoComanda(req, res) {
   WHERE id = $2
 `, [estado, id]);
 
+    if (estado === "EN_PREPARACION") {
+      await client.query(`
+        UPDATE ventas
+        SET estado = 'EN_PREPARACION', fecha_actualizacion = NOW()
+        WHERE id = $1 AND estado = 'PENDIENTE'
+      `, [comanda.id_venta]);
+    }
+
     if (estado === "LISTA") {
       await client.query(`
         UPDATE ventas
         SET estado = 'LISTO_PARA_ENTREGAR', fecha_actualizacion = NOW()
         WHERE id = $1
           AND estado NOT IN ('ENTREGADO', 'ANULADO')
+          AND EXISTS (
+            SELECT 1 FROM ventas_comandas activas
+            WHERE activas.id_venta = $1 AND activas.estado <> 'ANULADA'
+          )
           AND NOT EXISTS (
             SELECT 1 FROM ventas_comandas pendientes
-            WHERE pendientes.id_venta = $1 AND pendientes.estado <> 'LISTA'
+            WHERE pendientes.id_venta = $1
+              AND pendientes.estado NOT IN ('LISTA', 'ANULADA')
           )
       `, [comanda.id_venta]);
     }

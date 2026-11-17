@@ -86,6 +86,19 @@ export default function Ventas() {
     cargarDatos()
   }, [cargarDatos])
 
+  useEffect(() => {
+    const actualizarEstados = async () => {
+      try {
+        const resultado = await api('/api/ventas')
+        setVentas(Array.isArray(resultado.ventas) ? resultado.ventas : [])
+      } catch (e) {
+        setError(e.message)
+      }
+    }
+    const intervalo = window.setInterval(actualizarEstados, 5000)
+    return () => window.clearInterval(intervalo)
+  }, [])
+
   const productosFiltrados = useMemo(() => {
     const termino = busqueda.trim().toLocaleLowerCase('es')
     if (!termino) return productos
@@ -458,15 +471,23 @@ export default function Ventas() {
         </div>
         <div className="ventas-cart-wrap">
           <table className="ventas-cart">
-            <thead><tr><th>Pedido</th><th>Fecha</th><th>Canal</th><th>Entrega</th><th>Cliente</th><th>Total</th><th>Pagado</th><th>Pendiente</th></tr></thead>
+            <thead><tr><th>Pedido</th><th>Fecha</th><th>Canal</th><th>Entrega</th><th>Estado</th><th>Cliente</th><th>Total</th><th>Pagado</th><th>Pendiente</th></tr></thead>
             <tbody>
-              {ventas.length === 0 && <tr><td colSpan="8" className="ventas-empty">Todavía no hay pedidos registrados.</td></tr>}
+              {ventas.length === 0 && <tr><td colSpan="9" className="ventas-empty">Todavía no hay pedidos registrados.</td></tr>}
               {ventas.map((venta) => (
                 <tr key={venta.id}>
                   <td><strong>#{venta.numero}</strong></td>
                   <td>{new Date(venta.fecha).toLocaleString('es-AR')}</td>
                   <td>{venta.canal}</td>
                   <td>{venta.modalidad}</td>
+                  <td><span className={`ventas-order-state ventas-order-state-${String(venta.estado || 'PENDIENTE').toLowerCase()}`}>{({
+                    PENDIENTE: 'Pendiente',
+                    EN_PREPARACION: 'En preparación',
+                    LISTO_PARA_ENTREGAR: 'Listo para entregar',
+                    EN_REPARTO: 'En reparto',
+                    ENTREGADO: 'Entregado',
+                    ANULADO: 'Anulado',
+                  })[venta.estado] || venta.estado || 'Pendiente'}</span></td>
                   <td>{venta.cliente || 'Consumidor final'}</td>
                   <td>{moneda(venta.total)}</td>
                   <td>{moneda(venta.pagado)}</td>
