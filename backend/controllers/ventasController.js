@@ -219,6 +219,7 @@ async function crearVenta(req, res) {
       comandasGeneradas.push({
         id: comanda.id,
         numero_comanda: comanda.numero_comanda,
+        numero_pedido: venta.numero,
         sector: lineasSector[0].sector,
         estado: "PENDIENTE",
         fecha_alta: comanda.fecha_alta,
