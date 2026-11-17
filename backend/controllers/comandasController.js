@@ -56,7 +56,7 @@ async function consultarComandas(req, res) {
       INNER JOIN ventas_comandas_detalle cd ON cd.id_comanda = c.id AND cd.id_venta = c.id_venta
       INNER JOIN ventas_detalle vd ON vd.id = cd.id_venta_detalle AND vd.id_venta = cd.id_venta
       ${condiciones.length ? `WHERE ${condiciones.join(" AND ")}` : ""}
-      GROUP BY c.id, v.numero, v.modalidad, v.fecha, s.nombre
+      GROUP BY c.id, v.numero, v.modalidad, v.fecha, v.observaciones, s.nombre
       ORDER BY
         CASE c.estado WHEN 'PENDIENTE' THEN 1 WHEN 'EN_PREPARACION' THEN 2 WHEN 'LISTA' THEN 3 ELSE 4 END,
         c.fecha_alta ASC, c.numero_comanda ASC
