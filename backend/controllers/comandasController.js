@@ -231,6 +231,10 @@ async function previsualizarAnulacionComanda(req, res) {
         AND id <> ALL($2::bigint[])
     `, [comanda.id_venta, idsDetalle]);
     const nuevoTotal = Math.round((Number(totalNuevoResult.rows[0].total) + Number.EPSILON) * 100) / 100;
+    const diferenciaTotal = Math.round((totalActual - nuevoTotal + Number.EPSILON) * 100) / 100;
+    if (diferenciaTotal < 0 || Math.abs(diferenciaTotal - importeAnular) > 0.01) {
+      return res.status(409).json({ mensaje: "El total guardado del pedido no coincide con sus renglones activos. No se puede calcular una anulación segura; primero hay que revisar la venta." });
+    }
     const pagado = Number(comanda.pagado || 0);
     const excedenteCobrado = Math.max(0, Math.round((pagado - nuevoTotal + Number.EPSILON) * 100) / 100);
 
@@ -338,6 +342,10 @@ async function anularComanda(req, res) {
         AND id <> ALL($2::bigint[])
     `, [venta.id, idsDetalle]);
     const nuevoTotal = Math.round((Number(nuevoTotalResult.rows[0].total) + Number.EPSILON) * 100) / 100;
+    const diferenciaTotal = Math.round((Number(venta.total) - nuevoTotal + Number.EPSILON) * 100) / 100;
+    if (diferenciaTotal < 0 || Math.abs(diferenciaTotal - importeAnular) > 0.01) {
+      throw Object.assign(new Error("El total guardado del pedido no coincide con sus renglones activos. No se aplicó la anulación; primero hay que revisar la venta."), { status: 409 });
+    }
 
     if (Math.abs(nuevoTotal - totalEsperado) > 0.009) {
       throw Object.assign(new Error("El pedido cambió desde que se mostró la revisión. No se aplicó ninguna modificación. Volvé a revisar el impacto económico."), { status: 409 });
