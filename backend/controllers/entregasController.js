@@ -195,7 +195,7 @@ async function confirmarEntrega(req, res) {
         ? `Faltan cobrar $\{diferenciaPendiente.toFixed(2)}.`
         : `El importe ingresado supera el saldo en $\{excedente.toFixed(2)}.`;
       throw Object.assign(
-        new Error(`No se puede confirmar la entrega. El saldo pendiente es $\{esperado.toFixed(2)} y efectivo más transferencia deben sumar exactamente ese importe. \{detalle}`),
+        new Error(`No se puede confirmar la entrega. El saldo pendiente es $\{esperado.toFixed(2)} y efectivo más transferencia deben sumar exactamente ese importe. ${detalle}`),
         { status: 400 }
       );
     }
