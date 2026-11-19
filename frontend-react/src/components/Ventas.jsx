@@ -412,7 +412,7 @@ export default function Ventas() {
           </section>
 
           <section className="ventas-panel">
-            <h3>4. Cobro</h3>
+            <h3>4. Pago inicial del pedido</h3>
             <div className="ventas-payment-summary">
               <div><span>Total</span><strong>{moneda(total)}</strong></div>
               <div><span>Registrado</span><strong>{moneda(totalPagado)}</strong></div>
@@ -437,13 +437,13 @@ export default function Ventas() {
                   placeholder="0,00"
                 />
               </label>
-              <button type="button" className="ventas-add-payment-button" onClick={agregarPago} disabled={saldo <= 0}>Agregar pago</button>
+              <button type="button" className="ventas-add-payment-button" onClick={agregarPago} disabled={saldo <= 0}>Agregar pago al pedido</button>
               <button
                 type="button"
                 className="ventas-fill-payment"
                 onClick={() => setNuevoPago((p) => ({ ...p, importe: saldo.toFixed(2) }))}
                 disabled={saldo <= 0}
-              >Completar saldo</button>
+              >Cargar saldo restante</button>
             </div>
             {pagos.length > 0 && (
               <div className="ventas-payment-list">
@@ -455,7 +455,7 @@ export default function Ventas() {
                 ))}
               </div>
             )}
-            <p className="ventas-payment-note">Podés registrar un pago parcial, combinar medios de pago o guardar el pedido sin cobrar.</p>
+            <p className="ventas-payment-note">Acá registrás el anticipo o pago que recibís al tomar el pedido. Los importes se guardan al presionar REGISTRAR PEDIDO. Si el pedido es delivery y queda un saldo, ese saldo se cobra una sola vez desde Seguimiento de comandas al confirmar la entrega.</p>
             <button type="submit" className="ventas-submit" disabled={guardando || carrito.length === 0}>
               {guardando ? 'Registrando pedido...' : 'REGISTRAR PEDIDO'}
             </button>
