@@ -16,7 +16,7 @@ const moneda = (valor) =>
   }).format(Number(valor || 0))
 
 const importeEnCentavos = (valor) => {
-  let texto = String(valor ?? '0').trim().replace(/\s/g, '').replace(/^\\$/, '')
+  let texto = String(valor ?? '0').trim().replace(/\s/g, '').replace(/^\$/, '')
   if (!texto) return 0
   if (texto.includes(',')) {
     texto = texto.replace(/\./g, '').replace(',', '.')
