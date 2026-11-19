@@ -5,7 +5,10 @@ const API_BASE = import.meta.env.VITE_API_URL || (window.location.port === '5173
 const moneda = (valor) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(Number(valor || 0))
 const numero = (valor, decimales = 2) => Number(valor || 0).toLocaleString('es-AR', { maximumFractionDigits: decimales })
 const fechaLocal = (fecha) => {
-  const d = new Date(fecha)
+  const texto = String(fecha || '')
+  const d = /^\\d{4}-\\d{2}-\\d{2}$/.test(texto)
+    ? new Date(Number(texto.slice(0, 4)), Number(texto.slice(5, 7)) - 1, Number(texto.slice(8, 10)))
+    : new Date(fecha)
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-AR')
 }
 const fechaInput = (fecha) => {
@@ -78,7 +81,7 @@ export default function ReporteVentas() {
       filas = [['Medio de pago', 'Operaciones', 'Importe'], ...(datos.pagos || []).map((x) => [x.medio_pago, x.operaciones, x.importe])]
     } else {
       nombre += '-ventas'
-      filas = [['Pedido', 'Fecha', 'Cliente', 'Modalidad', 'Canal', 'Estado', 'Total', 'Cobrado', 'Pendiente'], ...(datos.ventas || []).map((x) => [x.numero, x.fecha, x.cliente, x.modalidad, x.canal, x.estado, x.total, x.pagado, x.pendiente])]
+      filas = [['Pedido', 'Fecha', 'Cliente', 'Modalidad', 'Canal', 'Estado', 'Total', 'Cobrado', 'Pendiente', 'Excedente'], ...(datos.ventas || []).map((x) => [x.numero, x.fecha, x.cliente, x.modalidad, x.canal, x.estado, x.total, x.pagado, x.pendiente, x.excedente])]
     }
     const contenido = '\uFEFF' + filas.map((fila) => fila.map(csvCelda).join(';')).join('\r\n')
     const url = URL.createObjectURL(new Blob([contenido], { type: 'text/csv;charset=utf-8;' }))
@@ -135,6 +138,7 @@ export default function ReporteVentas() {
                 <article><span>Total cobrado</span><strong>{moneda(resumen.total_cobrado)}</strong></article>
                 <article><span>Saldo pendiente</span><strong>{moneda(resumen.saldo_pendiente)}</strong></article>
                 <article><span>Ventas anuladas</span><strong>{numero(resumen.operaciones_anuladas, 0)}</strong></article>
+                <article className={Number(resumen.excedente_cobrado || 0) > 0 ? 'warning' : ''}><span>Excedente cobrado</span><strong>{moneda(resumen.excedente_cobrado)}</strong></article>
               </div>
               <section className="rv-panel">
                 <div className="rv-panel-title"><h3>Evolución diaria</h3><span>Importes de ventas no anuladas</span></div>
@@ -157,9 +161,9 @@ export default function ReporteVentas() {
             <section className="rv-panel">
               <div className="rv-panel-title"><h3>Operaciones registradas</h3><span>{datos.ventas?.length || 0} registros · máximo 500</span></div>
               <div className="rv-table-wrap"><table className="rv-table">
-                <thead><tr><th>Pedido</th><th>Fecha</th><th>Cliente</th><th>Modalidad</th><th>Canal</th><th>Estado</th><th className="num">Total</th><th className="num">Cobrado</th><th className="num">Pendiente</th></tr></thead>
+                <thead><tr><th>Pedido</th><th>Fecha</th><th>Cliente</th><th>Modalidad</th><th>Canal</th><th>Estado</th><th className="num">Total</th><th className="num">Cobrado</th><th className="num">Pendiente</th><th className="num">Excedente</th></tr></thead>
                 <tbody>{datos.ventas?.map((v) => <tr key={v.id} className={v.estado === 'ANULADO' ? 'cancelled' : ''}>
-                  <td>#{v.numero}</td><td>{fechaLocal(v.fecha)}</td><td>{v.cliente}</td><td>{v.modalidad}</td><td>{v.canal}</td><td>{v.estado}</td><td className="num">{moneda(v.total)}</td><td className="num">{moneda(v.pagado)}</td><td className="num">{moneda(v.pendiente)}</td>
+                  <td>#{v.numero}</td><td>{fechaLocal(v.fecha)}</td><td>{v.cliente}</td><td>{v.modalidad}</td><td>{v.canal}</td><td>{v.estado}</td><td className="num">{moneda(v.total)}</td><td className="num">{moneda(v.pagado)}</td><td className="num">{moneda(v.pendiente)}</td><td className="num">{moneda(v.excedente)}</td>
                 </tr>)}</tbody>
               </table></div>
               {!datos.ventas?.length && <p className="rv-empty">No hay operaciones para este período.</p>}
