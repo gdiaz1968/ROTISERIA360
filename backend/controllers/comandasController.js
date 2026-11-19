@@ -222,7 +222,15 @@ async function previsualizarAnulacionComanda(req, res) {
 
     const importeAnular = Math.round(lineas.rows.reduce((s, l) => s + Number(l.importe || 0), 0) * 100) / 100;
     const totalActual = Number(comanda.total);
-    const nuevoTotal = Math.max(0, Math.round((totalActual - importeAnular + Number.EPSILON) * 100) / 100);
+    const idsDetalle = lineas.rows.map((l) => l.id_venta_detalle);
+    const totalNuevoResult = await pool.query(`
+      SELECT COALESCE(SUM(subtotal), 0)::numeric AS total
+      FROM ventas_detalle
+      WHERE id_venta = $1
+        AND estado = 'ACTIVO'
+        AND id <> ALL($2::bigint[])
+    `, [comanda.id_venta, idsDetalle]);
+    const nuevoTotal = Math.round((Number(totalNuevoResult.rows[0].total) + Number.EPSILON) * 100) / 100;
     const pagado = Number(comanda.pagado || 0);
     const excedenteCobrado = Math.max(0, Math.round((pagado - nuevoTotal + Number.EPSILON) * 100) / 100);
 
