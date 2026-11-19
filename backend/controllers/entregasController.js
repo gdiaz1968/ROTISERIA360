@@ -49,6 +49,7 @@ async function listarPedidosEntrega(req, res) {
         ) ORDER BY id) AS detalles
         FROM ventas_detalle
         WHERE id_venta = v.id
+          AND estado = 'ACTIVO'
       ) det ON TRUE
       WHERE v.estado IN ('LISTO_PARA_ENTREGAR', 'EN_REPARTO', 'ENTREGADO')
       ORDER BY
