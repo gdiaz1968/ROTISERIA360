@@ -15,6 +15,19 @@ const moneda = (valor) =>
     maximumFractionDigits: 2,
   }).format(Number(valor || 0))
 
+const importeEnCentavos = (valor) => {
+  let texto = String(valor ?? '0').trim().replace(/\\s/g, '').replace(/^\\$/, '')
+  if (!texto) return 0
+  if (texto.includes(',')) {
+    texto = texto.replace(/\\./g, '').replace(',', '.')
+  } else if ((texto.match(/\\./g) || []).length > 1 || /\\.\\d{3}$/.test(texto)) {
+    texto = texto.replace(/\\./g, '')
+  }
+  if (!/^\\d+(\\.\\d{1,2})?$/.test(texto)) return null
+  const numero = Number(texto)
+  return Number.isFinite(numero) ? Math.round((numero + Number.EPSILON) * 100) : null
+}
+
 async function api(ruta, opciones = {}) {
   const respuesta = await fetch(`${API_BASE}${ruta}`, {
     ...opciones,
@@ -149,12 +162,13 @@ export default function Ventas() {
   }
 
   function agregarPago() {
-    const importe = Number(nuevoPago.importe)
-    if (!Number.isFinite(importe) || importe <= 0) {
-      setError('Ingresá un importe de pago mayor a cero.')
+    const centavos = importeEnCentavos(nuevoPago.importe)
+    if (centavos === null || centavos <= 0) {
+      setError('Ingresá un importe válido mayor a cero. Podés usar 3.500 o 3.500,00.')
       return
     }
-    if (importe - saldo > 0.009) {
+    const importe = centavos / 100
+    if (centavos > Math.round(saldo * 100)) {
       setError('El pago supera el saldo pendiente del pedido.')
       return
     }
@@ -428,10 +442,8 @@ export default function Ventas() {
               <label>
                 <span>Importe</span>
                 <input
-                  type="number"
-                  min="0.01"
-                  max={saldo}
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   value={nuevoPago.importe}
                   onChange={(e) => setNuevoPago((p) => ({ ...p, importe: e.target.value }))}
                   placeholder="0,00"
