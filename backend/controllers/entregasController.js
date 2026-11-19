@@ -37,8 +37,8 @@ async function listarPedidosEntrega(req, res) {
       LEFT JOIN repartos rep ON rep.id = rp.id_reparto
       LEFT JOIN LATERAL (
         SELECT SUM(importe) AS pagado
-        FROM ventas_pagos
-        WHERE id_venta = v.id AND estado = 'CONFIRMADO'
+        FROM ventas_pagos vp
+        WHERE vp.id_venta = v.id AND vp.estado = 'CONFIRMADO'
       ) p ON TRUE
       LEFT JOIN ventas_rendiciones rend ON rend.id_venta = v.id
       LEFT JOIN LATERAL (
