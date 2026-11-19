@@ -28,3 +28,7 @@ CREATE INDEX IF NOT EXISTS ix_ventas_detalle_venta_estado
 
 CREATE INDEX IF NOT EXISTS ix_ventas_comandas_venta_estado
   ON public.ventas_comandas (id_venta, estado);
+
+-- Cada renglón de venta pertenece a una sola comanda; evita anular un renglón compartido.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_ventas_comandas_detalle_linea_venta
+  ON public.ventas_comandas_detalle (id_venta_detalle);
