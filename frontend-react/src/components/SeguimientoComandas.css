@@ -44,3 +44,41 @@
 .sc-delivery-card>button:disabled{opacity:.45;cursor:not-allowed;background:#98a2b3}
 .sc-payment-error{display:block;color:#b42318!important;font-weight:700}
 .sc-payment-ok{display:block;color:#18784b!important;font-weight:700}
+
+.sc-state-anulada{background:#fef3f2;color:#b42318}
+.sc-cancel-button{background:#b42318!important;color:#fff!important}
+.sc-ticket-line-cancelled{text-decoration:line-through;color:#98a2b3}
+.sc-cancel-note{display:grid;gap:5px;margin:8px 0;padding:10px;border-radius:8px;background:#fef3f2;color:#912018;font-size:11px}
+.sc-cancel-note strong{font-size:12px}
+.sc-modal-overlay{position:fixed;inset:0;z-index:1200;background:rgba(16,24,40,.62);display:flex;align-items:center;justify-content:center;padding:18px}
+.sc-cancel-modal{width:min(680px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:13px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.28)}
+.sc-cancel-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-bottom:14px;border-bottom:1px solid #eaecf0}
+.sc-cancel-modal-head h3{margin:5px 0;font-size:20px;color:#202939}
+.sc-cancel-modal-head p{margin:0;color:#667085;font-size:12px;line-height:1.45}
+.sc-cancel-modal-head>button{flex:0 0 auto;border:0;border-radius:7px;width:32px;height:32px;background:#f2f4f7;color:#344054;font-size:22px;cursor:pointer}
+.sc-cancel-form,.sc-cancel-review{display:grid;gap:13px;padding-top:14px}
+.sc-cancel-form>label{display:grid;gap:6px;font-size:12px;font-weight:800;color:#344054}
+.sc-cancel-form input,.sc-cancel-form textarea{width:100%;border:1px solid #d0d5dd;border-radius:8px;padding:10px 11px;font:inherit;font-size:13px;color:#344054}
+.sc-cancel-form>small{font-size:10px;line-height:1.45;color:#667085}
+.sc-cancel-info{padding:11px 12px;border-radius:8px;background:#f8fafc;color:#344054}
+.sc-cancel-info strong{font-size:12px}
+.sc-cancel-info p{margin:5px 0 0;font-size:11px;line-height:1.5;color:#475467}
+.sc-cancel-info ul{margin:7px 0 0;padding-left:18px;font-size:11px;line-height:1.6;color:#475467}
+.sc-cancel-review h4{margin:0;font-size:13px;color:#344054}
+.sc-cancel-products{display:grid;gap:7px}
+.sc-cancel-products>div,.sc-cancel-totals>div{display:flex;justify-content:space-between;gap:12px;padding:8px 10px;border-bottom:1px solid #eaecf0;font-size:12px;color:#475467}
+.sc-cancel-products strong,.sc-cancel-totals strong{color:#344054;white-space:nowrap}
+.sc-cancel-totals{padding:5px 10px;border:1px solid #eaecf0;border-radius:8px}
+.sc-cancel-totals>div{padding:8px 0}
+.sc-cancel-totals .sc-new-total{border-top:1px solid #d0d5dd;margin-top:3px;padding-top:11px;font-weight:800;color:#172b4d}
+.sc-cancel-totals .sc-new-total strong{font-size:17px;color:#18784b}
+.sc-cancel-totals .sc-negative{color:#b42318}
+.sc-cancel-blocker{padding:11px 12px;border:1px solid #fecdca;border-radius:8px;background:#fef3f2;color:#912018}
+.sc-cancel-blocker strong{font-size:12px}
+.sc-cancel-blocker p{margin:5px 0 0;font-size:11px;line-height:1.5}
+.sc-cancel-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;padding-top:4px}
+.sc-cancel-actions button{border:0;border-radius:8px;padding:10px 13px;font-size:12px;font-weight:800;cursor:pointer}
+.sc-cancel-actions button:disabled{opacity:.45;cursor:not-allowed}
+.sc-secondary-button{background:#f2f4f7;color:#344054}
+.sc-danger-button{background:#b42318;color:#fff}
+@media(max-width:600px){.sc-modal-overlay{padding:8px}.sc-cancel-modal{padding:14px;max-height:96vh}.sc-cancel-actions{flex-direction:column-reverse}.sc-cancel-actions button{width:100%}}
