@@ -31,6 +31,15 @@ const moneda = (valor) => new Intl.NumberFormat('es-AR', {
   maximumFractionDigits: 2,
 }).format(Number(valor || 0))
 
+const pagoEntregaCoincide = (pago, pendiente) => {
+  const efectivo = Number(pago?.efectivo || 0)
+  const transferencia = Number(pago?.transferencia || 0)
+  const saldo = Number(pendiente || 0)
+  if (![efectivo, transferencia, saldo].every(Number.isFinite)) return false
+  if (efectivo < 0 || transferencia < 0 || saldo < 0) return false
+  return Math.round((efectivo + transferencia) * 100) === Math.round(saldo * 100)
+}
+
 const fechaHora = (valor) => valor
   ? new Date(valor).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
   : '—'
@@ -402,7 +411,8 @@ export default function SeguimientoComandas() {
                     <label>Efectivo<input type="number" min="0" step="0.01" value={pago.efectivo} onChange={(e) => cambiarPagoEntrega(pedido.id, 'efectivo', e.target.value)} /></label>
                     <label>Transferencia<input type="number" min="0" step="0.01" value={pago.transferencia} onChange={(e) => cambiarPagoEntrega(pedido.id, 'transferencia', e.target.value)} /></label>
                   </div>
-                  <button type="button" onClick={() => confirmarEntrega(pedido)}>Confirmar retiro y rendición</button>
+                  <small className="sc-muted">Efectivo + transferencia deben sumar exactamente {moneda(pedido.pendiente)}.</small>
+                  <button type="button" onClick={() => confirmarEntrega(pedido)} disabled={!pagoEntregaCoincide(pago, pedido.pendiente)}>Confirmar retiro y rendición</button>
                 </article>
               })}
             </div>
@@ -440,7 +450,8 @@ export default function SeguimientoComandas() {
                       <label>Efectivo<input type="number" min="0" step="0.01" value={pago.efectivo} onChange={(e) => cambiarPagoEntrega(pedido.id, 'efectivo', e.target.value)} /></label>
                       <label>Transferencia<input type="number" min="0" step="0.01" value={pago.transferencia} onChange={(e) => cambiarPagoEntrega(pedido.id, 'transferencia', e.target.value)} /></label>
                     </div>
-                    <button type="button" onClick={() => confirmarEntrega(pedido)}>Confirmar entrega y rendición</button>
+                    <small className="sc-muted">Efectivo + transferencia deben sumar exactamente {moneda(pedido.pendiente)}.</small>
+                    <button type="button" onClick={() => confirmarEntrega(pedido)} disabled={!pagoEntregaCoincide(pago, pedido.pendiente)}>Confirmar entrega y rendición</button>
                   </article>
                 })}
               </section>
