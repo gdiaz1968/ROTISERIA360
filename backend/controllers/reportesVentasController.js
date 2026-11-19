@@ -36,6 +36,7 @@ async function reporteVentas(req, res) {
           COALESCE(AVG(v.total) FILTER (WHERE v.estado <> 'ANULADO'), 0)::numeric AS promedio_venta,
           COALESCE(SUM(COALESCE(pg.pagado, 0)) FILTER (WHERE v.estado <> 'ANULADO'), 0)::numeric AS total_cobrado,
           COALESCE(SUM(GREATEST(v.total - COALESCE(pg.pagado, 0), 0)) FILTER (WHERE v.estado <> 'ANULADO'), 0)::numeric AS saldo_pendiente,
+          COALESCE(SUM(GREATEST(COALESCE(pg.pagado, 0) - v.total, 0)) FILTER (WHERE v.estado <> 'ANULADO'), 0)::numeric AS excedente_cobrado,
           COUNT(*) FILTER (WHERE v.estado = 'ANULADO')::int AS operaciones_anuladas
         FROM ventas v
         LEFT JOIN LATERAL (
@@ -49,7 +50,8 @@ async function reporteVentas(req, res) {
         SELECT v.id, v.numero, v.fecha, v.canal, v.modalidad, v.estado, v.total,
           COALESCE(c.nombre, 'Consumidor final') AS cliente,
           COALESCE(pg.pagado, 0)::numeric AS pagado,
-          GREATEST(v.total - COALESCE(pg.pagado, 0), 0)::numeric AS pendiente
+          GREATEST(v.total - COALESCE(pg.pagado, 0), 0)::numeric AS pendiente,
+          GREATEST(COALESCE(pg.pagado, 0) - v.total, 0)::numeric AS excedente
         FROM ventas v
         LEFT JOIN clientes c ON c.id = v.id_cliente
         LEFT JOIN LATERAL (
