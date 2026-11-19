@@ -1,7 +1,7 @@
 const pool = require("../db");
 
 function fechaValida(valor) {
-  return /^\\d{4}-\\d{2}-\\d{2}$/.test(String(valor || ""));
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(valor || ""));
 }
 
 async function reporteVentas(req, res) {
