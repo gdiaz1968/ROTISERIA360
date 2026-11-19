@@ -31,13 +31,31 @@ const moneda = (valor) => new Intl.NumberFormat('es-AR', {
   maximumFractionDigits: 2,
 }).format(Number(valor || 0))
 
-const pagoEntregaCoincide = (pago, pendiente) => {
-  const efectivo = Number(pago?.efectivo || 0)
-  const transferencia = Number(pago?.transferencia || 0)
-  const saldo = Number(pendiente || 0)
-  if (![efectivo, transferencia, saldo].every(Number.isFinite)) return false
-  if (efectivo < 0 || transferencia < 0 || saldo < 0) return false
-  return Math.round((efectivo + transferencia) * 100) === Math.round(saldo * 100)
+const evaluarPagoEntrega = (pago, pendiente) => {
+  const efectivo = Number(pago?.efectivo ?? 0)
+  const transferencia = Number(pago?.transferencia ?? 0)
+  const saldo = Number(pendiente)
+  if (![efectivo, transferencia, saldo].every(Number.isFinite) ||
+      efectivo < 0 || transferencia < 0 || saldo < 0) {
+    return { valido: false, mensaje: 'Ingresá importes válidos, iguales o mayores a cero.' }
+  }
+
+  const totalCentavos = Math.round(efectivo * 100) + Math.round(transferencia * 100)
+  const saldoCentavos = Math.round(saldo * 100)
+
+  if (totalCentavos < saldoCentavos) {
+    return {
+      valido: false,
+      mensaje: `Faltan cobrar ${moneda((saldoCentavos - totalCentavos) / 100)}.`,
+    }
+  }
+  if (totalCentavos > saldoCentavos) {
+    return {
+      valido: false,
+      mensaje: `El importe ingresado supera el saldo en ${moneda((totalCentavos - saldoCentavos) / 100)}.`,
+    }
+  }
+  return { valido: true, mensaje: 'Importe correcto. Se puede confirmar la entrega.' }
 }
 
 const fechaHora = (valor) => valor
@@ -254,6 +272,8 @@ export default function SeguimientoComandas() {
   }
 
   function cambiarPagoEntrega(id, campo, valor) {
+    setMensaje('')
+    setError('')
     setPagosEntrega((actual) => ({
       ...actual,
       [id]: { efectivo: '0', transferencia: '0', ...actual[id], [campo]: valor },
@@ -402,6 +422,7 @@ export default function SeguimientoComandas() {
               {pedidosMostrador.length === 0 && <div className="sc-empty">No hay pedidos de mostrador listos para retirar.</div>}
               {pedidosMostrador.map((pedido) => {
                 const pago = pagosEntrega[pedido.id] || { efectivo: '0', transferencia: '0' }
+                const validacionPago = evaluarPagoEntrega(pago, pedido.pendiente)
                 return <article className="sc-delivery-card" key={pedido.id}>
                   <header><div><span>PEDIDO</span><h4>#{pedido.numero}</h4></div><strong>{moneda(pedido.total)}</strong></header>
                   <p>{pedido.cliente || 'Consumidor final'} · {pedido.modalidad}</p>
@@ -411,8 +432,8 @@ export default function SeguimientoComandas() {
                     <label>Efectivo<input type="number" min="0" step="0.01" value={pago.efectivo} onChange={(e) => cambiarPagoEntrega(pedido.id, 'efectivo', e.target.value)} /></label>
                     <label>Transferencia<input type="number" min="0" step="0.01" value={pago.transferencia} onChange={(e) => cambiarPagoEntrega(pedido.id, 'transferencia', e.target.value)} /></label>
                   </div>
-                  <small className="sc-muted">Efectivo + transferencia deben sumar exactamente {moneda(pedido.pendiente)}.</small>
-                  <button type="button" onClick={() => confirmarEntrega(pedido)} disabled={!pagoEntregaCoincide(pago, pedido.pendiente)}>Confirmar retiro y rendición</button>
+                  <small className={`sc-muted ${validacionPago.valido ? 'sc-payment-ok' : 'sc-payment-error'}`}>{validacionPago.mensaje}</small>
+                  <button type="button" onClick={() => confirmarEntrega(pedido)} disabled={!validacionPago.valido}>Confirmar retiro y rendición</button>
                 </article>
               })}
             </div>
@@ -440,6 +461,7 @@ export default function SeguimientoComandas() {
                 {deliveryEnReparto.length === 0 && <p className="sc-muted">No hay pedidos en reparto.</p>}
                 {deliveryEnReparto.map((pedido) => {
                   const pago = pagosEntrega[pedido.id] || { efectivo: '0', transferencia: '0' }
+                  const validacionPago = evaluarPagoEntrega(pago, pedido.pendiente)
                   return <article className="sc-delivery-card" key={pedido.id}>
                     <header><div><span>PEDIDO #{pedido.numero}</span><h4>{pedido.repartidor || 'Repartidor'}</h4></div><strong>{moneda(pedido.total)}</strong></header>
                     <p>{pedido.cliente || 'Consumidor final'} · {pedido.direccion_entrega || ''}, {pedido.localidad_entrega || ''}</p>
@@ -450,8 +472,8 @@ export default function SeguimientoComandas() {
                       <label>Efectivo<input type="number" min="0" step="0.01" value={pago.efectivo} onChange={(e) => cambiarPagoEntrega(pedido.id, 'efectivo', e.target.value)} /></label>
                       <label>Transferencia<input type="number" min="0" step="0.01" value={pago.transferencia} onChange={(e) => cambiarPagoEntrega(pedido.id, 'transferencia', e.target.value)} /></label>
                     </div>
-                    <small className="sc-muted">Efectivo + transferencia deben sumar exactamente {moneda(pedido.pendiente)}.</small>
-                    <button type="button" onClick={() => confirmarEntrega(pedido)} disabled={!pagoEntregaCoincide(pago, pedido.pendiente)}>Confirmar entrega y rendición</button>
+                    <small className={`sc-muted ${validacionPago.valido ? 'sc-payment-ok' : 'sc-payment-error'}`}>{validacionPago.mensaje}</small>
+                    <button type="button" onClick={() => confirmarEntrega(pedido)} disabled={!validacionPago.valido}>Confirmar entrega y rendición</button>
                   </article>
                 })}
               </section>
