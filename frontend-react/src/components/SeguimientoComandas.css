@@ -40,3 +40,7 @@
 .sc-rider-list span{padding:6px 9px;border-radius:20px;background:#f2f4f7;color:#344054;font-size:11px}
 .sc-delivery-card>small{color:#667085;font-size:10px}
 @media(max-width:650px){.sc-delivery-head{align-items:flex-start;flex-direction:column}.sc-delivery-payments,.sc-rider-form{grid-template-columns:1fr}.sc-dispatch-form{align-items:stretch;flex-direction:column}.sc-dispatch-form button{width:100%}}
+
+.sc-delivery-card>button:disabled{opacity:.45;cursor:not-allowed;background:#98a2b3}
+.sc-payment-error{display:block;color:#b42318!important;font-weight:700}
+.sc-payment-ok{display:block;color:#18784b!important;font-weight:700}
