@@ -184,7 +184,23 @@ async function confirmarEntrega(req, res) {
     );
     const esperado = Math.max(0, Math.round((Number(venta.total) - Number(pagos.rows[0].pagado) + Number.EPSILON) * 100) / 100);
     const totalRendido = Math.round((efectivo + transferencia + Number.EPSILON) * 100) / 100;
-    const diferencia = Math.round((totalRendido - esperado + Number.EPSILON) * 100) / 100;
+    const centavosEsperados = Math.round(esperado * 100);
+    const centavosRendidos = Math.round(totalRendido * 100);
+
+    // Regla de negocio A: la entrega solo se confirma si se cobra el saldo completo.
+    if (centavosRendidos !== centavosEsperados) {
+      const diferenciaPendiente = Math.max(0, esperado - totalRendido);
+      const excedente = Math.max(0, totalRendido - esperado);
+      const detalle = diferenciaPendiente > 0
+        ? `Faltan cobrar $\{diferenciaPendiente.toFixed(2)}.`
+        : `El importe ingresado supera el saldo en $\{excedente.toFixed(2)}.`;
+      throw Object.assign(
+        new Error(`No se puede confirmar la entrega. El saldo pendiente es $\{esperado.toFixed(2)} y efectivo más transferencia deben sumar exactamente ese importe. \{detalle}`),
+        { status: 400 }
+      );
+    }
+
+    const diferencia = 0;
 
     if (efectivo > 0) {
       await client.query(
