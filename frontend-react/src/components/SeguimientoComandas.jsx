@@ -119,6 +119,13 @@ export default function SeguimientoComandas() {
   const [nuevoRepartidor, setNuevoRepartidor] = useState({ nombre: '', telefono: '' })
   const [pagosEntrega, setPagosEntrega] = useState({})
   const [cargandoEntregas, setCargandoEntregas] = useState(false)
+  const [anulacionAbierta, setAnulacionAbierta] = useState(false)
+  const [comandaAnular, setComandaAnular] = useState(null)
+  const [motivoAnulacion, setMotivoAnulacion] = useState('')
+  const [operadorAnulacion, setOperadorAnulacion] = useState('')
+  const [revisionAnulacion, setRevisionAnulacion] = useState(null)
+  const [cargandoRevision, setCargandoRevision] = useState(false)
+  const [confirmandoAnulacion, setConfirmandoAnulacion] = useState(false)
 
   const cargar = useCallback(async (silencioso = false) => {
     if (!silencioso) setCargando(true)
@@ -174,7 +181,7 @@ export default function SeguimientoComandas() {
   }, [])
 
   const visibles = useMemo(() => filtro === 'TODAS'
-    ? comandas
+    ? comandas.filter((comanda) => comanda.estado !== 'ANULADA')
     : comandas.filter((comanda) => comanda.estado === filtro), [comandas, filtro])
 
   const contadores = useMemo(() => ({
@@ -198,6 +205,71 @@ export default function SeguimientoComandas() {
       setError(e.message)
     } finally {
       setProcesando(null)
+    }
+  }
+
+  function abrirAnulacion(comanda) {
+    setError('')
+    setMensaje('')
+    setComandaAnular(comanda)
+    setMotivoAnulacion('')
+    setOperadorAnulacion('')
+    setRevisionAnulacion(null)
+    setAnulacionAbierta(true)
+  }
+
+  function cerrarAnulacion() {
+    if (cargandoRevision || confirmandoAnulacion) return
+    setAnulacionAbierta(false)
+    setComandaAnular(null)
+    setRevisionAnulacion(null)
+  }
+
+  async function revisarImpactoAnulacion() {
+    if (!motivoAnulacion.trim()) {
+      setError('Ingresá el motivo de anulación.')
+      return
+    }
+    if (!operadorAnulacion.trim()) {
+      setError('Ingresá el nombre del operador que realiza la anulación.')
+      return
+    }
+    setError('')
+    setCargandoRevision(true)
+    try {
+      const resultado = await api(`/api/comandas/${comandaAnular.id}/anulacion/preview`)
+      setRevisionAnulacion(resultado)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setCargandoRevision(false)
+    }
+  }
+
+  async function confirmarAnulacion() {
+    if (!revisionAnulacion?.puede_confirmar || !comandaAnular) return
+    setError('')
+    setConfirmandoAnulacion(true)
+    try {
+      const resultado = await api(`/api/comandas/${comandaAnular.id}/anulacion`, {
+        method: 'POST',
+        body: JSON.stringify({
+          motivo: motivoAnulacion.trim(),
+          usuario: operadorAnulacion.trim(),
+          total_esperado: revisionAnulacion.resumen.nuevo_total,
+        }),
+      })
+      setMensaje(`${resultado.mensaje} Nuevo total: ${moneda(resultado.pedido.total_nuevo)} · Pagado: ${moneda(resultado.pedido.pagado)} · Saldo: ${moneda(resultado.pedido.pendiente)}.`)
+      setAnulacionAbierta(false)
+      setComandaAnular(null)
+      setRevisionAnulacion(null)
+      await cargar(true)
+      await cargarEntregas(true)
+    } catch (e) {
+      setError(e.message)
+      setRevisionAnulacion(null)
+    } finally {
+      setConfirmandoAnulacion(false)
     }
   }
 
@@ -341,6 +413,7 @@ export default function SeguimientoComandas() {
             <option value="PENDIENTE">Pendientes</option>
             <option value="EN_PREPARACION">En preparación</option>
             <option value="LISTA">Listas</option>
+            <option value="ANULADA">Anuladas</option>
           </select>
         </label>
         <span>Actualización automática cada 5 segundos</span>
@@ -379,7 +452,7 @@ export default function SeguimientoComandas() {
 
             <div className="sc-ticket-lines">
               {comanda.detalles.map((detalle) => (
-                <div className="sc-ticket-line" key={detalle.id_venta_detalle}>
+                <div className={`sc-ticket-line ${detalle.estado === 'ANULADO' ? 'sc-ticket-line-cancelled' : ''}`} key={detalle.id_venta_detalle}>
                   <strong>{Number(detalle.cantidad)} ×</strong>
                   <span>{detalle.producto}</span>
                   {detalle.observaciones && <small>{detalle.observaciones}</small>}
@@ -398,6 +471,14 @@ export default function SeguimientoComandas() {
               <span>Inicio: {fechaHora(comanda.fecha_inicio)}</span>
               <span>Lista: {fechaHora(comanda.fecha_lista)}</span>
             </div>
+            {comanda.estado === 'ANULADA' && (
+              <div className="sc-cancel-note">
+                <strong>Comanda anulada</strong>
+                <span>Fecha: {fechaHora(comanda.fecha_anulacion)}</span>
+                <span>Operador: {comanda.usuario_anulacion || 'No informado'}</span>
+                <span>Motivo: {comanda.motivo_anulacion || 'Sin motivo registrado'}</span>
+              </div>
+            )}
 
             <footer className="sc-ticket-actions no-print">
               {comanda.estado === 'PENDIENTE' && (
@@ -410,9 +491,16 @@ export default function SeguimientoComandas() {
                   Marcar lista
                 </button>
               )}
-              <button type="button" className="sc-print-button" onClick={() => imprimir(comanda)} disabled={procesando === comanda.id}>
-                {comanda.fecha_impresion ? 'Reimprimir ticket' : 'Imprimir ticket'}
-              </button>
+              {comanda.estado !== 'ANULADA' && !['EN_REPARTO', 'ENTREGADO', 'ANULADO'].includes(comanda.estado_pedido) && (
+                <button type="button" className="sc-cancel-button" onClick={() => abrirAnulacion(comanda)} disabled={procesando === comanda.id}>
+                  Anular comanda
+                </button>
+              )}
+              {comanda.estado !== 'ANULADA' && (
+                <button type="button" className="sc-print-button" onClick={() => imprimir(comanda)} disabled={procesando === comanda.id}>
+                  {comanda.fecha_impresion ? 'Reimprimir ticket' : 'Imprimir ticket'}
+                </button>
+              )}
             </footer>
             {comanda.fecha_impresion && (
               <div className="sc-print-note no-print">Última solicitud de impresión: {fechaHora(comanda.fecha_impresion)}</div>
@@ -522,6 +610,89 @@ export default function SeguimientoComandas() {
             </div>
           )}
         </section>
+      )}
+      {anulacionAbierta && comandaAnular && (
+        <div className="sc-modal-overlay" role="presentation" onMouseDown={(e) => {
+          if (e.target === e.currentTarget) cerrarAnulacion()
+        }}>
+          <section className="sc-cancel-modal" role="dialog" aria-modal="true" aria-labelledby="sc-cancel-title">
+            <header className="sc-cancel-modal-head">
+              <div>
+                <span className="sc-eyebrow">PEDIDO #{comandaAnular.numero_pedido}</span>
+                <h3 id="sc-cancel-title">Anular comanda #{comandaAnular.numero_comanda}</h3>
+                <p>Se anulará únicamente esta comanda. Las demás comandas del pedido seguirán su circuito.</p>
+              </div>
+              <button type="button" onClick={cerrarAnulacion} disabled={cargandoRevision || confirmandoAnulacion} aria-label="Cerrar">×</button>
+            </header>
+
+            {!revisionAnulacion ? (
+              <div className="sc-cancel-form">
+                <div className="sc-cancel-info">
+                  <strong>Antes de continuar</strong>
+                  <p>La comanda dejará de prepararse. En el siguiente paso vas a revisar qué productos se quitarán de la venta y cómo quedarán el total y el saldo. No se borrarán pagos ni registros históricos.</p>
+                </div>
+                <label>Motivo de anulación *
+                  <textarea rows="3" value={motivoAnulacion} onChange={(e) => setMotivoAnulacion(e.target.value)} maxLength={1000} placeholder="Ej.: se agregó un producto por error." />
+                </label>
+                <label>Nombre del operador *
+                  <input value={operadorAnulacion} onChange={(e) => setOperadorAnulacion(e.target.value)} maxLength={120} placeholder="Quién realiza la operación" />
+                </label>
+                <small>El nombre se registra como dato declarado por el operador. Actualmente ROTISERIA360 no tiene autenticación individual para verificar su identidad.</small>
+                <div className="sc-cancel-actions">
+                  <button type="button" className="sc-secondary-button" onClick={cerrarAnulacion} disabled={cargandoRevision}>Cancelar</button>
+                  <button type="button" className="sc-danger-button" onClick={revisarImpactoAnulacion} disabled={cargandoRevision || !motivoAnulacion.trim() || !operadorAnulacion.trim()}>
+                    {cargandoRevision ? 'Calculando...' : 'Revisar impacto económico'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="sc-cancel-review">
+                <div className="sc-cancel-info">
+                  <strong>Revisión del pedido #{revisionAnulacion.pedido.numero}</strong>
+                  <p>Estos productos se quitarán del detalle comercial de la venta. La comanda seleccionada quedará anulada y las demás continuarán activas.</p>
+                </div>
+                <h4>Productos que se quitarán de la venta</h4>
+                <div className="sc-cancel-products">
+                  {revisionAnulacion.productos.map((producto) => (
+                    <div key={producto.id_venta_detalle}>
+                      <span>{Number(producto.cantidad)} × {producto.producto}</span>
+                      <strong>{moneda(producto.importe)}</strong>
+                    </div>
+                  ))}
+                </div>
+                <div className="sc-cancel-totals">
+                  <div><span>Total actual</span><strong>{moneda(revisionAnulacion.resumen.total_actual)}</strong></div>
+                  <div><span>Importe a descontar</span><strong className="sc-negative">{moneda(revisionAnulacion.resumen.importe_a_descontar)}</strong></div>
+                  <div className="sc-new-total"><span>Nuevo total de venta</span><strong>{moneda(revisionAnulacion.resumen.nuevo_total)}</strong></div>
+                  <div><span>Ya cobrado (se conserva)</span><strong>{moneda(revisionAnulacion.resumen.pagado)}</strong></div>
+                  <div><span>Nuevo saldo pendiente</span><strong>{moneda(revisionAnulacion.resumen.nuevo_saldo)}</strong></div>
+                </div>
+                {revisionAnulacion.resumen.excedente_cobrado > 0 && (
+                  <div className="sc-cancel-blocker">
+                    <strong>No se puede confirmar esta anulación todavía.</strong>
+                    <p>Ya se cobró {moneda(revisionAnulacion.resumen.excedente_cobrado)} por encima del nuevo total. Primero debe resolverse ese excedente mediante el procedimiento de devolución o ajuste correspondiente. Los pagos no se modificarán automáticamente.</p>
+                  </div>
+                )}
+                <div className="sc-cancel-info">
+                  <strong>Qué va a ocurrir al confirmar</strong>
+                  <ul>
+                    <li>La comanda quedará en estado ANULADA con fecha, motivo y operador.</li>
+                    <li>Los productos indicados quedarán marcados como anulados en la venta; no se borrarán.</li>
+                    <li>El total se actualizará a {moneda(revisionAnulacion.resumen.nuevo_total)}.</li>
+                    <li>Los pagos existentes se conservarán sin cambios.</li>
+                    <li>Las otras comandas del pedido no se modificarán.</li>
+                  </ul>
+                </div>
+                <div className="sc-cancel-actions">
+                  <button type="button" className="sc-secondary-button" onClick={() => setRevisionAnulacion(null)} disabled={confirmandoAnulacion}>Volver</button>
+                  <button type="button" className="sc-danger-button" onClick={confirmarAnulacion} disabled={!revisionAnulacion.puede_confirmar || confirmandoAnulacion}>
+                    {confirmandoAnulacion ? 'Confirmando...' : 'Confirmar anulación y ajuste'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
       )}
     </section>
   )
