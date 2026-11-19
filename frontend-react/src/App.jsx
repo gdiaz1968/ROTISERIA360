@@ -23,7 +23,7 @@ const modulos = [
   { codigo: 'reporte-productos', nombre: 'Reporte de productos', icono: '▤' },
   { codigo: 'reporte-recetas', nombre: 'Reporte de recetas', icono: '⚙' },
   { codigo: 'reporte-presentaciones', nombre: 'Reporte de presentaciones', icono: '▤' },
-  { codigo: 'reporte-ventas', nombre: 'Reporte de ventas', icono: '
+  { codigo: 'reporte-ventas', nombre: 'Reporte de ventas', icono: '$' },
   { codigo: 'presentaciones', nombre: 'Presentaciones', icono: '▤' },
   { codigo: 'proveedores', nombre: 'Proveedores', icono: '♧' },
   { codigo: 'recetas', nombre: 'Recetas', icono: '⚙' },
