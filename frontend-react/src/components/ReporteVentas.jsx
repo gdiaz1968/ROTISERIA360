@@ -6,7 +6,7 @@ const moneda = (valor) => new Intl.NumberFormat('es-AR', { style: 'currency', cu
 const numero = (valor, decimales = 2) => Number(valor || 0).toLocaleString('es-AR', { maximumFractionDigits: decimales })
 const fechaLocal = (fecha) => {
   const texto = String(fecha || '')
-  const d = /^\\d{4}-\\d{2}-\\d{2}$/.test(texto)
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(texto)
     ? new Date(Number(texto.slice(0, 4)), Number(texto.slice(5, 7)) - 1, Number(texto.slice(8, 10)))
     : new Date(fecha)
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-AR')
