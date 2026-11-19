@@ -31,18 +31,34 @@ const moneda = (valor) => new Intl.NumberFormat('es-AR', {
   maximumFractionDigits: 2,
 }).format(Number(valor || 0))
 
+// Convierte importes escritos en formato argentino (3.500,00 o 3.500)
+// o decimal internacional (3500.00) a centavos enteros.
+const importeEnCentavos = (valor) => {
+  let texto = String(valor ?? '0').trim().replace(/\\s/g, '').replace(/^\\$/, '')
+  if (!texto) return 0
+
+  if (texto.includes(',')) {
+    texto = texto.replace(/\\./g, '').replace(',', '.')
+  } else if ((texto.match(/\\./g) || []).length > 1 || /\\.\\d{3}$/.test(texto)) {
+    texto = texto.replace(/\\./g, '')
+  }
+
+  if (!/^\\d+(\\.\\d{1,2})?$/.test(texto)) return null
+  const numero = Number(texto)
+  return Number.isFinite(numero) ? Math.round((numero + Number.EPSILON) * 100) : null
+}
+
 const evaluarPagoEntrega = (pago, pendiente) => {
-  const efectivo = Number(pago?.efectivo ?? 0)
-  const transferencia = Number(pago?.transferencia ?? 0)
-  const saldo = Number(pendiente)
-  if (![efectivo, transferencia, saldo].every(Number.isFinite) ||
-      efectivo < 0 || transferencia < 0 || saldo < 0) {
+  const efectivoCentavos = importeEnCentavos(pago?.efectivo ?? '0')
+  const transferenciaCentavos = importeEnCentavos(pago?.transferencia ?? '0')
+  const saldoCentavos = importeEnCentavos(pendiente)
+
+  if ([efectivoCentavos, transferenciaCentavos, saldoCentavos].some((n) => n === null) ||
+      efectivoCentavos < 0 || transferenciaCentavos < 0 || saldoCentavos < 0) {
     return { valido: false, mensaje: 'Ingresá importes válidos, iguales o mayores a cero.' }
   }
 
-  const totalCentavos = Math.round(efectivo * 100) + Math.round(transferencia * 100)
-  const saldoCentavos = Math.round(saldo * 100)
-
+  const totalCentavos = efectivoCentavos + transferenciaCentavos
   if (totalCentavos < saldoCentavos) {
     return {
       valido: false,
@@ -258,8 +274,8 @@ export default function SeguimientoComandas() {
       const resultado = await api(`/api/entregas/${pedido.id}/confirmar`, {
         method: 'POST',
         body: JSON.stringify({
-          efectivo: Number(pago.efectivo || 0),
-          transferencia: Number(pago.transferencia || 0),
+          efectivo: importeEnCentavos(pago.efectivo || '0') / 100,
+          transferencia: importeEnCentavos(pago.transferencia || '0') / 100,
         }),
       })
       const r = resultado.rendicion
@@ -467,11 +483,16 @@ export default function SeguimientoComandas() {
                     <p>{pedido.cliente || 'Consumidor final'} · {pedido.direccion_entrega || ''}, {pedido.localidad_entrega || ''}</p>
                     <small>Salida: {fechaHora(pedido.fecha_salida)}</small>
                     <div className="sc-delivery-lines">{pedido.detalles.map((d, i) => <div key={i}>{Number(d.cantidad)} × {d.producto}</div>)}</div>
-                    <div className="sc-delivery-balance">Saldo esperado: <strong>{moneda(pedido.pendiente)}</strong></div>
-                    <div className="sc-delivery-payments">
-                      <label>Efectivo<input type="number" min="0" step="0.01" value={pago.efectivo} onChange={(e) => cambiarPagoEntrega(pedido.id, 'efectivo', e.target.value)} /></label>
-                      <label>Transferencia<input type="number" min="0" step="0.01" value={pago.transferencia} onChange={(e) => cambiarPagoEntrega(pedido.id, 'transferencia', e.target.value)} /></label>
+                    <div className="sc-delivery-balance">
+                      <div>Total del pedido: <strong>{moneda(pedido.total)}</strong></div>
+                      <div>Ya cobrado en Ventas: <strong>{moneda(pedido.pagado)}</strong></div>
+                      <div>Saldo que debe cobrar el repartidor: <strong>{moneda(pedido.pendiente)}</strong></div>
                     </div>
+                    <div className="sc-delivery-payments">
+                      <label>Efectivo<input type="text" inputMode="decimal" placeholder="0,00" value={pago.efectivo} onChange={(e) => cambiarPagoEntrega(pedido.id, 'efectivo', e.target.value)} /></label>
+                      <label>Transferencia<input type="text" inputMode="decimal" placeholder="0,00" value={pago.transferencia} onChange={(e) => cambiarPagoEntrega(pedido.id, 'transferencia', e.target.value)} /></label>
+                    </div>
+                    <small className="sc-muted">Podés ingresar, por ejemplo, 3.500 o 3.500,00. El anticipo registrado en Ventas ya está descontado.</small>
                     <small className={`sc-muted ${validacionPago.valido ? 'sc-payment-ok' : 'sc-payment-error'}`}>{validacionPago.mensaje}</small>
                     <button type="button" onClick={() => confirmarEntrega(pedido)} disabled={!validacionPago.valido}>Confirmar entrega y rendición</button>
                   </article>
