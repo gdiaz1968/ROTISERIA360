@@ -16,14 +16,14 @@ const moneda = (valor) =>
   }).format(Number(valor || 0))
 
 const importeEnCentavos = (valor) => {
-  let texto = String(valor ?? '0').trim().replace(/\\s/g, '').replace(/^\\$/, '')
+  let texto = String(valor ?? '0').trim().replace(/\s/g, '').replace(/^\\$/, '')
   if (!texto) return 0
   if (texto.includes(',')) {
-    texto = texto.replace(/\\./g, '').replace(',', '.')
-  } else if ((texto.match(/\\./g) || []).length > 1 || /\\.\\d{3}$/.test(texto)) {
-    texto = texto.replace(/\\./g, '')
+    texto = texto.replace(/\./g, '').replace(',', '.')
+  } else if ((texto.match(/\./g) || []).length > 1 || /\.\d{3}$/.test(texto)) {
+    texto = texto.replace(/\./g, '')
   }
-  if (!/^\\d+(\\.\\d{1,2})?$/.test(texto)) return null
+  if (!/^\d+(\.\d{1,2})?$/.test(texto)) return null
   const numero = Number(texto)
   return Number.isFinite(numero) ? Math.round((numero + Number.EPSILON) * 100) : null
 }
