@@ -1,4 +1,9 @@
 const pool = require("../db");
+const { registrarActividad } = require("../services/auditoriaService");
+
+async function auditarComanda(req, actividad) {
+  await registrarActividad({ modulo: "VENTAS", pantalla: "SEGUIMIENTO_COMANDAS", entidad: "COMANDA", metodoHttp: req.method, ruta: req.baseUrl + req.path, ...actividad });
+}
 
 async function consultarComandas(req, res) {
   const id = req.params.id ? Number(req.params.id) : null;
@@ -81,9 +86,11 @@ async function actualizarEstadoComanda(req, res) {
   const estado = String(req.body?.estado || "").trim().toUpperCase();
 
   if (!Number.isSafeInteger(id) || id <= 0) {
+    await auditarComanda(req, { accion: "COMANDA_CAMBIO_ESTADO", resultado: "ADVERTENCIA", detalle: { motivo: "ID_INVALIDO" } });
     return res.status(400).json({ mensaje: "Identificador de comanda inválido." });
   }
   if (!["EN_PREPARACION", "LISTA"].includes(estado)) {
+    await auditarComanda(req, { accion: "COMANDA_CAMBIO_ESTADO", resultado: "ADVERTENCIA", entidadId: String(id), detalle: { motivo: "ESTADO_SOLICITADO_INVALIDO", estado_solicitado: estado } });
     return res.status(400).json({ mensaje: "El estado solicitado no está permitido." });
   }
 
@@ -96,6 +103,7 @@ async function actualizarEstadoComanda(req, res) {
     );
     if (!actual.rowCount) {
       await client.query("ROLLBACK");
+      await auditarComanda(req, { accion: "COMANDA_CAMBIO_ESTADO", resultado: "ADVERTENCIA", entidadId: String(id), detalle: { motivo: "COMANDA_NO_ENCONTRADA" } });
       return res.status(404).json({ mensaje: "No se encontró la comanda." });
     }
 
@@ -107,6 +115,7 @@ async function actualizarEstadoComanda(req, res) {
 
     if (!transicionValida) {
       await client.query("ROLLBACK");
+      await auditarComanda(req, { accion: "COMANDA_CAMBIO_ESTADO", resultado: "ADVERTENCIA", entidadId: String(id), detalle: { motivo: "TRANSICION_NO_PERMITIDA", estado_anterior: comanda.estado, estado_solicitado: estado } });
       return res.status(409).json({ mensaje: `No se puede cambiar una comanda de ${comanda.estado} a ${estado}.` });
     }
 
@@ -146,9 +155,11 @@ async function actualizarEstadoComanda(req, res) {
     }
 
     await client.query("COMMIT");
+    await auditarComanda(req, { accion: "COMANDA_ESTADO_MODIFICADO", resultado: "OK", entidadId: String(id), detalle: { pedido_id: comanda.id_venta, estado_anterior: comanda.estado, estado_nuevo: estado } });
     res.json({ mensaje: "Estado de la comanda actualizado.", id, estado });
   } catch (error) {
     await client.query("ROLLBACK");
+    await auditarComanda(req, { accion: "COMANDA_CAMBIO_ESTADO", resultado: "ERROR", entidadId: String(id), detalle: { motivo: "ERROR_INTERNO", mensaje: error.message || "Error no identificado" } });
     console.error("Error al actualizar estado de comanda:", error);
     res.status(500).json({ mensaje: "No se pudo actualizar el estado de la comanda." });
   } finally {
