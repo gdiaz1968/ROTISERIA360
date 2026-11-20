@@ -277,7 +277,8 @@ async function crearVenta(req, res) {
         total_pagado: totalPagado,
         saldo_pendiente: Math.max(0, Math.round((total - totalPagado + Number.EPSILON) * 100) / 100),
         cantidad_productos: lineas.length,
-        cantidad_comandas: comandasGeneradas.length
+        cantidad_comandas: comandasGeneradas.length,
+        pagos: pagosValidados.map((pago) => ({ medio_pago: pago.medio, importe: pago.importe }))
       }
     });
     res.status(201).json({
