@@ -1,4 +1,23 @@
 const pool = require("../db");
+const { registrarActividad } = require("../services/auditoriaService");
+
+async function auditarVenta(req, { accion, resultado = "OK", entidadId = null, detalle = {} }) {
+  await registrarActividad({
+    modulo: "VENTAS",
+    pantalla: "VENTAS",
+    accion,
+    entidad: "VENTA",
+    entidadId: entidadId == null ? null : String(entidadId),
+    metodoHttp: req.method,
+    ruta: req.baseUrl ? `${req.baseUrl}${req.path}` : req.path,
+    resultado,
+    detalle
+  });
+}
+
+function errorValidacion(mensaje) {
+  return Object.assign(new Error(mensaje), { esValidacion: true });
+}
 
 const CANALES = ["MOSTRADOR", "WHATSAPP", "TELEFONO"];
 const MODALIDADES = ["MOSTRADOR", "RETIRO", "DELIVERY"];
@@ -53,18 +72,23 @@ async function crearVenta(req, res) {
   const observaciones = texto(body.observaciones, 2000);
 
   if (!CANALES.includes(canal)) {
+    await auditarVenta(req, { accion: "PEDIDO_CREAR", resultado: "ADVERTENCIA", detalle: { motivo: "CANAL_INVALIDO" } });
     return res.status(400).json({ mensaje: "El canal del pedido no es válido." });
   }
   if (!MODALIDADES.includes(modalidad)) {
+    await auditarVenta(req, { accion: "PEDIDO_CREAR", resultado: "ADVERTENCIA", detalle: { motivo: "MODALIDAD_INVALIDA" } });
     return res.status(400).json({ mensaje: "La modalidad de entrega no es válida." });
   }
   if (!items.length) {
+    await auditarVenta(req, { accion: "PEDIDO_CREAR", resultado: "ADVERTENCIA", detalle: { motivo: "SIN_PRODUCTOS" } });
     return res.status(400).json({ mensaje: "Agregá al menos un producto al pedido." });
   }
   if (modalidad === "DELIVERY" && !direccion) {
+    await auditarVenta(req, { accion: "PEDIDO_CREAR", resultado: "ADVERTENCIA", detalle: { motivo: "DELIVERY_SIN_DIRECCION" } });
     return res.status(400).json({ mensaje: "Para un delivery tenés que indicar la dirección de entrega." });
   }
   if (pagos.length > 5) {
+    await auditarVenta(req, { accion: "PEDIDO_CREAR", resultado: "ADVERTENCIA", detalle: { motivo: "DEMASIADOS_MEDIOS_PAGO", cantidad: pagos.length } });
     return res.status(400).json({ mensaje: "Se permiten hasta cinco medios de pago por pedido." });
   }
 
@@ -72,6 +96,7 @@ async function crearVenta(req, res) {
     ? new Date(body.fecha_entrega_programada)
     : null;
   if (fechaProgramada && Number.isNaN(fechaProgramada.getTime())) {
+    await auditarVenta(req, { accion: "PEDIDO_CREAR", resultado: "ADVERTENCIA", detalle: { motivo: "FECHA_PROGRAMADA_INVALIDA" } });
     return res.status(400).json({ mensaje: "La fecha programada no es válida." });
   }
 
@@ -80,6 +105,7 @@ async function crearVenta(req, res) {
     const medio = texto(pago.medio_pago, 20).toUpperCase();
     const importe = numeroPositivo(pago.importe);
     if (!MEDIOS_PAGO.includes(medio) || !importe) {
+      await auditarVenta(req, { accion: "PEDIDO_CREAR", resultado: "ADVERTENCIA", detalle: { motivo: "PAGO_INVALIDO", medio_pago: medio } });
       return res.status(400).json({ mensaje: "Revisá los medios e importes de pago ingresados." });
     }
     pagosValidados.push({ medio, importe });
@@ -123,7 +149,7 @@ async function crearVenta(req, res) {
       const idProducto = Number(item.id_producto);
       const cantidad = numeroPositivo(item.cantidad);
       if (!Number.isSafeInteger(idProducto) || idProducto <= 0 || !cantidad) {
-        throw new Error("Hay un producto o una cantidad inválida en el pedido.");
+        throw errorValidacion("Hay un producto o una cantidad inválida en el pedido.");
       }
 
       const productoResult = await client.query(`
@@ -140,7 +166,7 @@ async function crearVenta(req, res) {
       `, [idProducto]);
 
       if (!productoResult.rowCount) {
-        throw new Error("Uno de los productos no está habilitado para la venta o no tiene un sector activo asignado. Revisá Productos para la venta.");
+        throw errorValidacion("Uno de los productos no está habilitado para la venta o no tiene un sector activo asignado. Revisá Productos para la venta.");
       }
 
       const producto = productoResult.rows[0];
@@ -162,7 +188,7 @@ async function crearVenta(req, res) {
 
     const totalPagado = Math.round((pagosValidados.reduce((suma, pago) => suma + pago.importe, 0) + Number.EPSILON) * 100) / 100;
     if (totalPagado - total > 0.009) {
-      throw new Error("El importe cobrado no puede superar el total del pedido.");
+      throw errorValidacion("El importe cobrado no puede superar el total del pedido.");
     }
 
     const ventaResult = await client.query(`
@@ -239,6 +265,21 @@ async function crearVenta(req, res) {
     }
 
     await client.query("COMMIT");
+    await auditarVenta(req, {
+      accion: "PEDIDO_CREADO",
+      resultado: "OK",
+      entidadId: venta.id,
+      detalle: {
+        numero_pedido: venta.numero,
+        canal,
+        modalidad,
+        total,
+        total_pagado: totalPagado,
+        saldo_pendiente: Math.max(0, Math.round((total - totalPagado + Number.EPSILON) * 100) / 100),
+        cantidad_productos: lineas.length,
+        cantidad_comandas: comandasGeneradas.length
+      }
+    });
     res.status(201).json({
       mensaje: "Pedido registrado y comandas generadas correctamente.",
       comandas: comandasGeneradas,
@@ -253,12 +294,17 @@ async function crearVenta(req, res) {
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Error al crear venta:", error);
-    const mensaje = error.message?.includes("Uno de los productos") ||
-      error.message?.includes("cantidad inválida") ||
-      error.message?.includes("superar el total")
-      ? error.message
-      : "No se pudo registrar el pedido.";
-    res.status(400).json({ mensaje });
+    const esValidacion = Boolean(error.esValidacion);
+    await auditarVenta(req, {
+      accion: "PEDIDO_CREAR",
+      resultado: esValidacion ? "ADVERTENCIA" : "ERROR",
+      detalle: {
+        motivo: esValidacion ? "VALIDACION_RECHAZADA" : "ERROR_INTERNO",
+        mensaje: error.message || "Error no identificado"
+      }
+    });
+    const mensaje = esValidacion ? error.message : "No se pudo registrar el pedido.";
+    res.status(esValidacion ? 400 : 500).json({ mensaje });
   } finally {
     client.release();
   }
