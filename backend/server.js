@@ -22,6 +22,9 @@ const reportesRoutes = require("./routes/reportes");
 
 const app = express();
 
+// Auditoría automática de solicitudes a la API.
+app.use(auditoriaMiddleware);
+
 console.log(">>> SERVER.JS CORRECTO - PRUEBA 3032");
 
 const PORT = process.env.PORT || 3032;
@@ -46,9 +49,6 @@ app.get(
 
 app.use(cors());
 app.use(express.json());
-
-// Auditoría automática de solicitudes a la API.
-app.use(auditoriaMiddleware);
 
 app.use(function (req, res, next) {
     console.log(
