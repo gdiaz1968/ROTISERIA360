@@ -1,4 +1,9 @@
 const pool = require("../db");
+const { registrarActividad } = require("../services/auditoriaService");
+
+async function auditarEntrega(req, actividad) {
+  await registrarActividad({ modulo: "VENTAS", pantalla: "ENTREGAS", metodoHttp: req.method, ruta: req.baseUrl + req.path, ...actividad });
+}
 
 function enteroPositivo(valor) {
   const n = Number(valor);
@@ -85,6 +90,7 @@ async function crearRepartidor(req, res) {
       "INSERT INTO repartidores (nombre, telefono) VALUES ($1, $2) RETURNING id, nombre, telefono",
       [nombre, telefono || null]
     );
+    await auditarEntrega(req, { accion: "REPARTIDOR_CREADO", entidad: "REPARTIDOR", entidadId: String(resultado.rows[0].id), resultado: "OK", detalle: { nombre: resultado.rows[0].nombre, telefono_informado: Boolean(resultado.rows[0].telefono) } });
     res.status(201).json({ repartidor: resultado.rows[0], mensaje: "Repartidor registrado." });
   } catch (error) {
     console.error("Error al crear repartidor:", error);
@@ -134,6 +140,7 @@ async function crearReparto(req, res) {
     }
 
     await client.query("COMMIT");
+    await auditarEntrega(req, { accion: "SALIDA_REPARTO_REGISTRADA", entidad: "REPARTO", entidadId: String(idReparto), resultado: "OK", detalle: { repartidor_id: idRepartidor, cantidad_pedidos: pedidos.rowCount, pedidos: pedidos.rows.map((p) => ({ id: p.id, numero: p.numero })) } });
     res.status(201).json({
       mensaje: `Salida registrada para ${pedidos.rowCount} pedido(s).`,
       reparto: { id: idReparto, fecha_salida: reparto.rows[0].fecha_salida, numero_pedidos: pedidos.rowCount }
@@ -245,6 +252,7 @@ async function confirmarEntrega(req, res) {
     }
 
     await client.query("COMMIT");
+    await auditarEntrega(req, { accion: "PEDIDO_ENTREGADO", entidad: "VENTA", entidadId: String(idVenta), resultado: "OK", detalle: { numero_pedido: venta.numero, modalidad: venta.modalidad, total: Number(venta.total), importe_esperado: esperado, efectivo, transferencia, usuario } });
     res.json({
       mensaje: `Pedido #${venta.numero} confirmado como entregado.`,
       rendicion: { esperado, efectivo, transferencia, diferencia }
