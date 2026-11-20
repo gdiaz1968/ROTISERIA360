@@ -3,6 +3,7 @@ const cors = require("cors");
 const path = require("path");
 
 const pool = require("./db");
+const auditoriaMiddleware = require("./middleware/auditoriaMiddleware");
 
 
 const productosRoutes = require("./routes/productos");
@@ -45,6 +46,9 @@ app.get(
 
 app.use(cors());
 app.use(express.json());
+
+// Auditoría automática de solicitudes a la API.
+app.use(auditoriaMiddleware);
 
 app.use(function (req, res, next) {
     console.log(
