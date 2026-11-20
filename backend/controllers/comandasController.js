@@ -290,11 +290,19 @@ async function anularComanda(req, res) {
   const totalEsperado = Number(req.body?.total_esperado);
 
   if (!Number.isSafeInteger(id) || id <= 0) {
+    await auditarComanda(req, { accion: "COMANDA_ANULAR", resultado: "ADVERTENCIA", detalle: { motivo: "ID_INVALIDO" } });
     return res.status(400).json({ mensaje: "Identificador de comanda inválido." });
   }
-  if (!motivo) return res.status(400).json({ mensaje: "El motivo de anulación es obligatorio." });
-  if (!usuario) return res.status(400).json({ mensaje: "Ingresá el nombre del operador que realiza la anulación." });
+  if (!motivo) {
+    await auditarComanda(req, { accion: "COMANDA_ANULAR", resultado: "ADVERTENCIA", entidadId: String(id), detalle: { motivo: "MOTIVO_OBLIGATORIO" } });
+    return res.status(400).json({ mensaje: "El motivo de anulación es obligatorio." });
+  }
+  if (!usuario) {
+    await auditarComanda(req, { accion: "COMANDA_ANULAR", resultado: "ADVERTENCIA", entidadId: String(id), detalle: { motivo: "OPERADOR_OBLIGATORIO" } });
+    return res.status(400).json({ mensaje: "Ingresá el nombre del operador que realiza la anulación." });
+  }
   if (!Number.isFinite(totalEsperado) || totalEsperado < 0) {
+    await auditarComanda(req, { accion: "COMANDA_ANULAR", resultado: "ADVERTENCIA", entidadId: String(id), detalle: { motivo: "TOTAL_REVISION_INVALIDO" } });
     return res.status(400).json({ mensaje: "No se recibió un total de revisión válido. Volvé a calcular el impacto." });
   }
 
@@ -410,6 +418,7 @@ async function anularComanda(req, res) {
     );
 
     await client.query("COMMIT");
+    await auditarComanda(req, { accion: "COMANDA_ANULADA", resultado: "OK", entidadId: String(id), detalle: { pedido_id: venta.id, numero_pedido: venta.numero, numero_comanda: comanda.numero_comanda, motivo, operador: usuario, importe_descontado: importeAnular, total_anterior: Number(venta.total), total_nuevo: nuevoTotal, saldo_pendiente: Math.max(0, nuevoTotal - pagado) } });
     res.json({
       mensaje: `Comanda #${comanda.numero_comanda} anulada. El pedido #${venta.numero} continúa activo con las demás comandas.`,
       comanda: { id, estado: "ANULADA", motivo, usuario },
@@ -417,6 +426,7 @@ async function anularComanda(req, res) {
     });
   } catch (error) {
     await client.query("ROLLBACK");
+    await auditarComanda(req, { accion: "COMANDA_ANULAR", resultado: error.status ? "ADVERTENCIA" : "ERROR", entidadId: String(id), detalle: { motivo: error.status ? "OPERACION_RECHAZADA" : "ERROR_INTERNO", mensaje: error.message || "Error no identificado" } });
     if (error.status) return res.status(error.status).json({ mensaje: error.message });
     console.error("Error al anular comanda:", error);
     res.status(500).json({ mensaje: "No se pudo anular la comanda. No se confirmaron cambios." });
@@ -443,6 +453,7 @@ async function registrarSolicitudImpresion(req, res) {
       return res.status(404).json({ mensaje: "No se encontró una comanda activa para imprimir." });
     }
 
+    await auditarComanda(req, { accion: "COMANDA_IMPRESION_SOLICITADA", resultado: "OK", entidadId: String(id), detalle: { numero_comanda: resultado.rows[0].numero_comanda } });
     res.json({
       mensaje: "Se registró la solicitud de impresión autorizada por el operador.",
       comanda: resultado.rows[0]
