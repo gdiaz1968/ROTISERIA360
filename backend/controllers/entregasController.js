@@ -84,7 +84,10 @@ async function listarRepartidores(req, res) {
 async function crearRepartidor(req, res) {
   const nombre = String(req.body?.nombre || "").trim().slice(0, 150);
   const telefono = String(req.body?.telefono || "").trim().slice(0, 50);
-  if (!nombre) return res.status(400).json({ mensaje: "Ingresá el nombre del repartidor." });
+  if (!nombre) {
+    await auditarEntrega(req, { accion: "REPARTIDOR_CREAR", entidad: "REPARTIDOR", resultado: "ADVERTENCIA", detalle: { motivo: "NOMBRE_OBLIGATORIO" } });
+    return res.status(400).json({ mensaje: "Ingresá el nombre del repartidor." });
+  }
   try {
     const resultado = await pool.query(
       "INSERT INTO repartidores (nombre, telefono) VALUES ($1, $2) RETURNING id, nombre, telefono",
@@ -93,6 +96,7 @@ async function crearRepartidor(req, res) {
     await auditarEntrega(req, { accion: "REPARTIDOR_CREADO", entidad: "REPARTIDOR", entidadId: String(resultado.rows[0].id), resultado: "OK", detalle: { nombre: resultado.rows[0].nombre, telefono_informado: Boolean(resultado.rows[0].telefono) } });
     res.status(201).json({ repartidor: resultado.rows[0], mensaje: "Repartidor registrado." });
   } catch (error) {
+    await auditarEntrega(req, { accion: "REPARTIDOR_CREAR", entidad: "REPARTIDOR", resultado: "ERROR", detalle: { motivo: "ERROR_INTERNO", mensaje: error.message || "Error no identificado" } });
     console.error("Error al crear repartidor:", error);
     res.status(500).json({ mensaje: "No se pudo registrar el repartidor." });
   }
@@ -103,8 +107,14 @@ async function crearReparto(req, res) {
   const ids = Array.isArray(req.body?.ids_ventas)
     ? [...new Set(req.body.ids_ventas.map(enteroPositivo).filter(Boolean))]
     : [];
-  if (!idRepartidor) return res.status(400).json({ mensaje: "Seleccioná un repartidor válido." });
-  if (!ids.length) return res.status(400).json({ mensaje: "Seleccioná al menos un pedido delivery listo." });
+  if (!idRepartidor) {
+    await auditarEntrega(req, { accion: "REPARTO_CREAR", entidad: "REPARTO", resultado: "ADVERTENCIA", detalle: { motivo: "REPARTIDOR_INVALIDO" } });
+    return res.status(400).json({ mensaje: "Seleccioná un repartidor válido." });
+  }
+  if (!ids.length) {
+    await auditarEntrega(req, { accion: "REPARTO_CREAR", entidad: "REPARTO", resultado: "ADVERTENCIA", detalle: { motivo: "SIN_PEDIDOS" } });
+    return res.status(400).json({ mensaje: "Seleccioná al menos un pedido delivery listo." });
+  }
 
   const client = await pool.connect();
   try {
@@ -147,6 +157,7 @@ async function crearReparto(req, res) {
     });
   } catch (error) {
     await client.query("ROLLBACK");
+    await auditarEntrega(req, { accion: "REPARTO_CREAR", entidad: "REPARTO", resultado: error.status ? "ADVERTENCIA" : "ERROR", detalle: { motivo: error.status ? "OPERACION_RECHAZADA" : "ERROR_INTERNO", mensaje: error.message || "Error no identificado" } });
     if (error.status) return res.status(error.status).json({ mensaje: error.message });
     console.error("Error al registrar salida de reparto:", error);
     res.status(500).json({ mensaje: "No se pudo registrar la salida. Verificá que esté aplicada la migración de delivery." });
@@ -161,8 +172,12 @@ async function confirmarEntrega(req, res) {
   const transferencia = importe(req.body?.transferencia);
   const observaciones = String(req.body?.observaciones || "").trim().slice(0, 1000);
   const usuario = String(req.body?.usuario || "OPERADOR").trim().slice(0, 120) || "OPERADOR";
-  if (!idVenta) return res.status(400).json({ mensaje: "Pedido inválido." });
+  if (!idVenta) {
+    await auditarEntrega(req, { accion: "PEDIDO_CONFIRMAR_ENTREGA", entidad: "VENTA", resultado: "ADVERTENCIA", detalle: { motivo: "PEDIDO_INVALIDO" } });
+    return res.status(400).json({ mensaje: "Pedido inválido." });
+  }
   if (efectivo === null || transferencia === null) {
+    await auditarEntrega(req, { accion: "PEDIDO_CONFIRMAR_ENTREGA", entidad: "VENTA", entidadId: String(idVenta), resultado: "ADVERTENCIA", detalle: { motivo: "IMPORTES_INVALIDOS" } });
     return res.status(400).json({ mensaje: "Los importes de efectivo y transferencia deben ser cero o mayores." });
   }
 
@@ -259,6 +274,7 @@ async function confirmarEntrega(req, res) {
     });
   } catch (error) {
     await client.query("ROLLBACK");
+    await auditarEntrega(req, { accion: "PEDIDO_CONFIRMAR_ENTREGA", entidad: "VENTA", entidadId: String(idVenta), resultado: error.status ? "ADVERTENCIA" : "ERROR", detalle: { motivo: error.status ? "OPERACION_RECHAZADA" : "ERROR_INTERNO", mensaje: error.message || "Error no identificado" } });
     if (error.status) return res.status(error.status).json({ mensaje: error.message });
     console.error("Error al confirmar entrega:", error);
     res.status(500).json({ mensaje: "No se pudo confirmar la entrega. Verificá que esté aplicada la migración de delivery." });
