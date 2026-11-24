@@ -7,10 +7,6 @@ import Presentaciones from './components/Presentaciones'
 import ReporteProductos from './components/ReporteProductos'
 import ReporteRecetas from './components/ReporteRecetas'
 import ReportePresentaciones from './components/ReportePresentaciones'
-import ReporteVentas from './components/ReporteVentas'
-import ProductosVenta from './components/ProductosVenta'
-import Ventas from './components/Ventas'
-import SeguimientoComandas from './components/SeguimientoComandas'
 
 const API_BASE =
   import.meta.env.VITE_API_URL ||
@@ -19,17 +15,14 @@ const API_BASE =
 const modulos = [
   { codigo: 'dashboard', nombre: 'Inicio', icono: '⌂' },
   { codigo: 'productos', nombre: 'Productos', icono: '▦' },
-  { codigo: 'productos-venta', nombre: 'Productos para la venta', icono: '▤' },
   { codigo: 'reporte-productos', nombre: 'Reporte de productos', icono: '▤' },
   { codigo: 'reporte-recetas', nombre: 'Reporte de recetas', icono: '⚙' },
   { codigo: 'reporte-presentaciones', nombre: 'Reporte de presentaciones', icono: '▤' },
-  { codigo: 'reporte-ventas', nombre: 'Reporte de ventas', icono: '$' },
   { codigo: 'presentaciones', nombre: 'Presentaciones', icono: '▤' },
   { codigo: 'proveedores', nombre: 'Proveedores', icono: '♧' },
   { codigo: 'recetas', nombre: 'Recetas', icono: '⚙' },
   { codigo: 'costos', nombre: 'Costos', icono: '$' },
-  { codigo: 'ventas', nombre: 'VENTAS', icono: '▤' },
-  { codigo: 'seguimiento-comandas', nombre: 'Seguimiento de comandas', icono: '▣' },
+  { codigo: 'ventas', nombre: 'Ventas de mostrador', icono: '▤' },
  
 ]
 
@@ -459,7 +452,7 @@ function App() {
               <div className="products-toolbar">
                 <div>
                   <h2>Productos</h2>
-                  <p>Administración de insumos, elaborados y productos de reventa.</p>
+                  <p>Administración de insumos y productos elaborados.</p>
                 </div>
 
                 <button
@@ -571,9 +564,7 @@ function App() {
                                 className={`type-tag ${
                                   producto.tipo === 'ELABORADO'
                                     ? 'type-elaborado'
-                                    : producto.tipo === 'REVENTA'
-                                      ? 'type-reventa'
-                                      : 'type-insumo'
+                                    : 'type-insumo'
                                 }`}
                               >
                                 {producto.tipo}
@@ -655,12 +646,6 @@ function App() {
             </section>
           )}
 
-          {moduloActivo === 'productos-venta' && <ProductosVenta />}
-
-          {moduloActivo === 'ventas' && <Ventas />}
-
-          {moduloActivo === 'seguimiento-comandas' && <SeguimientoComandas />}
-
           {moduloActivo === 'presentaciones' && <Presentaciones />}
 
           {moduloActivo === 'recetas' && <RecetasProductos />}
@@ -673,20 +658,14 @@ function App() {
 
           {moduloActivo === 'reporte-presentaciones' && <ReportePresentaciones />}
 
-          {moduloActivo === 'reporte-ventas' && <ReporteVentas />}
-
           {moduloActivo !== 'dashboard' &&
               moduloActivo !== 'productos' &&
-              moduloActivo !== 'productos-venta' &&
-              moduloActivo !== 'ventas' &&
-              moduloActivo !== 'seguimiento-comandas' &&
               moduloActivo !== 'presentaciones' &&
               moduloActivo !== 'recetas' &&
               moduloActivo !== 'costos' &&
               moduloActivo !== 'reporte-productos' &&
               moduloActivo !== 'reporte-recetas' &&
-              moduloActivo !== 'reporte-presentaciones' &&
-              moduloActivo !== 'reporte-ventas' && (
+              moduloActivo !== 'reporte-presentaciones' && (
               <div className="coming-soon">
                 <div className="coming-soon-icon">
                   {modulos.find((modulo) => modulo.codigo === moduloActivo)?.icono}
@@ -770,7 +749,6 @@ function App() {
                   >
                     <option value="INSUMO">INSUMO</option>
                     <option value="ELABORADO">ELABORADO</option>
-                    <option value="REVENTA">REVENTA</option>
                   </select>
                 </label>
 
@@ -851,5 +829,3 @@ function App() {
 }
 
 export default App
-  
-  

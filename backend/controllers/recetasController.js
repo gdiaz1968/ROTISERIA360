@@ -1,25 +1,4 @@
 const pool = require("../db");
-const { registrarActividad } = require("../services/auditoriaService");
-
-const auditarReceta = async (req, { accion, resultado, entidadId = null, detalle = {} }) => {
-    await registrarActividad({
-        modulo: "RECETAS",
-        pantalla: "RECETAS",
-        accion,
-        entidad: "ESTRUCTURA",
-        entidadId: entidadId === null || entidadId === undefined ? null : String(entidadId),
-        metodoHttp: req.method,
-        ruta: req.baseUrl ? `${req.baseUrl}${req.path}` : req.path,
-        resultado,
-        detalle
-    });
-};
-
-const crearErrorValidacion = (mensaje) => {
-    const error = new Error(mensaje);
-    error.esValidacion = true;
-    return error;
-};
 
 
 // ======================================================
@@ -549,9 +528,6 @@ const crearReceta = async (req, res) => {
 
         if (!producto_id) {
 
-            await auditarReceta(req, { accion: "RECETA_CREAR", resultado: "ADVERTENCIA", entidadId: producto_id ?? null, detalle: { motivo: "VALIDACION_RECHAZADA" } });
-
-
             return res.status(400).json({
                 error: "Debe indicar el producto elaborado"
             });
@@ -560,9 +536,6 @@ const crearReceta = async (req, res) => {
 
 
         if (!rendimiento || rendimiento <= 0) {
-
-            await auditarReceta(req, { accion: "RECETA_CREAR", resultado: "ADVERTENCIA", entidadId: producto_id ?? null, detalle: { motivo: "VALIDACION_RECHAZADA" } });
-
 
             return res.status(400).json({
                 error: "El rendimiento debe ser mayor que cero"
@@ -573,9 +546,6 @@ const crearReceta = async (req, res) => {
 
         if (!unidad_rendimiento) {
 
-            await auditarReceta(req, { accion: "RECETA_CREAR", resultado: "ADVERTENCIA", entidadId: producto_id ?? null, detalle: { motivo: "VALIDACION_RECHAZADA" } });
-
-
             return res.status(400).json({
                 error: "Debe indicar la unidad de rendimiento"
             });
@@ -585,9 +555,6 @@ const crearReceta = async (req, res) => {
 
         if (!Array.isArray(detalle) ||
             detalle.length === 0) {
-
-            await auditarReceta(req, { accion: "RECETA_CREAR", resultado: "ADVERTENCIA", entidadId: producto_id ?? null, detalle: { motivo: "VALIDACION_RECHAZADA" } });
-
 
             return res.status(400).json({
                 error:
@@ -625,7 +592,7 @@ const crearReceta = async (req, res) => {
 
         if (producto.rows.length === 0) {
 
-            throw crearErrorValidacion(
+            throw new Error(
                 "El producto no existe"
             );
 
@@ -634,7 +601,7 @@ const crearReceta = async (req, res) => {
 
         if (producto.rows[0].tipo !== "ELABORADO") {
 
-            throw crearErrorValidacion(
+            throw new Error(
                 "El producto debe ser de tipo ELABORADO"
             );
 
@@ -643,7 +610,7 @@ const crearReceta = async (req, res) => {
 
         if (!producto.rows[0].activo) {
 
-            throw crearErrorValidacion(
+            throw new Error(
                 "El producto está inactivo"
             );
 
@@ -670,7 +637,7 @@ const crearReceta = async (req, res) => {
 
         if (estructuraActiva.rows.length > 0) {
 
-            throw crearErrorValidacion(
+            throw new Error(
                 "El producto ya posee una receta activa. " +
                 "Utilice modificar para generar una nueva versión."
             );
@@ -742,7 +709,7 @@ const crearReceta = async (req, res) => {
 
             if (!item.componente_id) {
 
-                throw crearErrorValidacion(
+                throw new Error(
                     "Existe un componente sin ID"
                 );
 
@@ -752,7 +719,7 @@ const crearReceta = async (req, res) => {
             if (!item.cantidad ||
                 item.cantidad <= 0) {
 
-                throw crearErrorValidacion(
+                throw new Error(
                     "Existe un componente con cantidad inválida"
                 );
 
@@ -775,7 +742,7 @@ const crearReceta = async (req, res) => {
 
             if (componente.rows.length === 0) {
 
-                throw crearErrorValidacion(
+                throw new Error(
                     "El componente " +
                     item.componente_id +
                     " no existe"
@@ -786,7 +753,7 @@ const crearReceta = async (req, res) => {
 
             if (!componente.rows[0].activo) {
 
-                throw crearErrorValidacion(
+                throw new Error(
                     "El componente " +
                     item.componente_id +
                     " está inactivo"
@@ -828,8 +795,6 @@ const crearReceta = async (req, res) => {
 
         await cliente.query("COMMIT");
 
-        await auditarReceta(req, { accion: "RECETA_CREADA", resultado: "OK", entidadId: estructura.id, detalle: { producto_id, version, cantidad_componentes: detalle.length, rendimiento, unidad_rendimiento } });
-
 
         res.status(201).json({
 
@@ -863,13 +828,6 @@ const crearReceta = async (req, res) => {
 
         }
 
-
-        await auditarReceta(req, {
-            accion: "RECETA_CREAR",
-            resultado: error.esValidacion ? "ADVERTENCIA" : "ERROR",
-            entidadId: req.body?.producto_id ?? null,
-            detalle: { motivo: error.esValidacion ? "REGLA_NEGOCIO_RECHAZADA" : "ERROR_TRANSACCIONAL", codigo_error: error.code || null }
-        });
 
         console.error(
             "ERROR CREAR RECETA:",
@@ -938,9 +896,6 @@ const modificarReceta = async (req, res) => {
 
         if (!estructuraId) {
 
-            await auditarReceta(req, { accion: "RECETA_MODIFICAR", resultado: "ADVERTENCIA", entidadId: estructuraId ?? null, detalle: { motivo: "VALIDACION_RECHAZADA" } });
-
-
             return res.status(400).json({
                 error: "Debe indicar una estructura válida"
             });
@@ -955,9 +910,6 @@ const modificarReceta = async (req, res) => {
         if (!rendimiento ||
             rendimiento <= 0) {
 
-            await auditarReceta(req, { accion: "RECETA_MODIFICAR", resultado: "ADVERTENCIA", entidadId: estructuraId ?? null, detalle: { motivo: "VALIDACION_RECHAZADA" } });
-
-
             return res.status(400).json({
                 error:
                     "El rendimiento debe ser mayor que cero"
@@ -967,9 +919,6 @@ const modificarReceta = async (req, res) => {
 
 
         if (!unidad_rendimiento) {
-
-            await auditarReceta(req, { accion: "RECETA_MODIFICAR", resultado: "ADVERTENCIA", entidadId: estructuraId ?? null, detalle: { motivo: "VALIDACION_RECHAZADA" } });
-
 
             return res.status(400).json({
                 error:
@@ -981,9 +930,6 @@ const modificarReceta = async (req, res) => {
 
         if (!Array.isArray(detalle) ||
             detalle.length === 0) {
-
-            await auditarReceta(req, { accion: "RECETA_MODIFICAR", resultado: "ADVERTENCIA", entidadId: estructuraId ?? null, detalle: { motivo: "VALIDACION_RECHAZADA" } });
-
 
             return res.status(400).json({
                 error:
@@ -1031,7 +977,7 @@ const modificarReceta = async (req, res) => {
 
         if (estructuraActual.rows.length === 0) {
 
-            throw crearErrorValidacion(
+            throw new Error(
                 "La receta no existe"
             );
 
@@ -1048,7 +994,7 @@ const modificarReceta = async (req, res) => {
 
         if (!actual.activo) {
 
-            throw crearErrorValidacion(
+            throw new Error(
                 "La receta está inactiva"
             );
 
@@ -1057,7 +1003,7 @@ const modificarReceta = async (req, res) => {
 
         if (actual.tipo !== "ELABORADO") {
 
-            throw crearErrorValidacion(
+            throw new Error(
                 "El producto de la estructura no es ELABORADO"
             );
 
@@ -1066,7 +1012,7 @@ const modificarReceta = async (req, res) => {
 
         if (!actual.producto_activo) {
 
-            throw crearErrorValidacion(
+            throw new Error(
                 "El producto está inactivo"
             );
 
@@ -1163,7 +1109,7 @@ const modificarReceta = async (req, res) => {
 
             if (!item.componente_id) {
 
-                throw crearErrorValidacion(
+                throw new Error(
                     "Existe un componente sin ID"
                 );
 
@@ -1173,7 +1119,7 @@ const modificarReceta = async (req, res) => {
             if (!item.cantidad ||
                 item.cantidad <= 0) {
 
-                throw crearErrorValidacion(
+                throw new Error(
                     "Existe un componente con cantidad inválida"
                 );
 
@@ -1196,7 +1142,7 @@ const modificarReceta = async (req, res) => {
 
             if (componente.rows.length === 0) {
 
-                throw crearErrorValidacion(
+                throw new Error(
                     "El componente " +
                     item.componente_id +
                     " no existe"
@@ -1207,7 +1153,7 @@ const modificarReceta = async (req, res) => {
 
             if (!componente.rows[0].activo) {
 
-                throw crearErrorValidacion(
+                throw new Error(
                     "El componente " +
                     item.componente_id +
                     " está inactivo"
@@ -1249,8 +1195,6 @@ const modificarReceta = async (req, res) => {
 
         await cliente.query("COMMIT");
 
-        await auditarReceta(req, { accion: "RECETA_MODIFICADA", resultado: "OK", entidadId: estructura.id, detalle: { estructura_anterior_id: estructuraId, producto_id: actual.producto_id, version_anterior: actual.version, version_nueva: nuevaVersion, cantidad_componentes: detalle.length, rendimiento, unidad_rendimiento } });
-
 
         res.json({
 
@@ -1290,13 +1234,6 @@ const modificarReceta = async (req, res) => {
 
         }
 
-
-        await auditarReceta(req, {
-            accion: "RECETA_MODIFICAR",
-            resultado: error.esValidacion ? "ADVERTENCIA" : "ERROR",
-            entidadId: req.params.id ?? null,
-            detalle: { motivo: error.esValidacion ? "REGLA_NEGOCIO_RECHAZADA" : "ERROR_TRANSACCIONAL", codigo_error: error.code || null }
-        });
 
         console.error(
             "ERROR MODIFICAR RECETA:",
@@ -1340,9 +1277,6 @@ const eliminarReceta = async (req, res) => {
 
         if (!estructuraId) {
 
-            await auditarReceta(req, { accion: "RECETA_ELIMINAR", resultado: "ADVERTENCIA", entidadId: estructuraId ?? null, detalle: { motivo: "VALIDACION_RECHAZADA" } });
-
-
             return res.status(400).json({
                 error:
                     "Debe indicar una estructura válida"
@@ -1379,7 +1313,7 @@ const eliminarReceta = async (req, res) => {
 
         if (estructura.rows.length === 0) {
 
-            throw crearErrorValidacion(
+            throw new Error(
                 "La receta no existe"
             );
 
@@ -1396,7 +1330,7 @@ const eliminarReceta = async (req, res) => {
 
         if (!actual.activo) {
 
-            throw crearErrorValidacion(
+            throw new Error(
                 "La receta ya está inactiva"
             );
 
@@ -1435,8 +1369,6 @@ const eliminarReceta = async (req, res) => {
 
         await cliente.query("COMMIT");
 
-        await auditarReceta(req, { accion: "RECETA_DADA_DE_BAJA", resultado: "OK", entidadId: actual.id, detalle: { producto_id: actual.producto_id, version: actual.version, activo: false } });
-
 
         res.json({
 
@@ -1470,13 +1402,6 @@ const eliminarReceta = async (req, res) => {
 
         }
 
-
-        await auditarReceta(req, {
-            accion: "RECETA_ELIMINAR",
-            resultado: error.esValidacion ? "ADVERTENCIA" : "ERROR",
-            entidadId: req.params.id ?? null,
-            detalle: { motivo: error.esValidacion ? "REGLA_NEGOCIO_RECHAZADA" : "ERROR_TRANSACCIONAL", codigo_error: error.code || null }
-        });
 
         console.error(
             "ERROR BAJA RECETA:",

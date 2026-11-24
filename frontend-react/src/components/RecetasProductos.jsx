@@ -56,7 +56,6 @@ async function consultarApi(ruta, opciones = {}) {
 export default function RecetasProductos() {
   const [productos, setProductos] = useState([])
   const [componentes, setComponentes] = useState([])
-  const [unidades, setUnidades] = useState([])
   const [productoId, setProductoId] = useState('')
   const [receta, setReceta] = useState(recetaVacia)
   const [modo, setModo] = useState('consulta')
@@ -71,35 +70,21 @@ export default function RecetasProductos() {
     [productos, productoId],
   )
 
-  const unidadSugerida = useCallback((producto) => {
-    if (!producto) return ''
-
-    const unidad = unidades.find(
-      (item) => String(item.id) === String(producto.id_unidad),
-    ) || unidades.find(
-      (item) => String(item.codigo).toUpperCase() === String(producto.unidad ?? '').toUpperCase(),
-    )
-
-    return unidad?.codigo || producto.unidad || ''
-  }, [unidades])
-
 
   useEffect(() => {
   let cancelado = false
 
   async function cargarInicial() {
     try {
-      const [listaProductos, listaComponentes, listaUnidades] = await Promise.all([
+      const [listaProductos, listaComponentes] = await Promise.all([
         consultarApi('/api/estructura/productos'),
         consultarApi('/api/estructura/componentes'),
-        consultarApi('/api/unidades'),
       ])
 
       if (cancelado) return
 
       setProductos(Array.isArray(listaProductos) ? listaProductos : [])
       setComponentes(Array.isArray(listaComponentes) ? listaComponentes : [])
-      setUnidades(Array.isArray(listaUnidades) ? listaUnidades : [])
       setError('')
     } catch (err) {
       if (!cancelado) {
@@ -145,10 +130,8 @@ export default function RecetasProductos() {
       setMensaje(`Receta activa: versión ${cabecera.version}.`)
     } catch (err) {
       if (err.message.includes('no tiene una receta activa')) {
-        const producto = productos.find((item) => String(item.id) === String(id))
         setReceta({
           ...recetaVacia,
-          unidad_rendimiento: unidadSugerida(producto),
           detalle: [],
         })
         setModo('nuevo')
@@ -159,7 +142,7 @@ export default function RecetasProductos() {
     } finally {
       setCargando(false)
     }
-  }, [productos, unidadSugerida])
+  }, [])
 
   function seleccionarProducto(valor) {
     setProductoId(valor)
@@ -187,11 +170,7 @@ export default function RecetasProductos() {
       return
     }
 
-    setReceta({
-      ...recetaVacia,
-      unidad_rendimiento: unidadSugerida(productoSeleccionado),
-      detalle: [],
-    })
+    setReceta({ ...recetaVacia, detalle: [] })
     setModo('nuevo')
     setError('')
     setMensaje('')
@@ -529,27 +508,17 @@ export default function RecetasProductos() {
             <span>
               Unidad de rendimiento <b>*</b>
             </span>
-            <select
+            <input
+              type="text"
+              maxLength="20"
+              placeholder="Ej.: KG, UN, PORCIÃ“N"
               value={receta.unidad_rendimiento}
               onChange={(e) =>
                 actualizarCabecera('unidad_rendimiento', e.target.value)
               }
               disabled={soloConsulta || guardando}
               required
-            >
-              <option value="">Seleccione una unidad...</option>
-              {receta.unidad_rendimiento &&
-                !unidades.some((unidad) => unidad.codigo === receta.unidad_rendimiento) && (
-                  <option value={receta.unidad_rendimiento}>
-                    {receta.unidad_rendimiento} (unidad no activa)
-                  </option>
-                )}
-              {unidades.map((unidad) => (
-                <option key={unidad.id} value={unidad.codigo}>
-                  {unidad.codigo} - {unidad.nombre}
-                </option>
-              ))}
-            </select>
+            />
           </label>
         </div>
 

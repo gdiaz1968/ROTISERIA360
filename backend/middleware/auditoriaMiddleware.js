@@ -1,8 +1,10 @@
 const { registrarActividad } = require("../services/auditoriaService");
 
+const METODOS_DE_ESCRITURA = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
 /**
- * Registra automáticamente el resultado de cada solicitud /api.
- * No guarda query strings, cuerpos, contraseñas ni tokens.
+ * Registra operaciones de escritura y respuestas fallidas de la API.
+ * No persiste valores del body, query string, contraseñas ni tokens.
  */
 function auditoriaMiddleware(req, res, next) {
     if (!req.originalUrl.startsWith("/api/")) {
@@ -10,38 +12,47 @@ function auditoriaMiddleware(req, res, next) {
     }
 
     const inicio = Date.now();
+    const metodo = String(req.method || "").toUpperCase();
 
-    res.on("finish", function () {
-        const ruta = (req.originalUrl || "").split("?")[0];
+    res.once("finish", function () {
+        const estadoHttp = res.statusCode;
+        const operacionDeEscritura = METODOS_DE_ESCRITURA.has(metodo);
+        const respuestaFallida = estadoHttp >= 400;
+
+        // Los GET correctos no generan ruido; los GET fallidos sí quedan auditados.
+        if (!operacionDeEscritura && !respuestaFallida) {
+            return;
+        }
+
+        const ruta = String(req.originalUrl || "").split("?")[0];
         const partes = ruta.split("/").filter(Boolean);
         const modulo = partes[1] || "api";
-        const estadoHttp = res.statusCode;
 
         let resultado = "OK";
-        if (estadoHttp >= 500) {
+        if (estadoHttp >= 400) {
             resultado = "ERROR";
-        } else if (estadoHttp >= 400) {
+        } else if (estadoHttp >= 300) {
             resultado = "ADVERTENCIA";
         }
 
-        // req.user queda preparado para integrarse con autenticación cuando exista.
-        const usuario = req.user
-            ? (req.user.usuario || req.user.username || null)
+        const usuarioActual = req.user || req.usuario || null;
+        const usuario = usuarioActual
+            ? (usuarioActual.usuario || usuarioActual.username || usuarioActual.nombre || null)
             : null;
-        const usuarioId = req.user && req.user.id
-            ? req.user.id
+        const usuarioId = usuarioActual && usuarioActual.id != null
+            ? usuarioActual.id
             : null;
 
-        registrarActividad({
+        void registrarActividad({
             usuarioId,
             usuario,
             sesionId: null,
             modulo,
             pantalla: null,
-            accion: req.method + " " + ruta,
+            accion: metodo + " " + ruta,
             entidad: null,
             entidadId: null,
-            metodoHttp: req.method,
+            metodoHttp: metodo,
             ruta,
             resultado,
             duracionMs: Date.now() - inicio,

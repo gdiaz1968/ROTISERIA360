@@ -19,8 +19,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    options: '-c timezone=America/Argentina/Buenos_Aires'
+    connectionString: process.env.DATABASE_URL
 });
 
 module.exports = pool;

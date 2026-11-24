@@ -1,33 +1,4 @@
 const pool = require("../db");
-const { registrarActividad } = require("../services/auditoriaService");
-
-// ======================================================
-// AUDITORÍA FUNCIONAL DE PRODUCTOS
-// No registra el contenido del request ni datos sensibles.
-// ======================================================
-
-const auditarProducto = async (req, {
-    accion,
-    resultado,
-    entidadId = null,
-    detalle = {}
-}) => {
-    await registrarActividad({
-        modulo: "PRODUCTOS",
-        pantalla: "PRODUCTOS",
-        accion,
-        entidad: "PRODUCTO",
-        entidadId: entidadId === null || entidadId === undefined
-            ? null
-            : String(entidadId),
-        metodoHttp: req.method,
-        ruta: req.baseUrl
-            ? `${req.baseUrl}${req.path}`
-            : req.path,
-        resultado,
-        detalle
-    });
-};
 
 // ======================================================
 // LISTAR PRODUCTOS
@@ -134,26 +105,8 @@ const crearProducto = async (req, res) => {
 
         if (!codigo || !nombre || !tipo || !id_unidad) {
 
-            await auditarProducto(req, {
-                accion: "PRODUCTO_CREAR",
-                resultado: "ADVERTENCIA",
-                detalle: { motivo: "CAMPOS_OBLIGATORIOS" }
-            });
-
             return res.status(400).json({
                 error: "Todos los campos son obligatorios"
-            });
-        }
-
-        if (!["INSUMO", "ELABORADO", "REVENTA"].includes(tipo)) {
-            await auditarProducto(req, {
-                accion: "PRODUCTO_CREAR",
-                resultado: "ADVERTENCIA",
-                detalle: { motivo: "TIPO_NO_VALIDO" }
-            });
-
-            return res.status(400).json({
-                error: "El tipo debe ser INSUMO, ELABORADO o REVENTA."
             });
         }
 
@@ -180,16 +133,7 @@ const crearProducto = async (req, res) => {
             id_unidad
         ]);
 
-        const producto = resultado.rows[0];
-
-        await auditarProducto(req, {
-            accion: "PRODUCTO_CREADO",
-            resultado: "OK",
-            entidadId: producto.id,
-            detalle: { tipo: producto.tipo }
-        });
-
-        res.status(201).json(producto);
+        res.status(201).json(resultado.rows[0]);
 
     } catch (error) {
 
@@ -197,25 +141,10 @@ const crearProducto = async (req, res) => {
 
         if (error.code === "23505") {
 
-            await auditarProducto(req, {
-                accion: "PRODUCTO_CREAR",
-                resultado: "ADVERTENCIA",
-                detalle: { motivo: "CODIGO_DUPLICADO", codigo_error: error.code }
-            });
-
             return res.status(400).json({
                 error: "El código del producto ya existe"
             });
         }
-
-        await auditarProducto(req, {
-            accion: "PRODUCTO_CREAR",
-            resultado: "ERROR",
-            detalle: {
-                motivo: "ERROR_BASE_DATOS_O_INTERNO",
-                codigo_error: error.code || null
-            }
-        });
 
         res.status(500).json({
             error: "Error al crear producto"
@@ -244,28 +173,8 @@ const modificarProducto = async (req, res) => {
 
         if (!codigo || !nombre || !tipo || !id_unidad) {
 
-            await auditarProducto(req, {
-                accion: "PRODUCTO_MODIFICAR",
-                resultado: "ADVERTENCIA",
-                entidadId: id,
-                detalle: { motivo: "CAMPOS_OBLIGATORIOS" }
-            });
-
             return res.status(400).json({
                 error: "Todos los campos son obligatorios"
-            });
-        }
-
-        if (!["INSUMO", "ELABORADO", "REVENTA"].includes(tipo)) {
-            await auditarProducto(req, {
-                accion: "PRODUCTO_MODIFICAR",
-                resultado: "ADVERTENCIA",
-                entidadId: id,
-                detalle: { motivo: "TIPO_NO_VALIDO" }
-            });
-
-            return res.status(400).json({
-                error: "El tipo debe ser INSUMO, ELABORADO o REVENTA."
             });
         }
 
@@ -290,31 +199,12 @@ const modificarProducto = async (req, res) => {
 
         if (resultado.rows.length === 0) {
 
-            await auditarProducto(req, {
-                accion: "PRODUCTO_MODIFICAR",
-                resultado: "ADVERTENCIA",
-                entidadId: id,
-                detalle: { motivo: "PRODUCTO_NO_ENCONTRADO" }
-            });
-
             return res.status(404).json({
                 error: "Producto no encontrado"
             });
         }
 
-        const producto = resultado.rows[0];
-
-        await auditarProducto(req, {
-            accion: "PRODUCTO_MODIFICADO",
-            resultado: "OK",
-            entidadId: producto.id,
-            detalle: {
-                tipo: producto.tipo,
-                activo: producto.activo
-            }
-        });
-
-        res.json(producto);
+        res.json(resultado.rows[0]);
 
     } catch (error) {
 
@@ -322,27 +212,10 @@ const modificarProducto = async (req, res) => {
 
         if (error.code === "23505") {
 
-            await auditarProducto(req, {
-                accion: "PRODUCTO_MODIFICAR",
-                resultado: "ADVERTENCIA",
-                entidadId: req.params.id,
-                detalle: { motivo: "CODIGO_DUPLICADO", codigo_error: error.code }
-            });
-
             return res.status(400).json({
                 error: "El código del producto ya existe"
             });
         }
-
-        await auditarProducto(req, {
-            accion: "PRODUCTO_MODIFICAR",
-            resultado: "ERROR",
-            entidadId: req.params.id,
-            detalle: {
-                motivo: "ERROR_BASE_DATOS_O_INTERNO",
-                codigo_error: error.code || null
-            }
-        });
 
         res.status(500).json({
             error: "Error al modificar producto"
@@ -373,45 +246,19 @@ const eliminarProducto = async (req, res) => {
 
         if (resultado.rows.length === 0) {
 
-            await auditarProducto(req, {
-                accion: "PRODUCTO_DAR_DE_BAJA",
-                resultado: "ADVERTENCIA",
-                entidadId: id,
-                detalle: { motivo: "NO_ENCONTRADO_O_YA_INACTIVO" }
-            });
-
             return res.status(404).json({
                 error: "Producto no encontrado o ya está inactivo"
             });
         }
 
-        const producto = resultado.rows[0];
-
-        await auditarProducto(req, {
-            accion: "PRODUCTO_DADO_DE_BAJA",
-            resultado: "OK",
-            entidadId: producto.id,
-            detalle: { activo: false }
-        });
-
         res.json({
             mensaje: "Producto dado de baja logicamente correctamente",
-            producto
+            producto: resultado.rows[0]
         });
 
     } catch (error) {
 
         console.error(error);
-
-        await auditarProducto(req, {
-            accion: "PRODUCTO_DAR_DE_BAJA",
-            resultado: "ERROR",
-            entidadId: req.params.id,
-            detalle: {
-                motivo: "ERROR_BASE_DATOS_O_INTERNO",
-                codigo_error: error.code || null
-            }
-        });
 
         res.status(500).json({
             error: "Error al dar de baja el producto"
