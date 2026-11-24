@@ -1,18 +1,16 @@
 const { registrarActividad } = require("../services/auditoriaService");
 
 function obtenerRuta(req) {
-    const rutaRegistrada = req.route && req.route.path
-        ? String(req.route.path)
-        : req.path;
-
-    return `${req.baseUrl || ""}${rutaRegistrada || ""}`.split("?")[0];
+    // Se conserva la ruta solicitada sin query string para evitar registrar
+    // posibles datos sensibles enviados como parámetros.
+    return String(req.path || req.originalUrl || "").split("?")[0];
 }
 
 function obtenerModulo(req) {
-    const base = (req.baseUrl || req.path || "").toLowerCase();
+    const ruta = String(req.path || "").toLowerCase();
 
-    if (base.startsWith("/api/")) {
-        const segmento = base.split("/")[2] || "api";
+    if (ruta.startsWith("/api/")) {
+        const segmento = ruta.split("/")[2] || "api";
         return segmento === "estructura" ? "recetas" : segmento;
     }
 
@@ -75,22 +73,17 @@ function auditoriaMiddleware(req, res, next) {
                 ? "ADVERTENCIA"
                 : "OK";
 
-        const ruta = obtenerRuta(req);
-        const detalle = {
-            content_length: req.get("content-length") || null
-        };
-
         registrarActividad({
             usuario: obtenerUsuario(req),
             modulo: obtenerModulo(req),
             accion: obtenerAccion(metodo),
             metodo,
-            ruta,
+            ruta: obtenerRuta(req),
             resultado,
             statusHttp,
             ip: req.ip || null,
             duracionMs: Math.max(0, Date.now() - inicio),
-            detalle
+            detalle: null
         }).catch(function (error) {
             // La auditoría no debe interrumpir ni cambiar la respuesta del negocio.
             console.error("ERROR REGISTRANDO AUDITORIA:", error.message);
